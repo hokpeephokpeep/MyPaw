@@ -10,14 +10,13 @@
  * - ฝาแฝด (Twins) / พี่น้อง (Siblings)
  * - เพื่อนสนิท (Besties)
  */
+import { parseLocalDate } from './utils';
 
 export function resolveAllKinships(allPets = []) {
   const petMap = new Map(allPets.map(p => [p.id, p]));
 
   // Direct Parent-Child Graph
-  // childId -> Set of parentIds
   const parentsOf = new Map();
-  // parentId -> Set of childIds
   const childrenOf = new Map();
 
   allPets.forEach(p => {
@@ -29,33 +28,55 @@ export function resolveAllKinships(allPets = []) {
   allPets.forEach(p => {
     (p.relationships || []).forEach(rel => {
       if (rel.type === 'parent') {
-        // rel.targetPetId is parent of p
         parentsOf.get(p.id)?.add(rel.targetPetId);
         childrenOf.get(rel.targetPetId)?.add(p.id);
       } else if (rel.type === 'child') {
-        // rel.targetPetId is child of p
         childrenOf.get(p.id)?.add(rel.targetPetId);
         parentsOf.get(rel.targetPetId)?.add(p.id);
       }
     });
   });
 
-  // Helper to get ancestral depth
-  // Returns Map<ancestorId, generationDistance> (1=parent, 2=grandparent, 3=great-grandparent...)
+  // Helper: compare age between two pets (returns <0 if p1 is older, >0 if p1 is younger, 0 if same birthDate)
+  const compareAge = (p1, p2) => {
+    const d1 = parseLocalDate(p1?.birthDate);
+    const d2 = parseLocalDate(p2?.birthDate);
+    if (!d1 || !d2) return 0;
+    return d1.getTime() - d2.getTime();
+  };
+
+  // Helper to get sibling label based on relative birthDate & gender
+  const getSiblingLabel = (selfPet, targetPet) => {
+    const isFemale = targetPet?.gender === 'female';
+    const diff = compareAge(targetPet, selfPet);
+    if (diff === 0) {
+      return 'ฝาแฝด';
+    }
+    if (diff < 0) {
+      // target was born earlier -> older sibling (พี่)
+      return isFemale ? 'พี่สาว' : 'พี่ชาย';
+    }
+    // target was born later -> younger sibling (น้อง)
+    return isFemale ? 'น้องสาว' : 'น้องชาย';
+  };
+
+  // Helper to get ancestral depth & path
+  // Returns Map<ancestorId, { depth, firstParentId }>
   const getAncestors = (petId) => {
     const ancestors = new Map();
-    const queue = [[petId, 0]];
+    const queue = [[petId, 0, null]];
     const visited = new Set([petId]);
 
     while (queue.length > 0) {
-      const [currId, depth] = queue.shift();
+      const [currId, depth, firstParent] = queue.shift();
       const directParents = parentsOf.get(currId) || new Set();
       
       for (const parentId of directParents) {
         if (!visited.has(parentId)) {
           visited.add(parentId);
-          ancestors.set(parentId, depth + 1);
-          queue.push([parentId, depth + 1]);
+          const rootParent = depth === 0 ? parentId : firstParent;
+          ancestors.set(parentId, { depth: depth + 1, viaParentId: rootParent });
+          queue.push([parentId, depth + 1, rootParent]);
         }
       }
     }
@@ -63,7 +84,7 @@ export function resolveAllKinships(allPets = []) {
   };
 
   // Helper to get descendants
-  // Returns Map<descendantId, generationDistance> (1=child, 2=grandchild, 3=great-grandchild...)
+  // Returns Map<descendantId, generationDistance>
   const getDescendants = (petId) => {
     const descendants = new Map();
     const queue = [[petId, 0]];
@@ -85,7 +106,6 @@ export function resolveAllKinships(allPets = []) {
   };
 
   // Build resolved relationships list for every pet
-  // petId -> Map<targetId, { type, label, depth, category }>
   const resolvedMap = new Map();
   allPets.forEach(p => resolvedMap.set(p.id, new Map()));
 
@@ -98,35 +118,36 @@ export function resolveAllKinships(allPets = []) {
       const target = petMap.get(rel.targetPetId);
       if (!target) return;
 
-      const isTargetFemale = target.gender === 'female';
       let label = rel.label;
 
       if (rel.type === 'partner') {
-        label = isTargetFemale ? 'แฟน (ตัวเมีย)' : 'แฟน (ตัวผู้)';
+        label = 'แฟน';
       } else if (rel.type === 'twin') {
         label = 'ฝาแฝด';
       } else if (rel.type === 'bestie') {
-        label = 'เพื่อนสนิท';
+        label = 'เพื่อนซี้';
       } else if (rel.type === 'sibling') {
-        label = isTargetFemale ? 'พี่สาว/น้องสาว' : 'พี่ชาย/น้องชาย';
+        label = getSiblingLabel(pet, target);
       }
 
       if (['partner', 'twin', 'bestie', 'sibling'].includes(rel.type)) {
         petTargetMap.set(target.id, {
           targetId: target.id,
           type: rel.type,
-          label: label || 'เพื่อนสนิท',
+          label: label || 'เพื่อนซี้',
           category: rel.type
         });
       }
     });
 
-    // 2. Ancestors (Parents, Grandparents, Great-Grandparents / พ่อ แม่ ตา ยาย ปู่ ทวด)
+    // 2. Ancestors (พ่อ แม่ ปู่ ย่า ตา ยาย ทวด)
     const ancestors = getAncestors(petId);
-    ancestors.forEach((gen, ancId) => {
+    ancestors.forEach(({ depth: gen, viaParentId }, ancId) => {
       const ancestor = petMap.get(ancId);
       if (!ancestor) return;
       const isFemale = ancestor.gender === 'female';
+      const viaParent = petMap.get(viaParentId);
+      const isMaternal = viaParent?.gender === 'female';
 
       let type = 'ancestor';
       let label = 'บรรพบุรุษ';
@@ -138,15 +159,19 @@ export function resolveAllKinships(allPets = []) {
         category = 'parent';
       } else if (gen === 2) {
         type = 'grandparent';
-        label = isFemale ? 'ย่า / ยาย' : 'ปู่ / ตา';
+        if (isMaternal) {
+          label = isFemale ? 'ยาย' : 'ตา';
+        } else {
+          label = isFemale ? 'ย่า' : 'ปู่';
+        }
         category = 'grandparent';
       } else if (gen === 3) {
         type = 'great_grandparent';
-        label = isFemale ? 'ทวดหญิง' : 'ทวดชาย';
+        label = isFemale ? 'ย่าทวด/ยายทวด' : 'ปู่ทวด/ตาทวด';
         category = 'great_grandparent';
       } else if (gen >= 4) {
         type = 'great_great_grandparent';
-        label = 'เทียด / ทวดรุ่นเก่า';
+        label = 'เทียด';
         category = 'great_grandparent';
       }
 
@@ -159,7 +184,7 @@ export function resolveAllKinships(allPets = []) {
       });
     });
 
-    // 3. Descendants (Children, Grandchildren, Great-Grandchildren / ลูก หลาน เหลน ลื่อ)
+    // 3. Descendants (ลูก หลาน เหลน ลื่อ)
     const descendants = getDescendants(petId);
     descendants.forEach((gen, descId) => {
       const descendant = petMap.get(descId);
@@ -184,7 +209,7 @@ export function resolveAllKinships(allPets = []) {
         category = 'great_grandchild';
       } else if (gen >= 4) {
         type = 'great_great_grandchild';
-        label = 'ลื่อ / ทายาทรุ่นเหลน';
+        label = 'ลื่อ';
         category = 'great_grandchild';
       }
 
@@ -198,7 +223,7 @@ export function resolveAllKinships(allPets = []) {
     });
   });
 
-  // 4. Infer Siblings via shared parents (ถ้ามีพ่อหรือแม่คนเดียวกัน -> เป็นพี่น้องกันอัตโนมัติ)
+  // 4. Infer Siblings via shared parents (ถ้ามีพ่อหรือแม่คนเดียวกัน -> เป็นพี่น้อง/แฝดกันอัตโนมัติ)
   allPets.forEach(p1 => {
     const parents1 = parentsOf.get(p1.id) || new Set();
     if (parents1.size === 0) return;
@@ -206,20 +231,69 @@ export function resolveAllKinships(allPets = []) {
     allPets.forEach(p2 => {
       if (p1.id === p2.id) return;
       const p1Map = resolvedMap.get(p1.id);
-      if (p1Map.has(p2.id)) return; // already defined
+      if (p1Map.has(p2.id)) return;
 
       const parents2 = parentsOf.get(p2.id) || new Set();
-      // Check intersection
       const shared = [...parents1].some(parentId => parents2.has(parentId));
       if (shared) {
-        const isP2Female = p2.gender === 'female';
+        const diff = compareAge(p2, p1);
+        const relType = diff === 0 ? 'twin' : 'sibling';
         p1Map.set(p2.id, {
           targetId: p2.id,
-          type: 'sibling',
-          label: isP2Female ? 'พี่สาว/น้องสาว (พ่อแม่เดียวกัน)' : 'พี่ชาย/น้องชาย (พ่อแม่เดียวกัน)',
-          category: 'sibling'
+          type: relType,
+          label: getSiblingLabel(p1, p2),
+          category: relType
         });
       }
+    });
+  });
+
+  // 5. Infer Uncles/Aunts (ลุง ป้า น้า อา) & Nephews/Nieces (หลาน)
+  allPets.forEach(pet => {
+    const petParents = parentsOf.get(pet.id) || new Set();
+    const petTargetMap = resolvedMap.get(pet.id);
+
+    petParents.forEach(parentId => {
+      const parent = petMap.get(parentId);
+      if (!parent) return;
+      const parentRels = resolvedMap.get(parentId);
+      if (!parentRels) return;
+
+      parentRels.forEach(rel => {
+        if (rel.type === 'sibling' || rel.type === 'twin') {
+          const uncleAunt = petMap.get(rel.targetId);
+          if (!uncleAunt || petTargetMap.has(uncleAunt.id)) return;
+
+          const isOlderThanParent = compareAge(uncleAunt, parent) <= 0;
+          const isFemale = uncleAunt.gender === 'female';
+          const isMaternal = parent.gender === 'female';
+
+          let label = 'น้า';
+          if (isOlderThanParent) {
+            label = isFemale ? 'ป้า' : 'ลุง';
+          } else {
+            label = isMaternal ? 'น้า' : 'อา';
+          }
+
+          petTargetMap.set(uncleAunt.id, {
+            targetId: uncleAunt.id,
+            type: 'uncle_aunt',
+            label,
+            category: 'family'
+          });
+
+          // Reverse for uncle/aunt -> nephew/niece
+          const uaMap = resolvedMap.get(uncleAunt.id);
+          if (uaMap && !uaMap.has(pet.id)) {
+            uaMap.set(pet.id, {
+              targetId: pet.id,
+              type: 'nephew_niece',
+              label: pet.gender === 'female' ? 'หลานสาว' : 'หลานชาย',
+              category: 'family'
+            });
+          }
+        }
+      });
     });
   });
 

@@ -11,8 +11,9 @@ import FamilyTreeModal from './components/FamilyTreeModal';
 import PetDetailModal from './components/PetDetailModal';
 import SplashScreen from './components/SplashScreen';
 import { resolveAllKinships } from './kinshipEngine';
+import { parseLocalDate, getTodayLocal } from './utils';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBars, faPlus, faXmark, faPaw, faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons';
+import { faBars, faPlus, faXmark, faPaw, faMagnifyingGlass, faSitemap } from '@fortawesome/free-solid-svg-icons';
 import confetti from 'canvas-confetti';
 
 const STORAGE_KEY = 'mypetsage_modern_pets_v2';
@@ -68,13 +69,13 @@ export default function App() {
     }
   }, [pets]);
 
-  // Check for today's birthday
+  // Check for today's birthday (Local Timezone Safe)
   useEffect(() => {
-    const today = new Date();
+    const today = getTodayLocal();
     const hasBirthdayToday = pets.some(p => {
       if (p.status === 'deceased' || !p.birthDate) return false;
-      const bday = new Date(p.birthDate);
-      return bday.getDate() === today.getDate() && bday.getMonth() === today.getMonth();
+      const bday = parseLocalDate(p.birthDate);
+      return bday && bday.getDate() === today.getDate() && bday.getMonth() === today.getMonth();
     });
 
     if (hasBirthdayToday) {
@@ -102,7 +103,7 @@ export default function App() {
         const isCurrentFemale = currentPet?.gender === 'female';
         switch (type) {
           case 'partner':
-            return isCurrentFemale ? 'แฟน (ตัวเมีย)' : 'แฟน (ตัวผู้)';
+            return 'แฟน';
           case 'parent':
             return isCurrentFemale ? 'ลูกสาว' : 'ลูกชาย';
           case 'child':
@@ -112,7 +113,7 @@ export default function App() {
           case 'twin':
             return 'ฝาแฝด';
           case 'bestie':
-            return 'เพื่อนสนิท';
+            return 'เพื่อนซี้';
           default:
             return 'สายสัมพันธ์';
         }
@@ -174,11 +175,19 @@ export default function App() {
     }
   };
 
+  // Full Cascade Delete (removes deleted pet ID from all remaining pets' relationships)
   const handleDeletePet = (id) => {
-    setPets(prev => prev.filter(p => p.id !== id));
+    setPets(prev => 
+      prev
+        .filter(p => p.id !== id)
+        .map(p => ({
+          ...p,
+          relationships: (p.relationships || []).filter(r => r.targetPetId !== id)
+        }))
+    );
   };
 
-  // 🌳 Infer all generations and kinships (ปู่ ย่า ตา ยาย หลาน เหลน ทวด แฟน)
+  // 🌳 Infer all generations and kinships (ปู่ ย่า ตา ยาย หลาน เหลน ทวด แฟน ลุง ป้า น้า อา)
   const resolvedPets = resolveAllKinships(pets);
 
   // Filter & Sort
@@ -195,16 +204,17 @@ export default function App() {
     })
     .sort((a, b) => {
       if (sortBy === 'age_desc') {
-        return new Date(a.birthDate) - new Date(b.birthDate);
+        return (parseLocalDate(a.birthDate) || 0) - (parseLocalDate(b.birthDate) || 0);
       }
       if (sortBy === 'age_asc') {
-        return new Date(b.birthDate) - new Date(a.birthDate);
+        return (parseLocalDate(b.birthDate) || 0) - (parseLocalDate(a.birthDate) || 0);
       }
       if (sortBy === 'bday_near') {
         const getBdayScore = (p) => {
-          if (p.status === 'deceased') return 999;
-          const today = new Date();
-          const birth = new Date(p.birthDate);
+          if (p.status === 'deceased') return 999999999999;
+          const today = getTodayLocal();
+          const birth = parseLocalDate(p.birthDate);
+          if (!birth) return 999999999999;
           let next = new Date(today.getFullYear(), birth.getMonth(), birth.getDate());
           if (next < today) next = new Date(today.getFullYear() + 1, birth.getMonth(), birth.getDate());
           return next - today;
@@ -224,37 +234,48 @@ export default function App() {
       <div className="w-full max-w-lg min-h-screen bg-slate-50 shadow-2xl flex flex-col relative pb-8">
         
         {/* Clean Sticky App Bar */}
-        <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md px-5 py-4 border-b border-slate-200/60 flex items-center justify-between">
+        <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md px-5 py-3.5 border-b border-slate-200/60 flex items-center justify-between">
           <div className="flex items-center gap-3">
             {/* Hamburger Menu Button */}
             <button
               onClick={() => setIsDrawerOpen(true)}
-              className="p-2 -ml-1 rounded-2xl bg-slate-100/90 hover:bg-slate-200 text-slate-700 active:scale-95 transition-all shadow-2xs"
+              className="w-10 h-10 -ml-1 rounded-2xl bg-slate-100/90 hover:bg-slate-200 text-slate-700 flex items-center justify-center active:scale-95 transition-all shadow-2xs"
               title="เมนู"
             >
               <FontAwesomeIcon icon={faBars} className="text-base" />
             </button>
 
-            {/* Clean Title */}
-            <h1 className="text-xl font-black text-slate-900 tracking-tight flex items-center gap-1.5">
+            {/* Brand Title in Mitr */}
+            <h1 className="font-mitr text-2xl font-semibold text-slate-900 tracking-wide flex items-center gap-1.5">
               <span>MyPaw</span>
               <FontAwesomeIcon icon={faPaw} className="text-paw-500 text-base" />
             </h1>
           </div>
 
-          {/* Active Filter Pill */}
-          {isFiltered && (
+          <div className="flex items-center gap-2">
+            {/* Active Filter Pill */}
+            {isFiltered && (
+              <button
+                onClick={() => {
+                  setActiveTab('all');
+                  setSearchQuery('');
+                }}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-paw-50 border border-paw-200 text-[11px] font-bold text-paw-700 hover:bg-paw-100 transition-colors animate-fadeIn"
+              >
+                <span>{activeTab === 'alive' ? 'อยู่ด้วยกัน' : activeTab === 'deceased' ? 'ดาวแมว' : searchQuery}</span>
+                <FontAwesomeIcon icon={faXmark} className="text-[10px]" />
+              </button>
+            )}
+
+            {/* Quick Family Tree Access Button */}
             <button
-              onClick={() => {
-                setActiveTab('all');
-                setSearchQuery('');
-              }}
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-paw-50 border border-paw-200 text-[11px] font-bold text-paw-700 hover:bg-paw-100 transition-colors animate-fadeIn"
+              onClick={() => setIsFamilyOpen(true)}
+              className="w-10 h-10 rounded-2xl bg-amber-50 hover:bg-amber-100 text-amber-600 border border-amber-200/60 flex items-center justify-center active:scale-95 transition-all shadow-2xs"
+              title="ผังครอบครัว"
             >
-              <span>{activeTab === 'alive' ? 'เฉพาะมีชีวิต' : activeTab === 'deceased' ? 'เฉพาะสายรุ้ง' : `ค้นหา: ${searchQuery}`}</span>
-              <FontAwesomeIcon icon={faXmark} className="text-[10px]" />
+              <FontAwesomeIcon icon={faSitemap} className="text-sm" />
             </button>
-          )}
+          </div>
         </header>
 
         {/* Pure Pet Cards Feed */}
@@ -276,31 +297,26 @@ export default function App() {
               <div className="w-20 h-20 mx-auto rounded-3xl bg-paw-100 text-paw-600 flex items-center justify-center text-3xl shadow-inner mb-4">
                 <FontAwesomeIcon icon={faPaw} />
               </div>
-              <h3 className="text-lg font-bold text-slate-800">ยังไม่มีข้อมูลสัตว์เลี้ยง</h3>
-              <p className="text-xs text-slate-400 mt-1 max-w-xs mx-auto">
-                กดปุ่มด้านล่างเพื่อเพิ่มน้องตัวแรก
-              </p>
               <button
                 onClick={() => {
                   setEditingPet(null);
                   setIsModalOpen(true);
                 }}
-                className="mt-6 px-6 py-3 rounded-2xl bg-paw-500 hover:bg-paw-600 text-white font-bold text-sm shadow-lg shadow-paw-500/25 transition-all inline-flex items-center gap-2"
+                className="mt-2 px-6 py-3 rounded-2xl bg-paw-500 hover:bg-paw-600 text-white font-bold text-sm shadow-lg shadow-paw-500/25 transition-all inline-flex items-center gap-2"
               >
                 <FontAwesomeIcon icon={faPlus} />
-                <span>เพิ่มสัตว์เลี้ยง</span>
+                <span>เพิ่มสมาชิก</span>
               </button>
             </div>
           ) : (
             <div className="py-20 text-center text-slate-400">
-              <FontAwesomeIcon icon={faMagnifyingGlass} className="text-3xl text-slate-300 block mx-auto mb-2" />
-              <p className="text-sm font-semibold">ไม่พบข้อมูลที่ค้นหา</p>
+              <FontAwesomeIcon icon={faMagnifyingGlass} className="text-3xl text-slate-300 block mx-auto mb-3" />
               <button
                 onClick={() => {
                   setActiveTab('all');
                   setSearchQuery('');
                 }}
-                className="mt-4 px-4 py-1.5 rounded-xl bg-slate-200 text-slate-700 text-xs font-semibold hover:bg-slate-300 transition-colors"
+                className="px-4 py-1.5 rounded-xl bg-slate-200 text-slate-700 text-xs font-semibold hover:bg-slate-300 transition-colors"
               >
                 แสดงทั้งหมด
               </button>
@@ -336,7 +352,7 @@ export default function App() {
 
       {/* Modals */}
       <PetModal
-        pet={editingPet}
+        pet={editingPet ? pets.find(p => p.id === editingPet.id) || editingPet : null}
         allPets={pets}
         isOpen={isModalOpen}
         onClose={() => {
@@ -361,7 +377,7 @@ export default function App() {
 
       {/* 🌈 Memorial Modal */}
       <MemorialModal
-        pet={memorialPet}
+        pet={memorialPet ? resolvedPets.find(p => p.id === memorialPet.id) || memorialPet : null}
         isOpen={!!memorialPet}
         dateFormat={dateFormat}
         onClose={() => setMemorialPet(null)}
@@ -370,21 +386,25 @@ export default function App() {
 
       {/* 🩺 Health & Weight Log Modal */}
       <HealthLogModal
-        pet={healthPet}
+        pet={healthPet ? resolvedPets.find(p => p.id === healthPet.id) || healthPet : null}
         isOpen={!!healthPet}
         dateFormat={dateFormat}
         onClose={() => setHealthPet(null)}
         onUpdatePet={handleSavePet}
       />
 
-      {/* 🌳 Family Tree Modal */}
+      {/* 🌳 Family Tree Modal (Interactive: tap any pet node to open its detail modal!) */}
       <FamilyTreeModal
         isOpen={isFamilyOpen}
         onClose={() => setIsFamilyOpen(false)}
         pets={resolvedPets}
+        onSelectPet={(selectedPet) => {
+          setIsFamilyOpen(false);
+          setDetailPet(selectedPet);
+        }}
       />
 
-      {/* 🔍 Long-Press Pet Detail Modal */}
+      {/* 🔍 Pet Detail Modal (Interactive: tap any relative to jump to their detail modal!) */}
       <PetDetailModal
         pet={detailPet ? resolvedPets.find(p => p.id === detailPet.id) || detailPet : null}
         allPets={resolvedPets}
@@ -398,9 +418,10 @@ export default function App() {
         onOpenMemorial={(p) => setMemorialPet(p)}
         onOpenHealth={(p) => setHealthPet(p)}
         onOpenFamily={() => setIsFamilyOpen(true)}
+        onSelectPet={(targetPet) => setDetailPet(targetPet)}
       />
 
-      {/* 🐾 Beautiful Animated Splash Screen */}
+      {/* 🐾 Animated Splash Screen */}
       {showSplash && (
         <SplashScreen onFinish={() => setShowSplash(false)} />
       )}

@@ -11,7 +11,6 @@ export default function FamilyTreeModal({ isOpen, onClose, pets = [], onSelectPe
 
     const petMap = new Map();
     pets.forEach(p => {
-      // Normalize relationships vs relations
       const rels = (p.relationships || p.relations || []).map(r => ({
         type: r.type,
         targetId: r.targetPetId || r.targetId,
@@ -28,8 +27,7 @@ export default function FamilyTreeModal({ isOpen, onClose, pets = [], onSelectPe
       return partnerRel ? petMap.get(partnerRel.targetId) : null;
     };
 
-    // Calculate depths: Start with roots (pets without parents)
-    // First pass: depth from parents
+    // First pass: depth from biological parents
     const computeDepth = (id, visited = new Set()) => {
       if (visited.has(id)) return 0;
       visited.add(id);
@@ -55,7 +53,6 @@ export default function FamilyTreeModal({ isOpen, onClose, pets = [], onSelectPe
     });
 
     // Second pass: Align partners to the same generation level
-    // e.g. ตังค์ทอน (depth 1, daughter of ชายน้อย) + ไข่ต้ม (depth 0, no parents recorded) -> ไข่ต้ม becomes depth 1
     let changed = true;
     let iterations = 0;
     while (changed && iterations < 5) {
@@ -91,7 +88,6 @@ export default function FamilyTreeModal({ isOpen, onClose, pets = [], onSelectPe
     const sortedLevels = Array.from(levelsMap.entries())
       .sort(([a], [b]) => a - b)
       .map(([levelIndex, levelPets]) => {
-        // Group pairs of partners together in each level
         const processed = new Set();
         const groups = [];
 
@@ -102,7 +98,6 @@ export default function FamilyTreeModal({ isOpen, onClose, pets = [], onSelectPe
           const partner = getPartner(p.id);
           if (partner && partner.depth === levelIndex && !processed.has(partner.id)) {
             processed.add(partner.id);
-            // Put male on left or female on left consistently
             groups.push({
               type: 'couple',
               primary: p,
@@ -116,14 +111,8 @@ export default function FamilyTreeModal({ isOpen, onClose, pets = [], onSelectPe
           }
         });
 
-        let title = 'รุ่นที่ 1 (บรรพบุรุษ)';
-        if (levelIndex === 1) title = 'รุ่นที่ 2 (รุ่นพ่อแม่)';
-        else if (levelIndex === 2) title = 'รุ่นที่ 3 (รุ่นลูก)';
-        else if (levelIndex > 2) title = `รุ่นที่ ${levelIndex + 1} (รุ่นหลาน)`;
-
         return {
           levelIndex,
-          title,
           groups
         };
       });
@@ -133,6 +122,7 @@ export default function FamilyTreeModal({ isOpen, onClose, pets = [], onSelectPe
 
   const renderPetCircle = (pet) => {
     const photoSrc = pet.avatar || pet.photo;
+    const isDeceased = pet.status === 'deceased';
     return (
       <div 
         key={pet.id}
@@ -140,17 +130,21 @@ export default function FamilyTreeModal({ isOpen, onClose, pets = [], onSelectPe
         className="flex flex-col items-center group cursor-pointer active:scale-95 transition-transform"
       >
         <div className="relative">
-          <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full overflow-hidden border-2 border-paw-300 shadow-md bg-slate-100 group-hover:border-paw-500 group-hover:shadow-lg transition-all">
+          <div className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full overflow-hidden border-2 shadow-md bg-slate-100 transition-all ${
+            isDeceased 
+              ? 'border-amber-300 ring-2 ring-sky-100 group-hover:border-amber-400' 
+              : 'border-paw-300 group-hover:border-paw-500'
+          }`}>
             {photoSrc ? (
               <img src={photoSrc} alt={pet.name} className="w-full h-full object-cover" />
             ) : (
-              <div className="w-full h-full flex items-center justify-center bg-slate-100 text-slate-400">
+              <div className="w-full h-full flex items-center justify-center bg-paw-50 text-paw-400">
                 <FontAwesomeIcon icon={faPaw} className="text-xl sm:text-2xl" />
               </div>
             )}
           </div>
         </div>
-        <span className="mt-2 text-xs sm:text-sm font-mitr font-medium text-slate-800 text-center max-w-[80px] sm:max-w-[90px] truncate">
+        <span className="mt-2 text-xs sm:text-sm font-mitr font-medium text-slate-800 text-center max-w-[84px] sm:max-w-[96px] truncate">
           {pet.name}
         </span>
       </div>
@@ -158,59 +152,58 @@ export default function FamilyTreeModal({ isOpen, onClose, pets = [], onSelectPe
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fadeIn">
-      <div className="bg-white rounded-3xl w-full max-w-xl max-h-[85vh] flex flex-col shadow-2xl border border-slate-100 overflow-hidden">
-        {/* Header */}
-        <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/80">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-paw-50 flex items-center justify-center text-paw-500">
-              <FontAwesomeIcon icon={faSitemap} className="text-lg" />
+    <div 
+      onClick={onClose}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fadeIn"
+    >
+      <div 
+        onClick={(e) => e.stopPropagation()}
+        className="bg-white rounded-[32px] w-full max-w-xl max-h-[85vh] flex flex-col shadow-2xl border border-slate-100 overflow-hidden animate-scaleUp"
+      >
+        {/* Clean Minimal Header */}
+        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/70">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-2xl bg-paw-100 flex items-center justify-center text-paw-600 shadow-2xs">
+              <FontAwesomeIcon icon={faSitemap} className="text-sm" />
             </div>
-            <div>
-              <h2 className="font-mitr font-semibold text-base sm:text-lg text-slate-800">ผังครอบครัว</h2>
-              <p className="text-xs text-slate-500 font-sans">สายสัมพันธ์ทางสายเลือดและคู่ครอง</p>
-            </div>
+            <h2 className="font-mitr font-semibold text-lg text-slate-800">ผังครอบครัว</h2>
           </div>
           <button 
             onClick={onClose}
-            className="w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 hover:text-slate-800 transition-colors"
+            className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 hover:text-slate-800 transition-colors"
           >
             <FontAwesomeIcon icon={faXmark} />
           </button>
         </div>
 
-        {/* Tree Content */}
-        <div className="p-5 sm:p-8 overflow-y-auto flex-1 bg-gradient-to-b from-white to-slate-50/50">
+        {/* Pure Tree Content */}
+        <div className="p-6 sm:p-8 overflow-y-auto flex-1 bg-gradient-to-b from-white via-paw-50/20 to-slate-50/50">
           {treeLevels.length === 0 ? (
             <div className="py-12 text-center text-slate-400 text-sm font-sans">
-              ไม่มีข้อมูลสัตว์เลี้ยง
+              <FontAwesomeIcon icon={faPaw} className="text-2xl mb-2 opacity-40 block mx-auto" />
             </div>
           ) : (
-            <div className="flex flex-col items-center gap-6 sm:gap-8">
+            <div className="flex flex-col items-center">
               {treeLevels.map((lvl, idx) => (
                 <div key={lvl.levelIndex} className="w-full flex flex-col items-center relative">
-                  {/* Level Generation Badge */}
-                  <div className="mb-3">
-                    <span className="text-[11px] font-sans font-medium px-3 py-1 rounded-full bg-slate-100 text-slate-600 border border-slate-200 shadow-xs">
-                      {lvl.title}
-                    </span>
-                  </div>
-
+                  
                   {/* Level Nodes */}
-                  <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-8">
+                  <div className="flex flex-wrap items-center justify-center gap-5 sm:gap-8">
                     {lvl.groups.map((group, gIdx) => {
                       if (group.type === 'single') {
                         return renderPetCircle(group.pet);
                       }
-                      // Couple: 2 circular nodes side-by-side with heart
+                      // Couple: 2 circular nodes side-by-side linked by a heart
                       return (
-                        <div key={`couple-${gIdx}`} className="flex items-center gap-2 sm:gap-3 p-2 rounded-2xl bg-slate-50 border border-slate-200/80 shadow-xs">
+                        <div 
+                          key={`couple-${gIdx}`} 
+                          className="flex items-center gap-3 sm:gap-4 px-4 py-3 rounded-3xl bg-rose-50/40 border border-rose-200/60 shadow-2xs"
+                        >
                           {renderPetCircle(group.primary)}
-                          <div className="flex flex-col items-center justify-center px-1">
-                            <span className="w-7 h-7 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center text-xs shadow-xs">
+                          <div className="flex items-center justify-center -mt-5">
+                            <div className="w-7 h-7 rounded-full bg-rose-100 text-rose-500 flex items-center justify-center text-xs shadow-2xs animate-pulse">
                               <FontAwesomeIcon icon={faHeart} />
-                            </span>
-                            <span className="text-[10px] text-rose-500 font-sans mt-0.5 font-medium">คู่กัน</span>
+                            </div>
                           </div>
                           {renderPetCircle(group.partner)}
                         </div>
@@ -218,9 +211,15 @@ export default function FamilyTreeModal({ isOpen, onClose, pets = [], onSelectPe
                     })}
                   </div>
 
-                  {/* Connecting Line to next generation */}
+                  {/* Architectural Pedigree Connector Line to Next Generation */}
                   {idx < treeLevels.length - 1 && (
-                    <div className="w-0.5 h-6 sm:h-8 bg-slate-300 mt-5 sm:mt-6"></div>
+                    <div className="flex flex-col items-center w-full my-3">
+                      <div className="w-0.5 h-5 bg-paw-300/70 rounded-full" />
+                      {treeLevels[idx + 1].groups.length > 1 && (
+                        <div className="w-3/5 max-w-[260px] h-0.5 bg-paw-300/60 rounded-full" />
+                      )}
+                      <div className="w-0.5 h-4 bg-paw-300/70 rounded-full" />
+                    </div>
                   )}
                 </div>
               ))}

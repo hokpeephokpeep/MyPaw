@@ -1,12 +1,13 @@
 import React from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
-  faXmark, faPenToSquare, faWeightScale, faFire, faUsers, 
-  faCalendarDays, faWandMagicSparkles, faHeart, faVenus, faMars, faLink 
+  faXmark, faPenToSquare, faWeightScale, faFire, faSitemap, 
+  faCalendarDays, faWandMagicSparkles, faVenus, faMars, faLink,
+  faPaw, faScissors, faRainbow, faSeedling, faCakeCandles, faInfinity
 } from '@fortawesome/free-solid-svg-icons';
 import { calculateAge, calculateCatToHumanAge, formatDate, getLifeStage, getDaysUntilBirthday } from '../utils';
 
-export default function PetDetailModal({ pet, allPets = [], dateFormat = 'en', isOpen, onClose, onEdit, onOpenMemorial, onOpenHealth, onOpenFamily }) {
+export default function PetDetailModal({ pet, allPets = [], dateFormat = 'en', isOpen, onClose, onEdit, onOpenMemorial, onOpenHealth, onOpenFamily, onSelectPet }) {
   if (!isOpen || !pet) return null;
 
   const isDeceased = pet.status === 'deceased';
@@ -19,27 +20,35 @@ export default function PetDetailModal({ pet, allPets = [], dateFormat = 'en', i
   const sourceRels = pet.resolvedRelationships || pet.relationships || [];
   const relations = sourceRels.map(r => {
     const target = allPets.find(p => p.id === r.targetPetId);
-    return target ? { ...r, targetName: target.name, targetGender: target.gender, targetAvatar: target.avatar } : null;
+    return target ? { ...r, target, targetName: target.name, targetGender: target.gender, targetAvatar: target.avatar } : null;
   }).filter(Boolean);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs animate-fadeIn">
-      <div className="w-full max-w-md rounded-[32px] bg-white text-slate-800 shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-scaleUp">
+    <div 
+      onClick={onClose}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs animate-fadeIn"
+    >
+      <div 
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-md rounded-[32px] bg-white text-slate-800 shadow-2xl overflow-hidden flex flex-col max-h-[88vh] animate-scaleUp"
+      >
         
         {/* Header with Hero preview */}
         <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-900 flex-shrink-0">
           {pet.avatar ? (
             <img src={pet.avatar} alt={pet.name} className="w-full h-full object-cover" />
           ) : (
-            <div className="w-full h-full flex items-center justify-center text-5xl bg-paw-100">🐱</div>
+            <div className="w-full h-full flex items-center justify-center bg-paw-100 text-paw-400">
+              <FontAwesomeIcon icon={faPaw} className="text-5xl" />
+            </div>
           )}
 
-          <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-black/30" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-black/30" />
 
           {/* Close button */}
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 p-2 rounded-full bg-black/40 text-white backdrop-blur-md hover:bg-black/60 transition-colors"
+            className="absolute top-4 right-4 w-9 h-9 rounded-full bg-black/40 text-white backdrop-blur-md hover:bg-black/60 flex items-center justify-center transition-colors"
           >
             <FontAwesomeIcon icon={faXmark} className="text-base" />
           </button>
@@ -48,7 +57,7 @@ export default function PetDetailModal({ pet, allPets = [], dateFormat = 'en', i
           <div className="absolute bottom-4 left-5 right-5 flex items-end justify-between">
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="font-mitr text-3xl font-bold text-white tracking-wide drop-shadow-md">
+                <h2 className="font-mitr text-3xl font-medium text-white tracking-wide drop-shadow-md">
                   {pet.name}
                 </h2>
                 <FontAwesomeIcon 
@@ -58,16 +67,27 @@ export default function PetDetailModal({ pet, allPets = [], dateFormat = 'en', i
                   }`} 
                 />
               </div>
-              <div className="text-xs text-white/90 mt-0.5 font-medium flex items-center gap-1.5">
-                <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${
+
+              {/* Self-explanatory Icon Chips */}
+              <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+                <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold inline-flex items-center gap-1 ${
                   isDeceased ? 'bg-sky-500/80 text-white' : 'bg-emerald-500/80 text-white'
                 }`}>
-                  {isDeceased ? 'ดาวแมว' : 'อยู่ด้วยกัน'}
+                  <FontAwesomeIcon icon={isDeceased ? faRainbow : faSeedling} className="text-[10px]" />
+                  <span>{isDeceased ? 'ดาวแมว' : 'อยู่ด้วยกัน'}</span>
                 </span>
-                <span>•</span>
-                <span>{pet.neutered ? 'ทำหมันแล้ว' : 'ยังไม่ทำหมัน'}</span>
-                <span>•</span>
-                <span>{lifeStage.label}</span>
+
+                {pet.neutered && (
+                  <span className="px-2 py-0.5 rounded-full bg-white/20 backdrop-blur-md text-white text-[11px] font-medium inline-flex items-center gap-1">
+                    <FontAwesomeIcon icon={faScissors} className="text-[9px]" />
+                    <span>ทำหมัน</span>
+                  </span>
+                )}
+
+                <span className="px-2 py-0.5 rounded-full bg-white/20 backdrop-blur-md text-white text-[11px] font-medium inline-flex items-center gap-1">
+                  <FontAwesomeIcon icon={lifeStage.icon} className="text-[9px]" />
+                  <span>{lifeStage.label}</span>
+                </span>
               </div>
             </div>
 
@@ -77,7 +97,7 @@ export default function PetDetailModal({ pet, allPets = [], dateFormat = 'en', i
                 onClose();
                 onEdit(pet);
               }}
-              className="p-2.5 rounded-full bg-paw-500 hover:bg-paw-600 text-white shadow-lg active:scale-95 transition-transform"
+              className="w-10 h-10 rounded-full bg-paw-500 hover:bg-paw-600 text-white shadow-lg flex items-center justify-center active:scale-95 transition-transform"
               title="แก้ไข"
             >
               <FontAwesomeIcon icon={faPenToSquare} className="text-sm" />
@@ -86,29 +106,42 @@ export default function PetDetailModal({ pet, allPets = [], dateFormat = 'en', i
         </div>
 
         {/* Content Body */}
-        <div className="p-6 overflow-y-auto space-y-4">
+        <div className="p-5 overflow-y-auto space-y-4">
 
-          {/* 📅 Status & Dates Overview Card */}
+          {/* 📅 Dates & Age Metrics Grid (Icon-led, Zero Redundant Labels) */}
           <div className="grid grid-cols-2 gap-2.5">
-            <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-100">
-              <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">วันเกิด</div>
-              <div className="text-sm font-bold text-slate-800 mt-1">{formatDate(pet.birthDate, dateFormat)}</div>
-              {!isDeceased && (
-                <div className="text-[11px] text-paw-600 font-medium mt-0.5">
-                  {daysUntilBday === 0 ? '🎉 วันเกิดวันนี้!' : `อีก ${daysUntilBday} วัน`}
-                </div>
-              )}
+            <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-100 flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-paw-100/80 text-paw-600 flex items-center justify-center flex-shrink-0">
+                <FontAwesomeIcon icon={faCalendarDays} className="text-sm" />
+              </div>
+              <div className="min-w-0">
+                <div className="text-sm font-bold text-slate-800 truncate">{formatDate(pet.birthDate, dateFormat)}</div>
+                {!isDeceased ? (
+                  <div className="text-[11px] text-paw-600 font-semibold flex items-center gap-1 mt-0.5">
+                    <FontAwesomeIcon icon={faCakeCandles} className="text-[10px]" />
+                    <span>{daysUntilBday === 0 ? 'วันนี้!' : `อีก ${daysUntilBday} วัน`}</span>
+                  </div>
+                ) : (
+                  <div className="text-[11px] text-slate-400 truncate mt-0.5">
+                    {formatDate(pet.deceasedDate, dateFormat)}
+                  </div>
+                )}
+              </div>
             </div>
 
-            <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-100">
-              <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
-                {isDeceased ? 'สู่วิมานดาวแมว' : 'เทียบคน'}
+            <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-100 flex items-center gap-3">
+              <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                isDeceased ? 'bg-purple-100 text-purple-600' : 'bg-amber-100 text-amber-600'
+              }`}>
+                <FontAwesomeIcon icon={isDeceased ? faInfinity : faWandMagicSparkles} className="text-sm" />
               </div>
-              <div className="text-sm font-bold text-slate-800 mt-1">
-                {isDeceased ? (pet.deceasedDate ? formatDate(pet.deceasedDate, dateFormat) : '-') : `~${humanAge} ปี`}
-              </div>
-              <div className="text-[11px] text-slate-400 mt-0.5">
-                {isDeceased ? `${age.totalDays.toLocaleString()} วัน` : 'วัยสมบูรณ์'}
+              <div className="min-w-0">
+                <div className="text-sm font-bold text-slate-800 truncate">
+                  {isDeceased ? `${age.totalDays.toLocaleString()} วัน` : `~${humanAge} ปีคน`}
+                </div>
+                <div className="text-[11px] text-slate-400 mt-0.5 truncate">
+                  {age.years > 0 ? `${age.years} ปี ` : ''}{age.months > 0 ? `${age.months} ด. ` : ''}{age.days} วัน
+                </div>
               </div>
             </div>
           </div>
@@ -121,15 +154,15 @@ export default function PetDetailModal({ pet, allPets = [], dateFormat = 'en', i
                   onClose();
                   onOpenHealth(pet);
                 }}
-                className="flex items-center gap-2.5 p-3 rounded-2xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-left transition-colors"
+                className="flex items-center gap-3 p-3.5 rounded-2xl bg-slate-50 hover:bg-paw-50/50 border border-slate-200/80 hover:border-paw-200 text-left transition-all active:scale-98"
               >
-                <div className="w-8 h-8 rounded-xl bg-paw-100 text-paw-600 flex items-center justify-center">
+                <div className="w-9 h-9 rounded-xl bg-paw-100 text-paw-600 flex items-center justify-center flex-shrink-0">
                   <FontAwesomeIcon icon={faWeightScale} className="text-sm" />
                 </div>
-                <div>
+                <div className="min-w-0">
                   <div className="text-xs font-bold text-slate-800">สมุดสุขภาพ</div>
-                  <div className="text-[11px] text-slate-400">
-                    {pet.latestWeight ? `${pet.latestWeight} กก.` : 'บันทึกน้ำหนัก'}
+                  <div className="text-[11px] text-paw-600 font-semibold truncate">
+                    {pet.latestWeight ? `${pet.latestWeight} กก.` : 'น้ำหนัก • วัคซีน'}
                   </div>
                 </div>
               </button>
@@ -139,14 +172,14 @@ export default function PetDetailModal({ pet, allPets = [], dateFormat = 'en', i
                   onClose();
                   onOpenMemorial(pet);
                 }}
-                className="flex items-center gap-2.5 p-3 rounded-2xl bg-gradient-to-r from-amber-50 to-pink-50 border border-amber-200 text-left transition-colors col-span-2"
+                className="flex items-center gap-3 p-3.5 rounded-2xl bg-gradient-to-r from-amber-50 to-pink-50 border border-amber-200/80 text-left transition-all active:scale-98"
               >
-                <div className="w-8 h-8 rounded-xl bg-amber-500 text-white flex items-center justify-center">
+                <div className="w-9 h-9 rounded-xl bg-amber-500 text-white flex items-center justify-center flex-shrink-0 shadow-xs">
                   <FontAwesomeIcon icon={faFire} className="text-sm" />
                 </div>
-                <div>
+                <div className="min-w-0">
                   <div className="text-xs font-bold text-slate-800">วิมานดาวแมว</div>
-                  <div className="text-[11px] text-slate-400">ระลึกถึง</div>
+                  <div className="text-[11px] text-amber-700 font-medium truncate">จุดเทียน • จดหมาย</div>
                 </div>
               </button>
             )}
@@ -156,78 +189,59 @@ export default function PetDetailModal({ pet, allPets = [], dateFormat = 'en', i
                 onClose();
                 onOpenFamily();
               }}
-              className={`flex items-center gap-2.5 p-3 rounded-2xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-left transition-colors ${
-                isDeceased ? 'col-span-2' : ''
-              }`}
+              className="flex items-center gap-3 p-3.5 rounded-2xl bg-slate-50 hover:bg-blue-50/50 border border-slate-200/80 hover:border-blue-200 text-left transition-all active:scale-98"
             >
-              <div className="w-8 h-8 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center">
-                <FontAwesomeIcon icon={faUsers} className="text-sm" />
+              <div className="w-9 h-9 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center flex-shrink-0">
+                <FontAwesomeIcon icon={faSitemap} className="text-sm" />
               </div>
-              <div>
+              <div className="min-w-0">
                 <div className="text-xs font-bold text-slate-800">ผังครอบครัว</div>
-                <div className="text-[11px] text-slate-400">{relations.length} สายสัมพันธ์</div>
+                <div className="text-[11px] text-blue-600 font-semibold">{relations.length} สายสัมพันธ์</div>
               </div>
             </button>
           </div>
 
-          {/* 🔗 Relationships List */}
-          <div className="space-y-2">
-            <div className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center justify-between">
-              <span>สายสัมพันธ์</span>
-              <button
-                onClick={() => {
-                  onClose();
-                  onEdit(pet);
-                }}
-                className="text-[11px] text-paw-600 font-semibold hover:underline"
-              >
-                + แก้ไข
-              </button>
-            </div>
-
-            {relations.length > 0 ? (
-              <div className="space-y-1.5">
+          {/* 🔗 Relationships Pill Grid (Tap any relative to switch to their profile) */}
+          {relations.length > 0 && (
+            <div className="space-y-2">
+              <div className="grid grid-cols-2 gap-2">
                 {relations.map((rel, idx) => (
-                  <div key={idx} className="flex items-center justify-between p-2.5 rounded-2xl bg-slate-50 border border-slate-100">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-xl overflow-hidden bg-white border border-slate-200 flex-shrink-0">
-                        {rel.targetAvatar ? (
-                          <img src={rel.targetAvatar} alt={rel.targetName} className="w-full h-full object-cover" />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-xs">🐱</div>
-                        )}
+                  <div 
+                    key={idx} 
+                    onClick={() => onSelectPet && onSelectPet(rel.target)}
+                    className="flex items-center gap-2.5 p-2 rounded-2xl bg-slate-50 hover:bg-paw-50/40 border border-slate-100 hover:border-paw-200 cursor-pointer transition-all active:scale-95"
+                  >
+                    <div className="w-9 h-9 rounded-full overflow-hidden bg-paw-50 border border-paw-200 flex-shrink-0 flex items-center justify-center">
+                      {rel.targetAvatar ? (
+                        <img src={rel.targetAvatar} alt={rel.targetName} className="w-full h-full object-cover" />
+                      ) : (
+                        <FontAwesomeIcon icon={faPaw} className="text-paw-400 text-xs" />
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1">
+                        <span className="font-mitr font-medium text-xs text-slate-800 truncate">{rel.targetName}</span>
+                        <FontAwesomeIcon 
+                          icon={rel.targetGender === 'female' ? faVenus : faMars} 
+                          className={`text-[10px] flex-shrink-0 ${
+                            rel.targetGender === 'female' ? 'text-pink-400' : 'text-sky-400'
+                          }`} 
+                        />
                       </div>
-                      <div>
-                        <div className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                          <span className="text-paw-600 font-medium">
-                            <FontAwesomeIcon icon={faLink} className="text-[10px] mr-1" />
-                            {rel.label}:
-                          </span>
-                          <span className="font-mitr font-medium text-sm">{rel.targetName}</span>
-                        </div>
+                      <div className="text-[10px] text-paw-600 font-semibold truncate">
+                        {rel.label}
                       </div>
                     </div>
-                    <span className="text-[11px] text-slate-400 font-medium flex items-center gap-1">
-                      <FontAwesomeIcon icon={rel.targetGender === 'female' ? faVenus : faMars} className="text-[10px]" />
-                      <span>{rel.targetGender === 'female' ? 'ตัวเมีย' : 'ตัวผู้'}</span>
-                    </span>
                   </div>
                 ))}
               </div>
-            ) : (
-              <div className="p-3 text-center rounded-2xl bg-slate-50 border border-slate-100 text-xs text-slate-400">
-                ยังไม่มีสายสัมพันธ์
-              </div>
-            )}
-          </div>
+            </div>
+          )}
 
           {/* Note */}
           {pet.note && (
-            <div className="space-y-1.5">
-              <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">บันทึก</div>
-              <div className="p-3 rounded-2xl bg-slate-50 border border-slate-100 text-xs italic text-slate-600">
-                "{pet.note}"
-              </div>
+            <div className="p-3.5 rounded-2xl bg-amber-50/40 border border-amber-100 text-xs text-slate-600 leading-relaxed">
+              "{pet.note}"
             </div>
           )}
 
