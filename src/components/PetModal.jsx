@@ -3,10 +3,13 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
   faXmark, faCamera, faTrashCan, faCheck, faUsers, 
   faVenus, faMars, faLink, faHeart, faScissors,
-  faSeedling, faRainbow, faPaw, faPlus, faCalendarDays, faNoteSticky
+  faSeedling, faRainbow, faPaw, faPlus, faCalendarDays, faNoteSticky,
+  faCropSimple, faShieldCat
 } from '@fortawesome/free-solid-svg-icons';
 import { toLocalDateString } from '../utils';
+import { getPhotoSrc, getPhotoThumb, fileToDataUrl, formatBytes } from '../imageUtils';
 import DateField from './DateField';
+import ImageCropModal from './ImageCropModal';
 
 export default function PetModal({ pet, allPets = [], isOpen, onClose, onSave, onDelete, dateFormat = 'th' }) {
   const [name, setName] = useState('');
@@ -31,6 +34,12 @@ export default function PetModal({ pet, allPets = [], isOpen, onClose, onSave, o
   const sessionPetIdRef = useRef(null);
   const isLoadedRef = useRef(false);
 
+  // ✂️ Image Cropper & Focus Area Modal State
+  const [isCropModalOpen, setIsCropModalOpen] = useState(false);
+  const [cropQueue, setCropQueue] = useState([]);
+  const [cropQueueIndex, setCropQueueIndex] = useState(0);
+  const [croppingPhotoIdx, setCroppingPhotoIdx] = useState(null); // null if queue, index if re-cropping
+
   useEffect(() => {
     if (pet) {
       sessionPetIdRef.current = pet.id;
@@ -45,7 +54,7 @@ export default function PetModal({ pet, allPets = [], isOpen, onClose, onSave, o
         ? pet.photos
         : (pet.avatar ? [pet.avatar] : []);
       setPhotos(petPhotos);
-      setAvatar(pet.avatar || (petPhotos[0] || ''));
+      setAvatar(getPhotoSrc(pet.avatar) || (getPhotoSrc(petPhotos[0]) || ''));
       setRelationships(pet.relationships || []);
     } else {
       sessionPetIdRef.current = `pet-${Date.now()}`;
@@ -87,7 +96,8 @@ export default function PetModal({ pet, allPets = [], isOpen, onClose, onSave, o
         status,
         deceasedDate: status === 'deceased' ? (deceasedDate || toLocalDateString()) : '',
         note: note.trim(),
-        avatar: photos[0] || avatar,
+        avatar: getPhotoSrc(photos[0]) || getPhotoSrc(avatar) || '',
+        avatarThumb: getPhotoThumb(photos[0]) || getPhotoThumb(avatar) || '',
         photos: photos.length > 0 ? photos : (avatar ? [avatar] : []),
         relationships
       });
@@ -98,53 +108,91 @@ export default function PetModal({ pet, allPets = [], isOpen, onClose, onSave, o
 
   if (!isOpen) return null;
 
-  const handleImageChange = (e) => {
+  const handleImageChange = async (e) => {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
 
-    files.forEach(file => {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const img = new Image();
-        img.onload = () => {
-          const canvas = document.createElement('canvas');
-          const maxDim = 800;
-          let width = img.width;
-          let height = img.height;
-          if (width > height) {
-            if (width > maxDim) {
-              height = Math.round((height * maxDim) / width);
-              width = maxDim;
-            }
-          } else {
-            if (height > maxDim) {
-              width = Math.round((width * maxDim) / height);
-              height = maxDim;
-            }
-          }
-          canvas.width = width;
-          canvas.height = height;
-          const ctx = canvas.getContext('2d');
-          ctx.drawImage(img, 0, 0, width, height);
-          const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
-
-          setPhotos(prev => {
-            const next = [...prev, dataUrl];
-            if (!avatar) setAvatar(next[0]);
-            return next;
-          });
-        };
-        img.src = event.target.result;
-      };
-      reader.readAsDataURL(file);
-    });
+    try {
+      const items = await Promise.all(
+        files.map(async (file) => ({
+          dataUrl: await fileToDataUrl(file),
+          file,
+          originalSize: file.size
+        }))
+      );
+      setCroppingPhotoIdx(null);
+      setCropQueue(items);
+      setCropQueueIndex(0);
+      setIsCropModalOpen(true);
+    } catch (err) {
+      console.error('Failed to read image files:', err);
+    }
     e.target.value = '';
+  };
+
+  const handleOpenCropForExisting = (idx) => {
+    if (!photos[idx]) return;
+    const item = photos[idx];
+    const src = getPhotoSrc(item);
+    setCroppingPhotoIdx(idx);
+    setCropQueue([{
+      dataUrl: src,
+      originalSize: item?.sizeBytes || 0
+    }]);
+    setCropQueueIndex(0);
+    setIsCropModalOpen(true);
+  };
+
+  const handleCropConfirm = (processed) => {
+    if (croppingPhotoIdx !== null) {
+      // Re-cropping an existing photo
+      setPhotos(prev => {
+        const next = [...prev];
+        next[croppingPhotoIdx] = processed;
+        if (croppingPhotoIdx === 0) {
+          setAvatar(processed.src);
+        }
+        return next;
+      });
+      setIsCropModalOpen(false);
+      setCroppingPhotoIdx(null);
+      setCropQueue([]);
+    } else {
+      // Adding new photo from queue
+      setPhotos(prev => {
+        const next = [...prev, processed];
+        if (!avatar) setAvatar(processed.src);
+        return next;
+      });
+
+      if (cropQueueIndex + 1 < cropQueue.length) {
+        setCropQueueIndex(prev => prev + 1);
+      } else {
+        setIsCropModalOpen(false);
+        setCropQueue([]);
+      }
+    }
+  };
+
+  const handleCropSkip = () => {
+    if (cropQueueIndex + 1 < cropQueue.length) {
+      setCropQueueIndex(prev => prev + 1);
+    } else {
+      setIsCropModalOpen(false);
+      setCropQueue([]);
+    }
+  };
+
+  const handleCropClose = () => {
+    setIsCropModalOpen(false);
+    setCropQueue([]);
+    setCroppingPhotoIdx(null);
   };
 
   const handleRemovePhoto = (idxToRemove) => {
     setPhotos(prev => {
       const next = prev.filter((_, idx) => idx !== idxToRemove);
-      setAvatar(next[0] || '');
+      setAvatar(getPhotoSrc(next[0]) || '');
       return next;
     });
   };
@@ -155,7 +203,7 @@ export default function PetModal({ pet, allPets = [], isOpen, onClose, onSave, o
       const target = prev[idx];
       const rest = prev.filter((_, i) => i !== idx);
       const next = [target, ...rest];
-      setAvatar(next[0]);
+      setAvatar(getPhotoSrc(next[0]));
       return next;
     });
   };
@@ -259,16 +307,32 @@ export default function PetModal({ pet, allPets = [], isOpen, onClose, onSave, o
           {/* Photos Management (Multiple Photos for Fade Slideshow) */}
           <div className="flex flex-col items-center">
             <div className="relative group">
-              <div className="w-24 h-24 rounded-3xl overflow-hidden bg-paw-50 border-2 border-paw-200 shadow-sm flex items-center justify-center">
+              <div className="w-24 h-24 rounded-3xl overflow-hidden bg-paw-50 border-2 border-paw-200 shadow-sm flex items-center justify-center relative">
                 {photos[0] || avatar ? (
-                  <img src={photos[0] || avatar} alt="Preview" className="w-full h-full object-cover" />
+                  <>
+                    <img 
+                      src={getPhotoSrc(photos[0]) || getPhotoSrc(avatar)} 
+                      alt="Preview" 
+                      className="w-full h-full object-cover" 
+                    />
+                    {/* Tap / Hover to Crop Focus Area */}
+                    <button
+                      type="button"
+                      onClick={() => handleOpenCropForExisting(0)}
+                      className="absolute inset-0 bg-black/45 text-white opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center gap-1 transition-opacity duration-150 active:opacity-100"
+                      title="ปรับตำแหน่งโฟกัสการ์ด"
+                    >
+                      <FontAwesomeIcon icon={faCropSimple} className="text-base text-amber-300" />
+                      <span className="text-[10px] font-bold font-sans">ปรับโฟกัส</span>
+                    </button>
+                  </>
                 ) : (
                   <FontAwesomeIcon icon={faPaw} className="text-3xl text-paw-300" />
                 )}
               </div>
               <label 
                 htmlFor="avatar-upload"
-                className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-paw-500 text-white shadow-md cursor-pointer hover:bg-paw-600 flex items-center justify-center active:scale-95 transition-transform transition-colors duration-150 ease-out"
+                className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-paw-500 text-white shadow-md cursor-pointer hover:bg-paw-600 flex items-center justify-center active:scale-95 transition-transform transition-colors duration-150 ease-out z-10"
                 title="เพิ่มรูปภาพ"
               >
                 <FontAwesomeIcon icon={faCamera} className="text-xs" />
@@ -285,39 +349,66 @@ export default function PetModal({ pet, allPets = [], isOpen, onClose, onSave, o
 
             {/* Thumbnail Gallery & Add Photo Trigger */}
             <div className="mt-3 flex items-center gap-2 flex-wrap justify-center max-w-xs">
-              {photos.map((src, idx) => (
-                <div 
-                  key={idx} 
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => handleSetPrimaryPhoto(idx)}
-                  className={`relative group/thumb w-12 h-12 rounded-xl overflow-hidden border cursor-pointer shadow-2xs transition-transform duration-150 ease-out active:scale-95 ${
-                    idx === 0 ? 'border-paw-500 ring-2 ring-paw-200' : 'border-slate-200 bg-slate-100 hover:border-slate-300'
-                  }`}
-                  title={idx === 0 ? 'รูปหลัก' : 'คลิกเพื่อตั้งเป็นรูปหลัก'}
-                >
-                  <img src={src} alt={`Thumb ${idx + 1}`} className="w-full h-full object-cover" />
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleRemovePhoto(idx);
-                    }}
-                    aria-label="ลบรูปภาพนี้"
-                    className="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-black/60 text-white text-[9px] flex items-center justify-center hover:bg-red-500 transition-colors"
-                    title="ลบรูปนี้"
+              {photos.map((photoItem, idx) => {
+                const src = getPhotoSrc(photoItem);
+                const thumb = getPhotoThumb(photoItem);
+                return (
+                  <div 
+                    key={idx} 
+                    className={`relative group/thumb w-12 h-12 flex-shrink-0 rounded-xl overflow-hidden border shadow-2xs transition-transform duration-150 ease-out active:scale-95 cursor-pointer ${
+                      idx === 0 ? 'border-paw-500 ring-2 ring-paw-200' : 'border-slate-200 bg-slate-100 hover:border-slate-300'
+                    }`}
+                    onClick={() => handleSetPrimaryPhoto(idx)}
+                    title={idx === 0 ? 'รูปหลัก' : 'คลิกเพื่อตั้งเป็นรูปหลัก'}
                   >
-                    <FontAwesomeIcon icon={faXmark} />
-                  </button>
-                  {idx === 0 && (
-                    <span className="absolute bottom-0 inset-x-0 bg-paw-600 text-[8px] text-white text-center font-bold">
-                      หลัก
-                    </span>
-                  )}
-                </div>
-              ))}
+                    <img 
+                      src={thumb || src} 
+                      alt={`Thumb ${idx + 1}`} 
+                      className="w-full h-full object-cover" 
+                    />
+                    
+                    {/* Action buttons overlay */}
+                    <div className="absolute top-0.5 inset-x-0.5 flex items-center justify-between pointer-events-none">
+                      {/* Crop / Focus button */}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleOpenCropForExisting(idx);
+                        }}
+                        aria-label="ปรับตำแหน่งโฟกัสการ์ด"
+                        className="pointer-events-auto w-4 h-4 rounded-full bg-black/60 hover:bg-paw-500 text-white text-[8px] flex items-center justify-center transition-colors shadow-2xs"
+                        title="ปรับโฟกัส"
+                      >
+                        <FontAwesomeIcon icon={faCropSimple} />
+                      </button>
+
+                      {/* Delete button */}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRemovePhoto(idx);
+                        }}
+                        aria-label="ลบรูปภาพนี้"
+                        className="pointer-events-auto w-4 h-4 rounded-full bg-black/60 hover:bg-red-500 text-white text-[8px] flex items-center justify-center transition-colors shadow-2xs"
+                        title="ลบรูปนี้"
+                      >
+                        <FontAwesomeIcon icon={faXmark} />
+                      </button>
+                    </div>
+
+                    {/* Badge */}
+                    {idx === 0 && (
+                      <span className="absolute bottom-0 inset-x-0 bg-paw-600 text-[8px] text-white text-center font-bold">
+                        หลัก
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
               <label 
-                className="w-12 h-12 rounded-xl border-2 border-dashed border-slate-300 hover:border-paw-400 bg-slate-50 hover:bg-paw-50/50 flex flex-col items-center justify-center cursor-pointer text-slate-400 hover:text-paw-600 transition-colors transition-transform duration-150 ease-out active:scale-95"
+                className="w-12 h-12 flex-shrink-0 rounded-xl border-2 border-dashed border-slate-300 hover:border-paw-400 bg-slate-50 hover:bg-paw-50/50 flex flex-col items-center justify-center cursor-pointer text-slate-400 hover:text-paw-600 transition-colors transition-transform duration-150 ease-out active:scale-95"
                 title="เพิ่มรูปภาพเพิ่มเติม"
               >
                 <FontAwesomeIcon icon={faCamera} className="text-xs" />
@@ -331,7 +422,6 @@ export default function PetModal({ pet, allPets = [], isOpen, onClose, onSave, o
                 />
               </label>
             </div>
-            <span className="text-[11px] text-slate-400 mt-1">ใส่ได้มากกว่า 1 รูปเพื่อเล่น Slideshow บนการ์ด</span>
           </div>
 
           {/* Name Input */}
@@ -598,6 +688,17 @@ export default function PetModal({ pet, allPets = [], isOpen, onClose, onSave, o
         </div>
 
       </div>
+
+      {/* ✂️ Crop & Focus Area Modal */}
+      <ImageCropModal
+        isOpen={isCropModalOpen}
+        imageItem={cropQueue[cropQueueIndex]}
+        queueIndex={cropQueueIndex}
+        queueTotal={cropQueue.length}
+        onConfirm={handleCropConfirm}
+        onSkip={cropQueue.length > 1 ? handleCropSkip : undefined}
+        onClose={handleCropClose}
+      />
     </div>
   );
 }

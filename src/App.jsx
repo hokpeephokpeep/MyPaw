@@ -760,6 +760,7 @@ export default function App() {
         isOpen={!!detailPet}
         onClose={() => setDetailPet(null)}
         onEdit={(p) => {
+          setDetailPet(null);
           setEditingPet(p);
           setIsModalOpen(true);
         }}

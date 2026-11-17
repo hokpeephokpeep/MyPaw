@@ -1,5 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { calculateAge, calculateCatToHumanAge, formatDate, getDaysUntilBirthday, getHumanAgeIcon, getPetSpecialEvents } from '../utils';
+import { getPhotoThumb, getPhotoSrc } from '../imageUtils';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
   faCalendarDays, faVenus, faMars, 
@@ -49,19 +50,21 @@ export default function PetCard({ pet, allPets = [], dateFormat = 'en', compact 
   const touchStartPosRef = useRef({ x: 0, y: 0 });
   const isSwipingRef = useRef(false);
 
-  // Normalize photos list
+  // Normalize photos list for fast thumbnail rendering (prevents memory bloat & UI jank)
   const photos = React.useMemo(() => {
     const list = [];
-    if (pet.avatar) list.push(pet.avatar);
+    const mainThumb = getPhotoThumb(pet.avatarThumb || pet.avatar);
+    if (mainThumb) list.push(mainThumb);
     if (Array.isArray(pet.photos)) {
       pet.photos.forEach(p => {
-        if (p && typeof p === 'string' && !list.includes(p)) {
-          list.push(p);
+        const thumb = getPhotoThumb(p);
+        if (thumb && !list.includes(thumb)) {
+          list.push(thumb);
         }
       });
     }
     return list;
-  }, [pet.avatar, pet.photos]);
+  }, [pet.avatar, pet.avatarThumb, pet.photos]);
 
   const hasMultiplePhotos = photos.length > 1;
 
@@ -76,9 +79,9 @@ export default function PetCard({ pet, allPets = [], dateFormat = 'en', compact 
 
     // Staggered interval:
     // Alive: 4.2s - 7.0s (energetic, lively)
-    // Deceased: 6.8s - 10.2s (calm, contemplative, peaceful reminiscing)
-    const minDelay = isDeceased ? 6800 : 4200;
-    const variance = isDeceased ? 3400 : 2800;
+    // Deceased: 8.0s - 12.0s (calm, contemplative, peaceful reminiscing with smooth 2.5s slow cross-fade)
+    const minDelay = isDeceased ? 8000 : 4200;
+    const variance = isDeceased ? 4000 : 2800;
 
     const scheduleNext = (delay) => {
       timer = setTimeout(() => {
@@ -312,12 +315,10 @@ export default function PetCard({ pet, allPets = [], dateFormat = 'en', compact 
                   key={`${src}-${idx}`}
                   src={src}
                   alt={pet.name}
-                  className={`absolute inset-0 w-full h-full object-cover select-none pointer-events-none ${
-                    isCurrent ? 'opacity-100 z-10' : 'opacity-0 z-0'
+                  className={`pet-photo-slide ${
+                    isCurrent ? 'is-active' : ''
                   } ${
-                    isDeceased
-                      ? 'transition-opacity duration-1000 ease-in-out transition-transform duration-1000 ease-out brightness-[1.02] contrast-[0.98]'
-                      : 'transition-opacity duration-300 ease-out transition-transform duration-250 ease-out'
+                    isDeceased ? 'pet-photo-deceased' : 'pet-photo-alive'
                   } ${
                     isInView 
                       ? (isDeceased ? 'scale-[1.025]' : 'scale-105') 
@@ -468,13 +469,17 @@ export default function PetCard({ pet, allPets = [], dateFormat = 'en', compact 
                 title="จากเราไปสู่ดาวแมวแล้วนานแค่ไหน"
                 className={`bg-gradient-to-r from-sky-50 via-amber-50/70 to-indigo-50/80 border border-sky-200/90 rounded-xl ${compact ? 'px-2 py-0.5' : 'px-2.5 py-1'} flex items-center gap-1 shadow-2xs flex-shrink-0`}
               >
-                {!compact && (
-                  <FontAwesomeIcon icon={faRainbow} className="text-amber-500 text-[10px]" />
-                )}
-                <span className={`${compact ? 'text-[10px]' : 'text-xs'} font-bold text-slate-700 tabular-nums whitespace-nowrap`}>
-                  {timeSincePassing 
-                    ? `${timeSincePassing.years}y ${timeSincePassing.months}m ${timeSincePassing.days}d` 
-                    : (lifespan ? `${lifespan.years}y ${lifespan.months}m ${lifespan.days}d` : `${age.totalDays.toLocaleString()}d`)}
+                <FontAwesomeIcon icon={faRainbow} className="text-amber-500 text-[10px]" />
+                <span className={`${compact ? 'text-[11px]' : 'text-xs'} font-bold text-slate-700 tabular-nums whitespace-nowrap`}>
+                  {compact ? (
+                    timeSincePassing 
+                      ? `${timeSincePassing.years > 0 ? `${timeSincePassing.years}y+` : (timeSincePassing.months > 0 ? `${timeSincePassing.months}m+` : `${timeSincePassing.days}d`)}`
+                      : (lifespan ? `${lifespan.years}y+` : `${age.totalDays.toLocaleString()}d`)
+                  ) : (
+                    timeSincePassing 
+                      ? `${timeSincePassing.years}y ${timeSincePassing.months}m ${timeSincePassing.days}d` 
+                      : (lifespan ? `${lifespan.years}y ${lifespan.months}m ${lifespan.days}d` : `${age.totalDays.toLocaleString()}d`)
+                  )}
                 </span>
               </div>
             )}

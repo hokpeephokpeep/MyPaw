@@ -6,6 +6,7 @@ import {
   faPaw, faScissors, faRainbow, faSeedling, faCakeCandles, faInfinity, faExpand
 } from '@fortawesome/free-solid-svg-icons';
 import { calculateAge, calculateCatToHumanAge, formatDate, getLifeStage, getDaysUntilBirthday, getHumanAgeIcon } from '../utils';
+import { getPhotoSrc, getPhotoThumb } from '../imageUtils';
 
 export default function PetDetailModal({ pet, allPets = [], dateFormat = 'en', isOpen, onClose, onEdit, onOpenMemorial, onOpenHealth, onOpenFamily, onSelectPet, onViewImage }) {
   if (!isOpen || !pet) return null;
@@ -29,19 +30,27 @@ export default function PetDetailModal({ pet, allPets = [], dateFormat = 'en', i
   const sourceRels = pet.resolvedRelationships || pet.relationships || [];
   const relations = sourceRels.map(r => {
     const target = allPets.find(p => p.id === r.targetPetId);
-    return target ? { ...r, target, targetName: target.name, targetGender: target.gender, targetAvatar: target.avatar } : null;
+    return target ? { 
+      ...r, 
+      target, 
+      targetName: target.name, 
+      targetGender: target.gender, 
+      targetAvatar: getPhotoThumb(target.avatarThumb || target.avatar) 
+    } : null;
   }).filter(Boolean);
 
   // Multi-photo list
   const photos = React.useMemo(() => {
     const list = [];
-    if (pet.avatar) list.push(pet.avatar);
+    const mainSrc = getPhotoSrc(pet.avatar);
+    if (mainSrc) list.push(mainSrc);
     if (Array.isArray(pet.photos)) {
       pet.photos.forEach(p => {
-        if (p && !list.includes(p)) list.push(p);
+        const src = getPhotoSrc(p);
+        if (src && !list.includes(src)) list.push(src);
       });
     }
-    return list;
+    return list.length > 0 ? list : ['/avatars/chainoi.png'];
   }, [pet]);
 
   const [activePhotoIdx, setActivePhotoIdx] = React.useState(0);
@@ -132,6 +141,8 @@ export default function PetDetailModal({ pet, allPets = [], dateFormat = 'en', i
               e.stopPropagation();
               onClose();
             }}
+            onTouchStart={(e) => e.stopPropagation()}
+            onTouchEnd={(e) => e.stopPropagation()}
             aria-label="Close details"
             className="absolute top-4 right-4 w-9 h-9 rounded-full bg-black/40 text-white backdrop-blur-md hover:bg-black/60 flex items-center justify-center transition-colors duration-150 ease-out active:scale-95 focus-visible:ring-2 focus-visible:ring-white outline-none z-20"
           >
@@ -155,7 +166,12 @@ export default function PetDetailModal({ pet, allPets = [], dateFormat = 'en', i
           )}
 
           {/* Name overlay */}
-          <div className="absolute bottom-4 left-5 right-5 z-20 flex items-end justify-between pointer-events-none">
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            onTouchStart={(e) => e.stopPropagation()}
+            onTouchEnd={(e) => e.stopPropagation()}
+            className="absolute bottom-4 left-5 right-5 z-20 flex items-end justify-between pointer-events-none"
+          >
             <div className="pointer-events-auto">
               <div className="flex items-center gap-2">
                 <h2 className="font-mitr text-3xl font-medium text-white tracking-wide drop-shadow-md">
@@ -194,10 +210,15 @@ export default function PetDetailModal({ pet, allPets = [], dateFormat = 'en', i
 
             {/* Quick Edit button */}
             <button
-              onClick={() => {
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
                 onClose();
                 onEdit(pet);
               }}
+              onTouchStart={(e) => e.stopPropagation()}
+              onTouchEnd={(e) => e.stopPropagation()}
               className="w-10 h-10 rounded-full bg-paw-500 hover:bg-paw-600 text-white shadow-lg flex items-center justify-center active:scale-95 transition-transform pointer-events-auto"
               title="แก้ไข"
             >

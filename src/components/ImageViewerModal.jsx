@@ -1,23 +1,26 @@
 import React, { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faXmark, faDownload, faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
+import { getPhotoSrc } from '../imageUtils';
 
 export default function ImageViewerModal({ pet, onClose }) {
   if (!pet || (!pet.avatar && (!pet.photos || pet.photos.length === 0))) return null;
 
   const photoList = React.useMemo(() => {
     const list = [];
-    if (pet.avatar) list.push(pet.avatar);
+    const mainSrc = getPhotoSrc(pet.avatar);
+    if (mainSrc) list.push(mainSrc);
     if (Array.isArray(pet.photos)) {
       pet.photos.forEach(p => {
-        if (p && !list.includes(p)) list.push(p);
+        const src = getPhotoSrc(p);
+        if (src && !list.includes(src)) list.push(src);
       });
     }
     return list.length > 0 ? list : ['/avatars/chainoi.png'];
   }, [pet]);
 
   const [currentIndex, setCurrentIndex] = useState(0);
-  const currentPhoto = photoList[currentIndex] || pet.avatar;
+  const currentPhoto = photoList[currentIndex] || getPhotoSrc(pet.avatar);
 
   const handleDownload = () => {
     const a = document.createElement('a');

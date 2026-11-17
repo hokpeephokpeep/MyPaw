@@ -1,5 +1,6 @@
 import React, { useRef } from 'react';
 import { calculateAge, calculateCatToHumanAge, formatDate, getDaysUntilBirthday, getHumanAgeIcon, getPetSpecialEvents } from '../utils';
+import { getPhotoThumb } from '../imageUtils';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
   faVenus, faMars, faRainbow, faCakeCandles, faPaw, 
@@ -84,9 +85,9 @@ export default function PetListItem({ pet, dateFormat = 'en', onOpenMore, onTogg
         <div className={`relative w-14 h-14 rounded-2xl overflow-hidden bg-slate-900 flex-shrink-0 shadow-xs group ${
           isDeceased ? 'ring-2 ring-sky-200/80 shadow-[0_0_12px_rgba(186,230,253,0.35)]' : ''
         }`}>
-          {pet.avatar ? (
+          {(pet.avatarThumb || pet.avatar) ? (
             <img 
-              src={pet.avatar} 
+              src={getPhotoThumb(pet.avatarThumb || pet.avatar)} 
               alt={pet.name} 
               className={`w-full h-full object-cover transition-transform ${
                 isDeceased

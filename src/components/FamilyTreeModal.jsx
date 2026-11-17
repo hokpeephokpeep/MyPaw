@@ -3,6 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
   faXmark, faSitemap, faHeart, faPaw, faVenus, faMars 
 } from '@fortawesome/free-solid-svg-icons';
+import { getPhotoThumb, getPhotoSrc } from '../imageUtils';
 
 export default function FamilyTreeModal({ isOpen, onClose, pets = [], onSelectPet }) {
   if (!isOpen) return null;
@@ -23,7 +24,7 @@ export default function FamilyTreeModal({ isOpen, onClose, pets = [], onSelectPe
   // Reusable Rounded Block Card with Large Photo, Gender badge, and Name only
   const renderPetCard = (pet) => {
     if (!pet) return null;
-    const photoSrc = pet.avatar || pet.photo;
+    const photoSrc = getPhotoThumb(pet.avatarThumb || pet.avatar || pet.photo) || getPhotoSrc(pet.avatar || pet.photo);
     const isDeceased = pet.status === 'deceased';
     const isFemale = pet.gender === 'female';
 
