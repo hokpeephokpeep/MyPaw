@@ -1,7 +1,7 @@
 import React from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
-  faXmark, faPlus, faDatabase, faRotateLeft, 
+  faXmark, faPlus, faDatabase, 
   faArrowDownWideShort, faFilter, faHeart, faPaw, faSitemap, faGlobe,
   faSeedling, faRainbow
 } from '@fortawesome/free-solid-svg-icons';
@@ -12,7 +12,6 @@ export default function HamburgerDrawer({
   onAddNewPet, 
   onOpenBackup,
   onOpenFamily,
-  onResetDefault,
   activeTab,
   setActiveTab,
   sortBy,
@@ -26,15 +25,15 @@ export default function HamburgerDrawer({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex animate-fadeIn">
+    <div className="fixed inset-0 z-50 flex animate-fadeIn overscroll-contain">
       {/* Backdrop */}
       <div 
         onClick={onClose} 
-        className="fixed inset-0 bg-black/45 backdrop-blur-xs transition-opacity"
+        className="fixed inset-0 bg-black/45 backdrop-blur-xs transition-opacity overscroll-contain"
       />
 
       {/* Drawer Panel */}
-      <div className="relative w-4/5 max-w-xs bg-white h-full shadow-2xl z-10 flex flex-col justify-between overflow-y-auto animate-slideInLeft">
+      <div className="relative w-4/5 max-w-xs bg-white h-full shadow-2xl z-10 flex flex-col justify-between overflow-y-auto animate-slideInLeft overscroll-contain">
         <div>
           {/* Header */}
           <div className="p-6 bg-gradient-to-br from-paw-500 to-amber-500 text-white">
@@ -44,7 +43,8 @@ export default function HamburgerDrawer({
               </div>
               <button 
                 onClick={onClose}
-                className="w-8 h-8 rounded-full bg-white/15 hover:bg-white/25 text-white flex items-center justify-center transition-colors"
+                aria-label="Close menu"
+                className="w-8 h-8 rounded-full bg-white/15 hover:bg-white/25 text-white flex items-center justify-center transition-colors duration-150 ease-out active:scale-95 focus-visible:ring-2 focus-visible:ring-white outline-none"
               >
                 <FontAwesomeIcon icon={faXmark} className="text-sm" />
               </button>
@@ -80,7 +80,7 @@ export default function HamburgerDrawer({
                   onClose();
                   onAddNewPet();
                 }}
-                className="flex flex-col items-center justify-center gap-2 p-3.5 rounded-2xl bg-paw-50 hover:bg-paw-100 text-paw-700 font-bold text-xs transition-all border border-paw-200/80 active:scale-95"
+                className="flex flex-col items-center justify-center gap-2 p-3.5 rounded-2xl bg-paw-50 hover:bg-paw-100 text-paw-700 font-bold text-xs transition-colors transition-transform duration-150 ease-out border border-paw-200/80 active:scale-95 focus-visible:ring-2 focus-visible:ring-paw-500 outline-none"
               >
                 <div className="w-9 h-9 rounded-xl bg-paw-500 text-white flex items-center justify-center shadow-xs">
                   <FontAwesomeIcon icon={faPlus} className="text-sm" />
@@ -93,7 +93,7 @@ export default function HamburgerDrawer({
                   onClose();
                   onOpenFamily();
                 }}
-                className="flex flex-col items-center justify-center gap-2 p-3.5 rounded-2xl bg-amber-50 hover:bg-amber-100 text-amber-900 font-bold text-xs transition-all border border-amber-200/80 active:scale-95"
+                className="flex flex-col items-center justify-center gap-2 p-3.5 rounded-2xl bg-amber-50 hover:bg-amber-100 text-amber-900 font-bold text-xs transition-colors transition-transform duration-150 ease-out border border-amber-200/80 active:scale-95 focus-visible:ring-2 focus-visible:ring-amber-500 outline-none"
               >
                 <div className="w-9 h-9 rounded-xl bg-amber-500 text-white flex items-center justify-center shadow-xs">
                   <FontAwesomeIcon icon={faSitemap} className="text-sm" />
@@ -107,7 +107,7 @@ export default function HamburgerDrawer({
               <div className="grid grid-cols-3 gap-1 bg-slate-100 p-1 rounded-2xl">
                 <button
                   onClick={() => setActiveTab('all')}
-                  className={`py-2 px-1 rounded-xl text-xs font-bold transition-all text-center ${
+                  className={`py-2 px-1 rounded-xl text-xs font-bold transition-colors duration-150 ease-out text-center active:scale-95 focus-visible:ring-2 focus-visible:ring-paw-500 outline-none ${
                     activeTab === 'all'
                       ? 'bg-white text-slate-900 shadow-xs'
                       : 'text-slate-500 hover:text-slate-800'
@@ -117,7 +117,7 @@ export default function HamburgerDrawer({
                 </button>
                 <button
                   onClick={() => setActiveTab('alive')}
-                  className={`py-2 px-1 rounded-xl text-xs font-bold transition-all text-center flex items-center justify-center gap-1 ${
+                  className={`py-2 px-1 rounded-xl text-xs font-bold transition-colors duration-150 ease-out text-center flex items-center justify-center gap-1 active:scale-95 focus-visible:ring-2 focus-visible:ring-paw-500 outline-none ${
                     activeTab === 'alive'
                       ? 'bg-white text-emerald-700 shadow-xs'
                       : 'text-slate-500 hover:text-slate-800'
@@ -128,7 +128,7 @@ export default function HamburgerDrawer({
                 </button>
                 <button
                   onClick={() => setActiveTab('deceased')}
-                  className={`py-2 px-1 rounded-xl text-xs font-bold transition-all text-center flex items-center justify-center gap-1 ${
+                  className={`py-2 px-1 rounded-xl text-xs font-bold transition-colors duration-150 ease-out text-center flex items-center justify-center gap-1 active:scale-95 focus-visible:ring-2 focus-visible:ring-paw-500 outline-none ${
                     activeTab === 'deceased'
                       ? 'bg-white text-sky-700 shadow-xs'
                       : 'text-slate-500 hover:text-slate-800'
@@ -159,7 +159,7 @@ export default function HamburgerDrawer({
               <button
                 type="button"
                 onClick={() => onSetDateFormat?.('en')}
-                className={`py-2 px-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                className={`py-2 px-2 rounded-xl text-xs font-bold transition-colors duration-150 ease-out flex items-center justify-center gap-1.5 active:scale-95 focus-visible:ring-2 focus-visible:ring-paw-500 outline-none ${
                   dateFormat === 'en'
                     ? 'bg-white text-paw-700 shadow-xs'
                     : 'text-slate-500 hover:text-slate-800'
@@ -171,7 +171,7 @@ export default function HamburgerDrawer({
               <button
                 type="button"
                 onClick={() => onSetDateFormat?.('th')}
-                className={`py-2 px-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                className={`py-2 px-2 rounded-xl text-xs font-bold transition-colors duration-150 ease-out flex items-center justify-center gap-1.5 active:scale-95 focus-visible:ring-2 focus-visible:ring-paw-500 outline-none ${
                   dateFormat === 'th'
                     ? 'bg-white text-paw-700 shadow-xs'
                     : 'text-slate-500 hover:text-slate-800'
@@ -184,7 +184,7 @@ export default function HamburgerDrawer({
 
             <hr className="border-slate-100" />
 
-            {/* 6. Secondary Actions: Backup & Reset */}
+            {/* 6. Secondary Actions: Backup */}
             <div className="space-y-1">
               <button
                 onClick={() => {
@@ -197,21 +197,6 @@ export default function HamburgerDrawer({
                   <FontAwesomeIcon icon={faDatabase} className="text-xs" />
                 </div>
                 <span>Backup & Restore</span>
-              </button>
-
-              <button
-                onClick={() => {
-                  if (window.confirm('Reset data back to original 7 cats?')) {
-                    onResetDefault();
-                    onClose();
-                  }
-                }}
-                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl hover:bg-slate-50 text-slate-700 font-semibold text-xs transition-colors"
-              >
-                <div className="w-7 h-7 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center">
-                  <FontAwesomeIcon icon={faRotateLeft} className="text-xs" />
-                </div>
-                <span>Reset to Default (7 Cats)</span>
               </button>
             </div>
 

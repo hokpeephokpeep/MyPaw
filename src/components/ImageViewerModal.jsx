@@ -39,12 +39,13 @@ export default function ImageViewerModal({ pet, onClose }) {
   return (
     <div 
       onClick={onClose}
-      className="fixed inset-0 z-[60] flex items-center justify-center bg-black/90 p-4 backdrop-blur-md animate-fadeIn"
+      className="fixed inset-0 z-[60] flex items-center justify-center bg-black/90 p-4 backdrop-blur-md animate-fadeIn overscroll-contain"
     >
       {/* Close button */}
       <button
         onClick={onClose}
-        className="absolute top-5 right-5 w-10 h-10 text-white/70 hover:text-white bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center transition-colors"
+        aria-label="Close"
+        className="absolute top-5 right-5 w-10 h-10 text-white/70 hover:text-white bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center transition-colors duration-150 ease-out active:scale-95 focus-visible:ring-2 focus-visible:ring-white outline-none"
       >
         <FontAwesomeIcon icon={faXmark} className="text-lg" />
       </button>
@@ -66,14 +67,16 @@ export default function ImageViewerModal({ pet, onClose }) {
             <>
               <button
                 onClick={handlePrev}
-                className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/50 hover:bg-black/75 text-white flex items-center justify-center transition-all active:scale-90"
+                aria-label="Previous photo"
+                className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/50 hover:bg-black/75 text-white flex items-center justify-center transition-colors transition-transform duration-150 ease-out active:scale-95 focus-visible:ring-2 focus-visible:ring-white outline-none"
                 title="รูปก่อนหน้า"
               >
                 <FontAwesomeIcon icon={faChevronLeft} className="text-sm" />
               </button>
               <button
                 onClick={handleNext}
-                className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/50 hover:bg-black/75 text-white flex items-center justify-center transition-all active:scale-90"
+                aria-label="Next photo"
+                className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/50 hover:bg-black/75 text-white flex items-center justify-center transition-colors transition-transform duration-150 ease-out active:scale-95 focus-visible:ring-2 focus-visible:ring-white outline-none"
                 title="รูปถัดไป"
               >
                 <FontAwesomeIcon icon={faChevronRight} className="text-sm" />

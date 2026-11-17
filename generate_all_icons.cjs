@@ -3,9 +3,9 @@ const path = require('path');
 const sharp = require('sharp');
 
 async function run() {
-  const svgPath = path.join(__dirname, 'For Icon', 'icon.svg');
+  const svgPath = path.join(__dirname, 'resources', 'icon.svg');
   if (!fs.existsSync(svgPath)) {
-    console.error('icon.svg not found in For Icon!');
+    console.error('icon.svg not found in resources/icon.svg!');
     process.exit(1);
   }
 
@@ -15,15 +15,19 @@ async function run() {
   fs.writeFileSync(path.join(__dirname, 'public', 'favicon.svg'), svgBuffer);
   console.log('✓ Updated public/favicon.svg');
 
-  // 2. Generate PNGs in For Icon
-  const forIconDir = path.join(__dirname, 'For Icon');
-  const forIconSizes = [512, 192, 144, 96, 72, 48];
-  for (const size of forIconSizes) {
-    await sharp(svgBuffer)
-      .resize(size, size)
-      .png()
-      .toFile(path.join(forIconDir, `icon_${size}x${size}.png`));
-    console.log(`✓ Generated For Icon/icon_${size}x${size}.png`);
+  // 2. Generate PNGs in resources/icons & public/icons
+  const resIconsDir = path.join(__dirname, 'resources', 'icons');
+  const pubIconsDir = path.join(__dirname, 'public', 'icons');
+  if (!fs.existsSync(resIconsDir)) fs.mkdirSync(resIconsDir, { recursive: true });
+  if (!fs.existsSync(pubIconsDir)) fs.mkdirSync(pubIconsDir, { recursive: true });
+
+  const iconSizes = [512, 192, 144, 96, 72, 48];
+  for (const size of iconSizes) {
+    const filename = `icon_${size}x${size}.png`;
+    const buf = await sharp(svgBuffer).resize(size, size).png().toBuffer();
+    fs.writeFileSync(path.join(resIconsDir, filename), buf);
+    fs.writeFileSync(path.join(pubIconsDir, filename), buf);
+    console.log(`✓ Generated ${filename}`);
   }
 
   // 3. Generate public/paw_icon.png (512x512)

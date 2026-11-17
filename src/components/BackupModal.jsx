@@ -1,9 +1,8 @@
 import React, { useRef } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
-  faXmark, faDownload, faUpload, faRotateLeft, faDatabase 
+  faXmark, faDownload, faUpload, faDatabase 
 } from '@fortawesome/free-solid-svg-icons';
-import { initialPets } from '../defaultPets';
 
 export default function BackupModal({ isOpen, onClose, pets, onRestore }) {
   const fileInputRef = useRef(null);
@@ -39,22 +38,14 @@ export default function BackupModal({ isOpen, onClose, pets, onRestore }) {
     }
   };
 
-  // Reset to default 7 pets
-  const handleResetToDefault = () => {
-    if (window.confirm('รีเซ็ตข้อมูลกลับเป็นน้องแมวทั้ง 7 ตัวดั้งเดิม?')) {
-      onRestore(initialPets);
-      onClose();
-    }
-  };
-
   return (
     <div 
       onClick={onClose}
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 sm:p-4 backdrop-blur-xs animate-fadeIn"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 sm:p-4 backdrop-blur-xs animate-fadeIn overscroll-contain"
     >
       <div 
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-sm rounded-t-[32px] sm:rounded-[32px] bg-white shadow-2xl overflow-hidden flex flex-col animate-slideUpSheet sm:animate-scaleUp pb-[env(safe-area-inset-bottom)]"
+        className="w-full max-w-sm rounded-t-[32px] sm:rounded-[32px] bg-white shadow-2xl overflow-hidden flex flex-col animate-slideUpSheet sm:animate-scaleUp pb-[env(safe-area-inset-bottom)] overscroll-contain"
       >
         {/* Mobile Pull Handle */}
         <div className="w-12 h-1.5 bg-slate-300 rounded-full mx-auto mt-2.5 -mb-1 sm:hidden flex-shrink-0" />
@@ -70,7 +61,8 @@ export default function BackupModal({ isOpen, onClose, pets, onRestore }) {
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 text-slate-400 hover:text-slate-600 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors"
+            aria-label="Close"
+            className="w-8 h-8 text-slate-400 hover:text-slate-600 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors duration-150 ease-out active:scale-95 focus-visible:ring-2 focus-visible:ring-paw-500 outline-none"
           >
             <FontAwesomeIcon icon={faXmark} className="text-sm" />
           </button>
@@ -81,7 +73,7 @@ export default function BackupModal({ isOpen, onClose, pets, onRestore }) {
           {/* Action 1: Export */}
           <button
             onClick={handleExport}
-            className="w-full p-3.5 rounded-2xl border border-slate-200 hover:border-paw-300 hover:bg-paw-50/40 flex items-center justify-between text-left transition-all group active:scale-98"
+            className="w-full p-3.5 rounded-2xl border border-slate-200 hover:border-paw-300 hover:bg-paw-50/40 flex items-center justify-between text-left transition-colors transition-transform duration-150 ease-out active:scale-97 focus-visible:ring-2 focus-visible:ring-paw-500 outline-none group"
           >
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-xl bg-paw-100 text-paw-600 flex items-center justify-center">
@@ -98,7 +90,7 @@ export default function BackupModal({ isOpen, onClose, pets, onRestore }) {
           <div>
             <button
               onClick={() => fileInputRef.current.click()}
-              className="w-full p-3.5 rounded-2xl border border-slate-200 hover:border-emerald-300 hover:bg-emerald-50/40 flex items-center gap-3 text-left transition-all group active:scale-98"
+              className="w-full p-3.5 rounded-2xl border border-slate-200 hover:border-emerald-300 hover:bg-emerald-50/40 flex items-center gap-3 text-left transition-colors transition-transform duration-150 ease-out active:scale-97 focus-visible:ring-2 focus-visible:ring-emerald-500 outline-none group"
             >
               <div className="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center">
                 <FontAwesomeIcon icon={faUpload} className="text-xs" />
@@ -110,20 +102,10 @@ export default function BackupModal({ isOpen, onClose, pets, onRestore }) {
               ref={fileInputRef}
               onChange={handleImport}
               accept=".json"
+              aria-label="Upload backup JSON file"
               className="hidden"
             />
           </div>
-
-          {/* Action 3: Reset to Default 7 Pets */}
-          <button
-            onClick={handleResetToDefault}
-            className="w-full p-3.5 rounded-2xl border border-slate-200 hover:border-purple-300 hover:bg-purple-50/40 flex items-center gap-3 text-left transition-all group active:scale-98"
-          >
-            <div className="w-9 h-9 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center">
-              <FontAwesomeIcon icon={faRotateLeft} className="text-xs" />
-            </div>
-            <span className="font-bold text-xs text-slate-800">Reset to Default (7 Cats)</span>
-          </button>
         </div>
       </div>
     </div>

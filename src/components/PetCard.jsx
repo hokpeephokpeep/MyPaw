@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { calculateAge, calculateCatToHumanAge, formatDate, getDaysUntilBirthday, getHumanAgeIcon } from '../utils';
+import { calculateAge, calculateCatToHumanAge, formatDate, getDaysUntilBirthday, getHumanAgeIcon, getPetSpecialEvents } from '../utils';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
   faCalendarDays, faVenus, faMars, 
@@ -14,8 +14,13 @@ export default function PetCard({ pet, allPets = [], dateFormat = 'en', compact 
   const lifespan = isDeceased && pet.deceasedDate 
     ? calculateAge(pet.birthDate, pet.deceasedDate)
     : null;
+  // ⏳ How long they have been gone (from deceasedDate to today)
+  const timeSincePassing = isDeceased && pet.deceasedDate
+    ? calculateAge(pet.deceasedDate)
+    : null;
   const humanAge = calculateCatToHumanAge(age.years, age.months);
   const daysUntilBday = !isDeceased ? getDaysUntilBirthday(pet.birthDate) : 999;
+  const specialEvents = getPetSpecialEvents(pet);
 
   // Long press handling: 380ms hold enters detail profile
   const timerRef = useRef(null);
@@ -69,20 +74,25 @@ export default function PetCard({ pet, allPets = [], dateFormat = 'en', compact 
     let timer = null;
     let isCancelled = false;
 
-    // Randomize time per card so they don't fade in sync like robots:
-    // Staggered interval between 4.8s and 8.0s with per-card random variance
+    // Staggered interval:
+    // Alive: 4.2s - 7.0s (energetic, lively)
+    // Deceased: 6.8s - 10.2s (calm, contemplative, peaceful reminiscing)
+    const minDelay = isDeceased ? 6800 : 4200;
+    const variance = isDeceased ? 3400 : 2800;
+
     const scheduleNext = (delay) => {
       timer = setTimeout(() => {
         if (isCancelled) return;
         setPhotoIndex(prev => (prev + 1) % photos.length);
-        // Next transition with random interval (4800ms - 8000ms)
-        const nextDelay = 4800 + Math.floor(Math.random() * 3200);
+        const nextDelay = minDelay + Math.floor(Math.random() * variance);
         scheduleNext(nextDelay);
       }, delay);
     };
 
     // Initial stagger delay so cards loaded simultaneously don't fade at the same second
-    const initialDelay = 2500 + Math.floor(Math.random() * 3000);
+    const initialDelay = isDeceased
+      ? 3500 + Math.floor(Math.random() * 3200)
+      : 2200 + Math.floor(Math.random() * 2600);
     scheduleNext(initialDelay);
 
     return () => {
@@ -90,7 +100,7 @@ export default function PetCard({ pet, allPets = [], dateFormat = 'en', compact 
       if (timer) clearTimeout(timer);
       if (indicatorTimeoutRef.current) clearTimeout(indicatorTimeoutRef.current);
     };
-  }, [isInView, hasMultiplePhotos, photos.length]);
+  }, [isInView, hasMultiplePhotos, photos.length, isDeceased]);
 
   useEffect(() => {
     const el = cardRef.current;
@@ -193,6 +203,8 @@ export default function PetCard({ pet, allPets = [], dateFormat = 'en', compact 
   return (
     <div 
       ref={cardRef}
+      role="button"
+      tabIndex={0}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
       onTouchMove={handleTouchMove}
@@ -200,13 +212,21 @@ export default function PetCard({ pet, allPets = [], dateFormat = 'en', compact 
       onMouseUp={cancelPress}
       onMouseLeave={cancelPress}
       onClick={handleClickCard}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onOpenDetail(pet);
+        }
+      }}
       onContextMenu={(e) => {
         e.preventDefault();
         onOpenMore(pet);
       }}
       className={`relative ${isDeceased ? 'overflow-visible' : 'overflow-hidden'} ${
         compact ? 'rounded-2xl' : 'rounded-[32px]'
-      } select-none touch-manipulation cursor-pointer group/card`}
+      } select-none touch-manipulation cursor-pointer group/card focus-visible:ring-2 focus-visible:ring-paw-500 outline-none ${
+        isDeceased ? 'card-deceased-transition' : 'card-alive-transition'
+      }`}
     >
       {/* ☁️ OVERSHOOT CLOUDS GRAPHIC (3 CLOUDS: 1 LEFT, 2 RIGHT STAGGERED) - Middle zone, 100% Opacity (No alpha blending to save CPU/GPU) */}
       {isDeceased && (
@@ -216,7 +236,7 @@ export default function PetCard({ pet, allPets = [], dateFormat = 'en', compact 
             <img
               src="/clouds/C3.svg"
               alt=""
-              className={`w-full h-auto ${compact ? 'animate-cloud-float-subtle' : 'animate-cloud-float-1'} select-none pointer-events-none`}
+              className={`w-full h-auto ${compact ? 'animate-cloud-float-subtle' : 'animate-cloud-float-1'} motion-reduce:animate-none select-none pointer-events-none`}
               style={{
                 filter: compact
                   ? 'drop-shadow(0 4px 8px rgba(12, 74, 110, 0.25)) drop-shadow(0 1px 3px rgba(0, 0, 0, 0.12))'
@@ -230,7 +250,7 @@ export default function PetCard({ pet, allPets = [], dateFormat = 'en', compact 
             <img
               src="/clouds/C1.svg"
               alt=""
-              className={`w-full h-auto ${compact ? 'animate-cloud-float-subtle' : 'animate-cloud-float-3'} select-none pointer-events-none`}
+              className={`w-full h-auto ${compact ? 'animate-cloud-float-subtle' : 'animate-cloud-float-3'} motion-reduce:animate-none select-none pointer-events-none`}
               style={{
                 filter: compact
                   ? 'drop-shadow(0 3px 6px rgba(14, 165, 233, 0.25)) drop-shadow(0 1px 3px rgba(0, 0, 0, 0.1))'
@@ -244,7 +264,7 @@ export default function PetCard({ pet, allPets = [], dateFormat = 'en', compact 
             <img
               src="/clouds/C2.svg"
               alt=""
-              className={`w-full h-auto ${compact ? 'animate-cloud-float-subtle' : 'animate-cloud-float-2'} select-none pointer-events-none`}
+              className={`w-full h-auto ${compact ? 'animate-cloud-float-subtle' : 'animate-cloud-float-2'} motion-reduce:animate-none select-none pointer-events-none`}
               style={{
                 filter: compact
                   ? 'drop-shadow(0 4px 7px rgba(79, 70, 229, 0.22)) drop-shadow(0 1px 3px rgba(14, 165, 233, 0.15))'
@@ -257,17 +277,21 @@ export default function PetCard({ pet, allPets = [], dateFormat = 'en', compact 
 
       {/* Main Card Container Box (Clipped Inner Elements) */}
       <div 
-        className={`relative overflow-hidden ${compact ? 'rounded-2xl' : 'rounded-[32px]'} shadow-xs transition-all duration-300 hover:shadow-md active:scale-[0.985] ${
+        className={`relative overflow-hidden ${compact ? 'rounded-2xl' : 'rounded-[32px]'} shadow-xs transition-colors transition-shadow duration-500 ${
           isDeceased
-            ? 'border-2 border-sky-200/80 shadow-sky-100/50'
+            ? 'border-2 border-sky-200/90 shadow-[0_6px_24px_-4px_rgba(56,189,248,0.22)]'
             : 'bg-white border border-slate-200/70 hover:border-paw-300'
         }`}
       >
         
-        {/* 🌈 Heavenly Sky Background (ONLY FOR DECEASED PETS) */}
+        {/* 🌈 Heavenly Sky Background (ONLY FOR DECEASED PETS: Feel good คิดถึง ปนเหงา) */}
         {isDeceased && (
           <div className="absolute inset-0 pointer-events-none overflow-hidden z-0 bg-gradient-to-b from-sky-400 via-sky-200 to-indigo-100">
             <div className="absolute -top-12 -right-12 w-80 h-80 rounded-full opacity-40 blur-xs animate-rainbow pointer-events-none bg-gradient-to-tr from-transparent via-red-300 via-amber-200 via-emerald-200 via-sky-300 to-purple-400" />
+            {/* 🌟 Delicate starlight twinkle in memorial sky */}
+            <div className="absolute top-4 left-6 w-1.5 h-1.5 rounded-full bg-white animate-star-1 opacity-70 pointer-events-none" />
+            <div className="absolute top-10 right-14 w-2 h-2 rounded-full bg-amber-100 animate-star-2 opacity-80 pointer-events-none" />
+            <div className="absolute top-20 left-16 w-1 h-1 rounded-full bg-white animate-star-3 opacity-60 pointer-events-none" />
           </div>
         )}
 
@@ -288,9 +312,17 @@ export default function PetCard({ pet, allPets = [], dateFormat = 'en', compact 
                   key={`${src}-${idx}`}
                   src={src}
                   alt={pet.name}
-                  className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ease-in-out select-none pointer-events-none ${
+                  className={`absolute inset-0 w-full h-full object-cover select-none pointer-events-none ${
                     isCurrent ? 'opacity-100 z-10' : 'opacity-0 z-0'
-                  } ${isInView ? 'scale-105' : 'scale-100 group-hover:scale-105'} transition-transform duration-700 ease-out`}
+                  } ${
+                    isDeceased
+                      ? 'transition-opacity duration-1000 ease-in-out transition-transform duration-1000 ease-out brightness-[1.02] contrast-[0.98]'
+                      : 'transition-opacity duration-300 ease-out transition-transform duration-250 ease-out'
+                  } ${
+                    isInView 
+                      ? (isDeceased ? 'scale-[1.025]' : 'scale-105') 
+                      : (isDeceased ? 'scale-100 group-hover:scale-[1.025]' : 'scale-100 group-hover:scale-105')
+                  }`}
                 />
               );
             })
@@ -302,13 +334,13 @@ export default function PetCard({ pet, allPets = [], dateFormat = 'en', compact 
 
           {/* Minimal Circle Dots Indicator: centered at bottom of image, appears ONLY on swipe then times out */}
           {hasMultiplePhotos && (
-            <div className={`absolute bottom-2 left-1/2 -translate-x-1/2 z-30 flex items-center gap-1.5 bg-black/25 backdrop-blur-xs px-2 py-0.5 rounded-full pointer-events-none transition-all duration-300 ${
+            <div className={`absolute bottom-2 left-1/2 -translate-x-1/2 z-30 flex items-center gap-1.5 bg-black/25 backdrop-blur-xs px-2 py-0.5 rounded-full pointer-events-none transition-transform transition-opacity duration-300 ease-out ${
               showIndicator ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'
             }`}>
               {photos.map((_, idx) => (
                 <span
                   key={idx}
-                  className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${
+                  className={`w-1.5 h-1.5 rounded-full transition-colors duration-300 ease-out ${
                     idx === photoIndex
                       ? 'bg-white shadow-xs'
                       : 'bg-white/40'
@@ -318,27 +350,36 @@ export default function PetCard({ pet, allPets = [], dateFormat = 'en', compact 
             </div>
           )}
 
-          {/* Top-Left Rainbow Bridge Tag OR Birthday Countdown Pill */}
-          {isDeceased ? (
-            <div className="absolute top-3.5 left-3.5 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/45 backdrop-blur-md text-white text-xs font-medium shadow-md border border-white/20">
-              <FontAwesomeIcon icon={faRainbow} className="text-amber-300 text-xs" />
-              <span>Rainbow Bridge</span>
+          {/* 🌟 Top-Left Special Event Badges (Rainbow Bridge, Birthday, Checkup, Vaccine) */}
+          {specialEvents.length > 0 && (
+            <div className="absolute top-3.5 left-3.5 z-20 flex flex-col gap-1.5 items-start max-w-[85%] pointer-events-none">
+              {specialEvents.slice(0, compact ? 1 : 2).map((ev, idx) => (
+                <div 
+                  key={idx}
+                  className={`inline-flex items-center gap-1.5 ${compact ? 'px-2.5 py-0.5 text-[11px]' : 'px-3 py-1 text-xs'} rounded-full font-semibold shadow-md border ${ev.bgClass}`}
+                >
+                  <FontAwesomeIcon icon={ev.icon} className={`${compact ? 'text-[10px]' : 'text-xs'} ${ev.iconClass}`} />
+                  <span className="truncate">{ev.label}</span>
+                </div>
+              ))}
             </div>
-          ) : daysUntilBday <= 14 ? (
-            <div className="absolute top-3.5 left-3.5 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-paw-500/90 backdrop-blur-md text-white text-xs font-bold shadow-md border border-white/25 animate-pulse">
-              <FontAwesomeIcon icon={faCakeCandles} className="text-amber-200 text-xs" />
-              <span>{daysUntilBday === 0 ? 'Happy Birthday! 🎂' : `In ${daysUntilBday}d`}</span>
-            </div>
-          ) : null}
+          )}
 
 
 
           {/* 🏷️ NAME OVERLAY AT BOTTOM OF PHOTO */}
-          <div className={`absolute inset-x-0 bottom-0 z-20 bg-gradient-to-t from-black/85 via-black/45 to-transparent ${compact ? 'pt-10 pb-2.5 px-3.5' : 'pt-16 pb-3.5 px-5'} flex items-end justify-between pointer-events-none`}>
+          <div className={`absolute inset-x-0 bottom-0 z-20 ${
+            isDeceased 
+              ? 'bg-gradient-to-t from-slate-950/90 via-sky-950/50 to-transparent' 
+              : 'bg-gradient-to-t from-black/85 via-black/45 to-transparent'
+          } ${compact ? 'pt-10 pb-2.5 px-3.5' : 'pt-16 pb-3.5 px-5'} flex items-end justify-between pointer-events-none`}>
             <div className="min-w-0">
               <div className="flex items-center gap-1.5">
-                <h2 className={`font-mitr ${compact ? 'text-xl' : 'text-3xl'} font-medium text-white tracking-wide drop-shadow-[0_2px_6px_rgba(0,0,0,0.7)] truncate`}>
-                  {pet.name}
+                <h2 className={`font-mitr ${compact ? 'text-xl' : 'text-3xl'} font-medium text-white tracking-wide drop-shadow-[0_2px_6px_rgba(0,0,0,0.7)] truncate flex items-center gap-1.5`}>
+                  <span>{pet.name}</span>
+                  {isDeceased && (
+                    <span className="text-amber-200/90 text-xs sm:text-sm font-normal drop-shadow-xs">✨</span>
+                  )}
                 </h2>
 
                 {/* 🚻 Minimal Gender Icon */}
@@ -356,9 +397,14 @@ export default function PetCard({ pet, allPets = [], dateFormat = 'en', compact 
                   <span>{formatDate(pet.birthDate, dateFormat)}</span>
                 </span>
                 {isDeceased && pet.deceasedDate && (
-                  <span className="text-amber-200 flex items-center gap-1">
+                  <span className="text-amber-200/90 flex items-center gap-1">
                     <span>—</span>
                     <span>{formatDate(pet.deceasedDate, dateFormat)}</span>
+                    {!compact && lifespan && (
+                      <span className="text-amber-100 font-medium">
+                        ({lifespan.years > 0 ? `${lifespan.years}y ` : ''}{lifespan.months > 0 ? `${lifespan.months}m ` : ''}{lifespan.days}d)
+                      </span>
+                    )}
                   </span>
                 )}
               </div>
@@ -370,7 +416,7 @@ export default function PetCard({ pet, allPets = [], dateFormat = 'en', compact 
         <div 
           className={`${compact ? 'px-2.5 py-2 rounded-b-2xl' : 'px-5 py-3.5'} relative ${
             isDeceased 
-              ? 'bg-white/95 backdrop-blur-md border-t border-sky-100' 
+              ? 'bg-gradient-to-r from-sky-50/95 via-white/95 to-indigo-50/90 backdrop-blur-md border-t border-sky-200/60' 
               : 'bg-white'
           }`}
         >
@@ -383,29 +429,33 @@ export default function PetCard({ pet, allPets = [], dateFormat = 'en', compact 
           />
 
           <div className="flex items-center justify-between gap-1.5 relative z-10">
-            {/* Typographic Age Design: e.g. 8y 6m 15d */}
-            <div className={`flex items-baseline gap-0.5 sm:gap-1 font-sans font-black tracking-tight select-none flex-shrink-0`}>
+            {/* Typographic Age Design: Bold Prompt numbers with subtle Google Sans unit indicators */}
+            <div className="flex items-baseline gap-0.5 sm:gap-1 select-none flex-shrink-0">
               {age.years > 0 && (
-                <span className={`${compact ? 'text-base' : 'text-2xl'} text-paw-600 tabular-nums inline-flex items-baseline`}>
+                <span className={`${compact ? 'text-lg' : 'text-2xl'} font-prompt font-bold tracking-tight tabular-nums inline-flex items-baseline leading-none ${
+                  isDeceased ? 'text-sky-800' : 'text-paw-600'
+                }`}>
                   {age.years}
-                  <span className={`${compact ? 'text-[9px]' : 'text-xs'} font-bold text-paw-400 lowercase font-mono ml-0.5 mr-0.5`}>y</span>
+                  <span className={`${compact ? 'text-[9px]' : 'text-[11px]'} font-sans font-normal lowercase ml-0.5 mr-1 select-none ${
+                    isDeceased ? 'text-sky-400' : 'text-paw-400'
+                  }`}>y</span>
                 </span>
               )}
               {age.months > 0 && (
-                <span className={`${compact ? 'text-sm' : 'text-xl'} text-slate-800 tabular-nums inline-flex items-baseline`}>
+                <span className={`${compact ? 'text-base' : 'text-xl'} font-prompt font-bold tracking-tight text-slate-800 tabular-nums inline-flex items-baseline leading-none`}>
                   {age.months}
-                  <span className={`${compact ? 'text-[9px]' : 'text-xs'} font-bold text-slate-400 lowercase font-mono ml-0.5 mr-0.5`}>m</span>
+                  <span className={`${compact ? 'text-[9px]' : 'text-[11px]'} font-sans font-normal text-slate-400 lowercase ml-0.5 mr-1 select-none`}>m</span>
                 </span>
               )}
-              <span className={`${compact ? 'text-sm' : 'text-xl'} text-slate-800 tabular-nums inline-flex items-baseline`}>
+              <span className={`${compact ? 'text-base' : 'text-xl'} font-prompt font-bold tracking-tight text-slate-800 tabular-nums inline-flex items-baseline leading-none`}>
                 {age.days}
-                <span className={`${compact ? 'text-[9px]' : 'text-xs'} font-bold text-slate-400 lowercase font-mono ml-0.5`}>d</span>
+                <span className={`${compact ? 'text-[9px]' : 'text-[11px]'} font-sans font-normal text-slate-400 lowercase ml-0.5 select-none`}>d</span>
               </span>
             </div>
 
             {/* Cat-to-Human Age or Memorial Lifespan Summary Capsule */}
             {!isDeceased ? (
-              <div className={`bg-amber-50/90 border border-amber-200/70 rounded-xl ${compact ? 'px-2 py-0.5' : 'px-3 py-1.5'} flex items-center gap-1 shadow-2xs flex-shrink-0`}>
+              <div className={`bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/80 rounded-xl ${compact ? 'px-2 py-0.5' : 'px-3 py-1.5'} flex items-center gap-1 shadow-2xs flex-shrink-0 hover:border-amber-300 transition-colors`}>
                 {!compact && (
                   <FontAwesomeIcon icon={getHumanAgeIcon(humanAge)} className="text-amber-500 text-[10px]" />
                 )}
@@ -414,12 +464,17 @@ export default function PetCard({ pet, allPets = [], dateFormat = 'en', compact 
                 </span>
               </div>
             ) : (
-              <div className={`bg-amber-50/90 border border-amber-200/80 rounded-xl ${compact ? 'px-1.5 py-0.5' : 'px-2.5 py-1'} flex items-center gap-1 shadow-2xs flex-shrink-0`}>
+              <div 
+                title="จากเราไปสู่ดาวแมวแล้วนานแค่ไหน"
+                className={`bg-gradient-to-r from-sky-50 via-amber-50/70 to-indigo-50/80 border border-sky-200/90 rounded-xl ${compact ? 'px-2 py-0.5' : 'px-2.5 py-1'} flex items-center gap-1 shadow-2xs flex-shrink-0`}
+              >
                 {!compact && (
                   <FontAwesomeIcon icon={faRainbow} className="text-amber-500 text-[10px]" />
                 )}
-                <span className={`${compact ? 'text-[10px]' : 'text-xs'} font-bold text-amber-900 tabular-nums whitespace-nowrap`}>
-                  {lifespan ? `${lifespan.years}y ${lifespan.months}m ${lifespan.days}d` : `${age.totalDays.toLocaleString()}d`}
+                <span className={`${compact ? 'text-[10px]' : 'text-xs'} font-bold text-slate-700 tabular-nums whitespace-nowrap`}>
+                  {timeSincePassing 
+                    ? `${timeSincePassing.years}y ${timeSincePassing.months}m ${timeSincePassing.days}d` 
+                    : (lifespan ? `${lifespan.years}y ${lifespan.months}m ${lifespan.days}d` : `${age.totalDays.toLocaleString()}d`)}
                 </span>
               </div>
             )}

@@ -17,6 +17,10 @@ export default function PetDetailModal({ pet, allPets = [], dateFormat = 'en', i
   const lifespan = isDeceased && pet.deceasedDate 
     ? calculateAge(pet.birthDate, pet.deceasedDate)
     : null;
+  // ⏳ How long they have been gone (from deceasedDate to today)
+  const timeSincePassing = isDeceased && pet.deceasedDate
+    ? calculateAge(pet.deceasedDate)
+    : null;
   const humanAge = calculateCatToHumanAge(age.years, age.months);
   const lifeStage = getLifeStage(age.years, age.months);
   const daysUntilBday = !isDeceased ? getDaysUntilBirthday(pet.birthDate) : null;
@@ -81,11 +85,11 @@ export default function PetDetailModal({ pet, allPets = [], dateFormat = 'en', i
   return (
     <div 
       onClick={onClose}
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 sm:p-4 backdrop-blur-xs animate-fadeIn"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 sm:p-4 backdrop-blur-xs animate-fadeIn overscroll-contain"
     >
       <div 
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-md rounded-t-[32px] sm:rounded-[32px] bg-white text-slate-800 shadow-2xl overflow-hidden flex flex-col max-h-[92vh] sm:max-h-[88vh] animate-slideUpSheet sm:animate-scaleUp pb-[env(safe-area-inset-bottom)] relative"
+        className="w-full max-w-md rounded-t-[32px] sm:rounded-[32px] bg-white text-slate-800 shadow-2xl overflow-hidden flex flex-col max-h-[92vh] sm:max-h-[88vh] animate-slideUpSheet sm:animate-scaleUp pb-[env(safe-area-inset-bottom)] relative overscroll-contain"
       >
         {/* Mobile Pull Handle */}
         <div className="w-12 h-1.5 bg-white/60 rounded-full mx-auto my-2.5 sm:hidden absolute top-0 inset-x-0 z-30 pointer-events-none" />
@@ -104,7 +108,7 @@ export default function PetDetailModal({ pet, allPets = [], dateFormat = 'en', i
                 key={`${src}-${idx}`}
                 src={src} 
                 alt={pet.name} 
-                className={`absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-all duration-500 ${
+                className={`absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform transition-opacity duration-500 ease-out ${
                   idx === activePhotoIdx ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'
                 }`} 
               />
@@ -128,7 +132,8 @@ export default function PetDetailModal({ pet, allPets = [], dateFormat = 'en', i
               e.stopPropagation();
               onClose();
             }}
-            className="absolute top-4 right-4 w-9 h-9 rounded-full bg-black/40 text-white backdrop-blur-md hover:bg-black/60 flex items-center justify-center transition-colors z-20"
+            aria-label="Close details"
+            className="absolute top-4 right-4 w-9 h-9 rounded-full bg-black/40 text-white backdrop-blur-md hover:bg-black/60 flex items-center justify-center transition-colors duration-150 ease-out active:scale-95 focus-visible:ring-2 focus-visible:ring-white outline-none z-20"
           >
             <FontAwesomeIcon icon={faXmark} className="text-base" />
           </button>
@@ -219,7 +224,12 @@ export default function PetDetailModal({ pet, allPets = [], dateFormat = 'en', i
                   </div>
                 ) : (
                   <div className="text-[11px] text-slate-400 truncate mt-0.5">
-                    {formatDate(pet.deceasedDate, dateFormat)}
+                    <span>{formatDate(pet.deceasedDate, dateFormat)}</span>
+                    {lifespan && (
+                      <span className="text-amber-600/90 font-semibold ml-1">
+                        (สรุปอายุ {lifespan.years}y {lifespan.months}m)
+                      </span>
+                    )}
                   </div>
                 )}
               </div>
@@ -232,12 +242,24 @@ export default function PetDetailModal({ pet, allPets = [], dateFormat = 'en', i
                 <FontAwesomeIcon icon={isDeceased ? faRainbow : getHumanAgeIcon(humanAge)} className="text-sm" />
               </div>
               <div className="min-w-0">
-                <div className="text-sm font-bold text-slate-800 truncate">
-                  {age.years > 0 ? `${age.years}y ` : ''}{age.months > 0 ? `${age.months}m ` : ''}{age.days}d
+                <div className="text-base font-prompt font-bold text-slate-800 truncate inline-flex items-baseline leading-none">
+                  {age.years > 0 && (
+                    <span className="text-paw-600 font-prompt font-bold inline-flex items-baseline mr-1.5">
+                      {age.years}<span className="text-[10px] font-sans font-normal text-paw-400 lowercase ml-0.5">y</span>
+                    </span>
+                  )}
+                  {age.months > 0 && (
+                    <span className="text-slate-800 font-prompt font-bold inline-flex items-baseline mr-1.5">
+                      {age.months}<span className="text-[10px] font-sans font-normal text-slate-400 lowercase ml-0.5">m</span>
+                    </span>
+                  )}
+                  <span className="text-slate-800 font-prompt font-bold inline-flex items-baseline">
+                    {age.days}<span className="text-[10px] font-sans font-normal text-slate-400 lowercase ml-0.5">d</span>
+                  </span>
                 </div>
-                <div className="text-[11px] text-slate-400 mt-0.5 font-mono font-semibold tracking-tight truncate">
-                  {isDeceased && lifespan 
-                    ? `ช่วงชีวิต ${lifespan.years}y ${lifespan.months}m ${lifespan.days}d`
+                <div className="text-[11px] text-slate-400 mt-1 font-mono font-semibold tracking-tight truncate">
+                  {isDeceased && timeSincePassing 
+                    ? `จากเราไปแล้ว ${timeSincePassing.years}y ${timeSincePassing.months}m ${timeSincePassing.days}d`
                     : `~${humanAge}y human`
                   }
                 </div>
@@ -253,7 +275,7 @@ export default function PetDetailModal({ pet, allPets = [], dateFormat = 'en', i
                   onClose();
                   onOpenHealth(pet);
                 }}
-                className="flex items-center gap-3 p-3.5 rounded-2xl bg-slate-50 hover:bg-paw-50/50 border border-slate-200/80 hover:border-paw-200 text-left transition-all active:scale-98"
+                className="flex items-center gap-3 p-3.5 rounded-2xl bg-slate-50 hover:bg-paw-50/50 border border-slate-200/80 hover:border-paw-200 text-left transition-colors transition-transform duration-150 ease-out active:scale-97 focus-visible:ring-2 focus-visible:ring-paw-500 outline-none"
               >
                 <div className="w-9 h-9 rounded-xl bg-paw-100 text-paw-600 flex items-center justify-center flex-shrink-0">
                   <FontAwesomeIcon icon={faWeightScale} className="text-sm" />
@@ -271,7 +293,7 @@ export default function PetDetailModal({ pet, allPets = [], dateFormat = 'en', i
                   onClose();
                   onOpenMemorial(pet);
                 }}
-                className="flex items-center gap-3 p-3.5 rounded-2xl bg-gradient-to-r from-amber-50 to-pink-50 border border-amber-200/80 text-left transition-all active:scale-98"
+                className="flex items-center gap-3 p-3.5 rounded-2xl bg-gradient-to-r from-amber-50 to-pink-50 border border-amber-200/80 text-left transition-colors transition-transform duration-150 ease-out active:scale-97 focus-visible:ring-2 focus-visible:ring-amber-500 outline-none"
               >
                 <div className="w-9 h-9 rounded-xl bg-amber-500 text-white flex items-center justify-center flex-shrink-0 shadow-xs">
                   <FontAwesomeIcon icon={faFire} className="text-sm" />
@@ -288,7 +310,7 @@ export default function PetDetailModal({ pet, allPets = [], dateFormat = 'en', i
                 onClose();
                 onOpenFamily();
               }}
-              className="flex items-center gap-3 p-3.5 rounded-2xl bg-slate-50 hover:bg-blue-50/50 border border-slate-200/80 hover:border-blue-200 text-left transition-all active:scale-98"
+              className="flex items-center gap-3 p-3.5 rounded-2xl bg-slate-50 hover:bg-blue-50/50 border border-slate-200/80 hover:border-blue-200 text-left transition-colors transition-transform duration-150 ease-out active:scale-97 focus-visible:ring-2 focus-visible:ring-blue-500 outline-none"
             >
               <div className="w-9 h-9 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center flex-shrink-0">
                 <FontAwesomeIcon icon={faSitemap} className="text-sm" />
@@ -307,8 +329,16 @@ export default function PetDetailModal({ pet, allPets = [], dateFormat = 'en', i
                 {relations.map((rel, idx) => (
                   <div 
                     key={idx} 
+                    role="button"
+                    tabIndex={0}
                     onClick={() => onSelectPet && onSelectPet(rel.target)}
-                    className="flex items-center gap-2.5 p-2 rounded-2xl bg-slate-50 hover:bg-paw-50/40 border border-slate-100 hover:border-paw-200 cursor-pointer transition-all active:scale-95"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        onSelectPet && onSelectPet(rel.target);
+                      }
+                    }}
+                    className="flex items-center gap-2.5 p-2 rounded-2xl bg-slate-50 hover:bg-paw-50/40 border border-slate-100 hover:border-paw-200 cursor-pointer transition-colors transition-transform duration-150 ease-out active:scale-97 focus-visible:ring-2 focus-visible:ring-paw-500 outline-none"
                   >
                     <div className="w-9 h-9 rounded-full overflow-hidden bg-paw-50 border border-paw-200 flex-shrink-0 flex items-center justify-center">
                       {rel.targetAvatar ? (

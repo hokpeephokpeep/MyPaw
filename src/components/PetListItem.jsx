@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { calculateAge, calculateCatToHumanAge, formatDate, getDaysUntilBirthday, getHumanAgeIcon } from '../utils';
+import { calculateAge, calculateCatToHumanAge, formatDate, getDaysUntilBirthday, getHumanAgeIcon, getPetSpecialEvents } from '../utils';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
   faVenus, faMars, faRainbow, faCakeCandles, faPaw, 
@@ -12,8 +12,12 @@ export default function PetListItem({ pet, dateFormat = 'en', onOpenMore, onTogg
   const lifespan = isDeceased && pet.deceasedDate 
     ? calculateAge(pet.birthDate, pet.deceasedDate)
     : null;
+  const timeSincePassing = isDeceased && pet.deceasedDate
+    ? calculateAge(pet.deceasedDate)
+    : null;
   const humanAge = calculateCatToHumanAge(age.years, age.months);
   const daysUntilBday = !isDeceased ? getDaysUntilBirthday(pet.birthDate) : 999;
+  const specialEvents = getPetSpecialEvents(pet);
 
   const timerRef = useRef(null);
   const isLongPressRef = useRef(false);
@@ -50,6 +54,8 @@ export default function PetListItem({ pet, dateFormat = 'en', onOpenMore, onTogg
 
   return (
     <div 
+      role="button"
+      tabIndex={0}
       onTouchStart={startPress}
       onTouchEnd={cancelPress}
       onTouchMove={cancelPress}
@@ -57,24 +63,36 @@ export default function PetListItem({ pet, dateFormat = 'en', onOpenMore, onTogg
       onMouseUp={cancelPress}
       onMouseLeave={cancelPress}
       onClick={handleClickItem}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onOpenDetail(pet);
+        }
+      }}
       onContextMenu={(e) => {
         e.preventDefault();
         onOpenMore(pet);
       }}
-      className={`p-3 rounded-2xl flex items-center justify-between gap-3 transition-all cursor-pointer select-none active:scale-[0.985] shadow-2xs ${
+      className={`p-3 rounded-2xl flex items-center justify-between gap-3 cursor-pointer select-none active:scale-[0.985] shadow-2xs focus-visible:ring-2 focus-visible:ring-paw-500 outline-none ${
         isDeceased
-          ? 'bg-gradient-to-r from-sky-50 to-indigo-50/60 border border-sky-200/80'
-          : 'bg-white border border-slate-200/80 hover:border-paw-300'
+          ? 'card-deceased-transition bg-gradient-to-r from-sky-50/90 via-indigo-50/40 to-slate-50 border border-sky-200/80 shadow-[0_2px_12px_rgba(56,189,248,0.1)]'
+          : 'card-alive-transition bg-white border border-slate-200/80 hover:border-paw-300'
       }`}
     >
       <div className="flex items-center gap-3 min-w-0">
         {/* Avatar thumbnail */}
-        <div className="relative w-14 h-14 rounded-2xl overflow-hidden bg-slate-900 flex-shrink-0 shadow-xs group">
+        <div className={`relative w-14 h-14 rounded-2xl overflow-hidden bg-slate-900 flex-shrink-0 shadow-xs group ${
+          isDeceased ? 'ring-2 ring-sky-200/80 shadow-[0_0_12px_rgba(186,230,253,0.35)]' : ''
+        }`}>
           {pet.avatar ? (
             <img 
               src={pet.avatar} 
               alt={pet.name} 
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform" 
+              className={`w-full h-full object-cover transition-transform ${
+                isDeceased
+                  ? 'duration-700 ease-out group-hover:scale-103 brightness-[1.02]'
+                  : 'duration-200 ease-out group-hover:scale-106'
+              }`} 
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-paw-100 text-paw-400">
@@ -93,28 +111,23 @@ export default function PetListItem({ pet, dateFormat = 'en', onOpenMore, onTogg
 
         {/* Pet Name & Typographic Age */}
         <div className="min-w-0">
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5 flex-wrap">
             <h2 className="font-mitr font-medium text-base text-slate-900 truncate">
               {pet.name}
             </h2>
-            {isDeceased ? (
-              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-sky-100 text-sky-700 text-[10px] font-bold">
-                <FontAwesomeIcon icon={faRainbow} className="text-[9px]" />
-                <span>Memorial</span>
+            {specialEvents.length > 0 && (
+              <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border shadow-2xs ${specialEvents[0].bgClass}`}>
+                <FontAwesomeIcon icon={specialEvents[0].icon} className={`text-[9px] ${specialEvents[0].iconClass}`} />
+                <span className="truncate max-w-[130px]">{specialEvents[0].label}</span>
               </span>
-            ) : daysUntilBday <= 14 ? (
-              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-paw-100 text-paw-700 text-[10px] font-bold animate-pulse">
-                <FontAwesomeIcon icon={faCakeCandles} className="text-[9px]" />
-                <span>{daysUntilBday === 0 ? 'Today!' : `${daysUntilBday}d`}</span>
-              </span>
-            ) : null}
+            )}
           </div>
 
           {/* Typo Age: 8y 6m 15d */}
           <div className="flex items-baseline gap-1 font-sans font-bold tracking-tight text-xs text-slate-600 mt-0.5">
             {age.years > 0 && (
-              <span className="text-paw-600">
-                {age.years}<span className="text-[10px] text-paw-400 lowercase font-mono">y</span>
+              <span className={isDeceased ? 'text-sky-800' : 'text-paw-600'}>
+                {age.years}<span className={`text-[10px] lowercase font-mono ${isDeceased ? 'text-sky-400' : 'text-paw-400'}`}>y</span>
               </span>
             )}
             {age.months > 0 && (
@@ -139,10 +152,13 @@ export default function PetListItem({ pet, dateFormat = 'en', onOpenMore, onTogg
             </span>
           </div>
         ) : (
-          <div className="bg-amber-50/90 border border-amber-200/80 rounded-full px-3 py-1 flex items-center gap-1.5 shadow-2xs whitespace-nowrap">
+          <div 
+            title="จากเราไปสู่ดาวแมวแล้วนานแค่ไหน"
+            className="bg-gradient-to-r from-sky-50 via-amber-50/70 to-indigo-50/80 border border-sky-200/80 rounded-full px-3 py-1 flex items-center gap-1.5 shadow-2xs whitespace-nowrap"
+          >
             <FontAwesomeIcon icon={faRainbow} className="text-amber-500 text-[10px]" />
-            <span className="text-xs font-bold text-amber-900 tabular-nums">
-              {lifespan ? `${lifespan.years}y ${lifespan.months}m ${lifespan.days}d` : `${age.totalDays.toLocaleString()}d`}
+            <span className="text-xs font-bold text-slate-700 tabular-nums">
+              {timeSincePassing ? `${timeSincePassing.years}y ${timeSincePassing.months}m ${timeSincePassing.days}d` : ''}
             </span>
           </div>
         )}

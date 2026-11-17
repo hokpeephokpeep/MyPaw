@@ -1,6 +1,7 @@
 // Date & Life Stage calculation utilities (Local Timezone Safe)
 import { 
-  faBaby, faChild, faPerson, faPersonCane, faBolt, faSun, faCrown, faFeather, faGem 
+  faBaby, faChild, faPerson, faPersonCane, faBolt, faSun, faCrown, faFeather, faGem,
+  faRainbow, faCakeCandles, faStethoscope, faSyringe
 } from '@fortawesome/free-solid-svg-icons';
 
 /**
@@ -184,4 +185,108 @@ export function formatDateTh(dateStr) {
 export function formatDate(dateStr, locale = 'en') {
   if (locale === 'th') return formatDateTh(dateStr);
   return formatDateEn(dateStr);
+}
+
+/**
+ * Special Event Evaluator for Pet Cards & List Items
+ * Priority Order:
+ * 1. Rainbow Bridge (แมวที่อยู่ดาวแมวแล้ว)
+ * 2. Birthday Today (วันเกิดวันนี้ 🎂)
+ * 3. Health Checkup Today / Soon (คิวนัดตรวจสุขภาพ 🩺)
+ * 4. Annual Vaccine Overdue / Due Soon (ใกล้ครบรอบปีทำวัคซีน 💉)
+ * 5. Birthday Countdown (ใกล้วันเกิด นับถอยหลัง 1-14 วัน 🎂)
+ */
+export function getPetSpecialEvents(pet) {
+  if (!pet) return [];
+  const events = [];
+  const today = getTodayLocal();
+  const isDeceased = pet.status === 'deceased';
+
+  // 1. Rainbow Bridge
+  if (isDeceased) {
+    events.push({
+      type: 'deceased',
+      label: 'Rainbow Bridge',
+      icon: faRainbow,
+      bgClass: 'bg-black/55 backdrop-blur-md text-white border-white/20',
+      iconClass: 'text-amber-300'
+    });
+    return events; // Deceased cats stay dedicated to the Rainbow Bridge memorial
+  }
+
+  // 2. Birthday Today! 🎂
+  const daysUntilBday = getDaysUntilBirthday(pet.birthDate);
+  if (daysUntilBday === 0) {
+    events.push({
+      type: 'birthday_today',
+      label: 'วันเกิดวันนี้! 🎂',
+      icon: faCakeCandles,
+      bgClass: 'bg-gradient-to-r from-pink-500 to-rose-500 text-white font-bold border-white/30 shadow-md shadow-rose-500/25 animate-pulse motion-reduce:animate-none',
+      iconClass: 'text-amber-200'
+    });
+  }
+
+  // 3. Health Checkup Appointment (คิวนัดตรวจสุขภาพ)
+  if (pet.checkupDate) {
+    const checkupParsed = parseLocalDate(pet.checkupDate);
+    if (checkupParsed) {
+      const daysUntilCheckup = Math.round((checkupParsed.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+      if (daysUntilCheckup === 0) {
+        events.push({
+          type: 'checkup_today',
+          label: 'นัดตรวจสุขภาพวันนี้ 🩺',
+          icon: faStethoscope,
+          bgClass: 'bg-emerald-600/95 backdrop-blur-md text-white border-white/25 shadow-md shadow-emerald-600/25 animate-pulse motion-reduce:animate-none',
+          iconClass: 'text-emerald-200'
+        });
+      } else if (daysUntilCheckup > 0 && daysUntilCheckup <= 14) {
+        events.push({
+          type: 'checkup_soon',
+          label: daysUntilCheckup === 1 ? 'นัดตรวจพรุ่งนี้ 🩺' : `นัดตรวจอีก ${daysUntilCheckup} วัน`,
+          icon: faStethoscope,
+          bgClass: 'bg-sky-600/90 backdrop-blur-md text-white border-white/25 shadow-sm',
+          iconClass: 'text-sky-200'
+        });
+      }
+    }
+  }
+
+  // 4. Annual Vaccine Care (ใกล้ครบรอบปีทำวัคซีน - รอบ 365 วัน)
+  if (pet.vaccineDate) {
+    const vaccineParsed = parseLocalDate(pet.vaccineDate);
+    if (vaccineParsed) {
+      const daysSinceVaccine = Math.round((today.getTime() - vaccineParsed.getTime()) / (1000 * 60 * 60 * 24));
+      if (daysSinceVaccine >= 365) {
+        events.push({
+          type: 'vaccine_overdue',
+          label: 'ถึงกำหนดวัคซีน 💉',
+          icon: faSyringe,
+          bgClass: 'bg-rose-600/95 backdrop-blur-md text-white border-white/25 shadow-sm shadow-rose-600/25 animate-pulse motion-reduce:animate-none',
+          iconClass: 'text-rose-200'
+        });
+      } else if (daysSinceVaccine >= 335) { // ภายใน 30 วันก่อนครบรอบ
+        const daysLeft = 365 - daysSinceVaccine;
+        events.push({
+          type: 'vaccine_soon',
+          label: daysLeft === 1 ? 'วัคซีนพรุ่งนี้ 💉' : `วัคซีนอีก ${daysLeft} วัน`,
+          icon: faSyringe,
+          bgClass: 'bg-amber-600/90 backdrop-blur-md text-white border-white/25 shadow-sm',
+          iconClass: 'text-amber-200'
+        });
+      }
+    }
+  }
+
+  // 5. Birthday Countdown (ใกล้วันเกิด นับถอยหลัง 1-14 วัน)
+  if (daysUntilBday > 0 && daysUntilBday <= 14) {
+    events.push({
+      type: 'birthday_soon',
+      label: daysUntilBday === 1 ? 'วันเกิดพรุ่งนี้ 🎂' : `วันเกิดอีก ${daysUntilBday} วัน`,
+      icon: faCakeCandles,
+      bgClass: 'bg-paw-500/90 backdrop-blur-md text-white border-white/25 shadow-sm',
+      iconClass: 'text-amber-200'
+    });
+  }
+
+  return events;
 }

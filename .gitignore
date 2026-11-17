@@ -1,3 +1,37 @@
+# Dependencies & Package Managers (Downloadable via npm/yarn/pnpm)
+node_modules/
+.pnpm-store/
+.yarn/cache/
+.yarn/unplugged/
+.npm/
+
+# Agent Skills & Assistant Tooling (Downloadable / Installed on demand)
+.agents/
+skills/
+*.skill
+.gemini/
+.claude/
+.cursor/
+.antigravity/
+
+# Temporary & Staging Asset Directories
+_Temp/
+_temp/
+For Icon/
+
+# Build outputs & compile caches
+dist/
+dist-ssr/
+.cache/
+.vite/
+*.tsbuildinfo
+
+# Local Environment & Secrets
+.env
+.env.local
+.env.*.local
+*.local
+
 # Logs
 logs
 *.log
@@ -7,16 +41,13 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
-*.local
-
-# Editor directories and files
+# Editor & OS files
 .vscode/*
 !.vscode/extensions.json
 .idea
 .DS_Store
+Thumbs.db
+desktop.ini
 *.suo
 *.ntvs*
 *.njsproj

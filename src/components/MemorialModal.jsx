@@ -35,11 +35,11 @@ export default function MemorialModal({ pet, isOpen, dateFormat = 'en', onClose,
   return (
     <div 
       onClick={onClose}
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/75 sm:p-4 backdrop-blur-md animate-fadeIn"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/75 sm:p-4 backdrop-blur-md animate-fadeIn overscroll-contain"
     >
       <div 
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-md rounded-t-[32px] sm:rounded-[32px] bg-gradient-to-b from-slate-900 via-indigo-950 to-slate-900 text-white shadow-2xl overflow-hidden flex flex-col max-h-[92vh] sm:max-h-[88vh] border border-sky-400/20 animate-slideUpSheet sm:animate-scaleUp pb-[env(safe-area-inset-bottom)]"
+        className="w-full max-w-md rounded-t-[32px] sm:rounded-[32px] bg-gradient-to-b from-slate-900 via-indigo-950 to-slate-900 text-white shadow-2xl overflow-hidden flex flex-col max-h-[92vh] sm:max-h-[88vh] border border-sky-400/20 animate-slideUpSheet sm:animate-scaleUp pb-[env(safe-area-inset-bottom)] overscroll-contain"
       >
         {/* Mobile Pull Handle */}
         <div className="w-12 h-1.5 bg-white/30 rounded-full mx-auto mt-2.5 -mb-1 sm:hidden flex-shrink-0" />
@@ -54,14 +54,15 @@ export default function MemorialModal({ pet, isOpen, dateFormat = 'en', onClose,
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 text-white/60 hover:text-white rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
+            aria-label="Close"
+            className="w-8 h-8 text-white/60 hover:text-white rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors duration-150 ease-out active:scale-95 focus-visible:ring-2 focus-visible:ring-white outline-none"
           >
             <FontAwesomeIcon icon={faXmark} className="text-sm" />
           </button>
         </div>
 
         {/* Content Body */}
-        <div className="p-6 overflow-y-auto space-y-5">
+        <div className="p-6 overflow-y-auto space-y-5 overscroll-contain">
           
           {/* 🕯️ Virtual Interactive Candle (Self-explanatory) */}
           <div className="rounded-3xl bg-white/5 border border-white/10 p-6 flex flex-col items-center text-center relative overflow-hidden">
@@ -106,6 +107,8 @@ export default function MemorialModal({ pet, isOpen, dateFormat = 'en', onClose,
             <form onSubmit={handleAddLetter} className="flex gap-2">
               <input
                 type="text"
+                autoComplete="off"
+                aria-label={`เขียนถึง ${pet.name}`}
                 value={newLetter}
                 onChange={(e) => setNewLetter(e.target.value)}
                 placeholder={`เขียนถึง ${pet.name}...`}
@@ -114,7 +117,8 @@ export default function MemorialModal({ pet, isOpen, dateFormat = 'en', onClose,
               <button
                 type="submit"
                 disabled={!newLetter.trim()}
-                className="w-10 h-10 rounded-2xl bg-gradient-to-r from-sky-500 to-indigo-500 hover:from-sky-600 hover:to-indigo-600 disabled:opacity-35 text-white font-bold text-xs shadow-md transition-all flex items-center justify-center flex-shrink-0"
+                aria-label="Send letter"
+                className="w-10 h-10 rounded-2xl bg-gradient-to-r from-sky-500 to-indigo-500 hover:from-sky-600 hover:to-indigo-600 disabled:opacity-35 text-white font-bold text-xs shadow-md transition-colors transition-transform duration-150 ease-out active:scale-95 focus-visible:ring-2 focus-visible:ring-sky-400 outline-none flex items-center justify-center flex-shrink-0"
               >
                 <FontAwesomeIcon icon={faPaperPlane} className="text-xs" />
               </button>

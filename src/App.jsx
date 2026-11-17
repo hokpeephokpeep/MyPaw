@@ -69,9 +69,11 @@ export default function App() {
         });
         return reconciled;
       }
-      return initialPets;
+      // Fresh app installation: starts with 0 pets for new users.
+      // In development mode, load developer's 7 cats as local dev seed data.
+      return import.meta.env.DEV ? initialPets : [];
     } catch (e) {
-      return initialPets;
+      return import.meta.env.DEV ? initialPets : [];
     }
   });
 
@@ -115,11 +117,21 @@ export default function App() {
     }
   });
 
+  const scrollToTopInstant = () => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    lastScrollYRef.current = 0;
+    setIsBottomNavVisible(true);
+    resetIdleTimer(3200);
+  };
+
   const handleSetViewMode = (mode) => {
     setViewMode(mode);
     try {
       localStorage.setItem('mypaw_view_mode', mode);
     } catch (e) {}
+    scrollToTopInstant();
   };
 
   // 📱 Interactive Bottom Navigation Bar Visibility with Directional Scroll & Timeout
@@ -136,6 +148,18 @@ export default function App() {
       setIsBottomNavVisible(false);
     }, duration);
   };
+
+  // 🔝 Auto Scroll to Top when viewMode, activeTab, or sortBy changes
+  const isFirstMountRef = useRef(true);
+  useEffect(() => {
+    if (isFirstMountRef.current) {
+      isFirstMountRef.current = false;
+      return;
+    }
+    scrollToTopInstant();
+    const rafId = requestAnimationFrame(scrollToTopInstant);
+    return () => cancelAnimationFrame(rafId);
+  }, [viewMode, activeTab, sortBy]);
 
   useEffect(() => {
     // Initial display timeout on load
@@ -416,14 +440,22 @@ export default function App() {
           <div className="flex items-center gap-2.5">
             <button
               onClick={() => setIsDrawerOpen(true)}
-              className="w-9 h-9 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center active:scale-90 transition-all shadow-2xs -ml-0.5"
+              className="w-10 h-10 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center active:scale-95 transition-transform transition-colors duration-150 ease-out shadow-2xs -ml-0.5 focus-visible:ring-2 focus-visible:ring-paw-500 outline-none"
               title="Menu"
               aria-label="Menu"
             >
               <FontAwesomeIcon icon={faBars} className="text-sm" />
             </button>
 
-            <h1 className="font-mitr text-2xl font-semibold text-slate-900 tracking-wide flex items-center gap-1.5">
+            <h1 
+              onClick={() => {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                setIsBottomNavVisible(true);
+                resetIdleTimer(3200);
+              }}
+              className="font-mitr text-2xl font-semibold text-slate-900 tracking-wide flex items-center gap-1.5 cursor-pointer active:scale-98 transition-transform"
+              title="แตะเพื่อเลื่อนขึ้นบนสุด"
+            >
               <span>MyPaw</span>
               <FontAwesomeIcon icon={faPaw} className="text-paw-500 text-base" />
             </h1>
@@ -435,7 +467,7 @@ export default function App() {
             <div className="flex items-center bg-slate-100/90 p-1 rounded-2xl border border-slate-200/60 shadow-2xs">
               <button
                 onClick={() => handleSetViewMode('1col')}
-                className={`w-7 h-7 rounded-xl flex items-center justify-center transition-all active:scale-90 ${
+                className={`w-7 h-7 rounded-xl flex items-center justify-center transition-colors duration-150 ease-out active:scale-95 focus-visible:ring-2 focus-visible:ring-paw-500 outline-none ${
                   viewMode === '1col'
                     ? 'bg-white text-paw-600 shadow-xs'
                     : 'text-slate-400 hover:text-slate-600'
@@ -448,7 +480,7 @@ export default function App() {
 
               <button
                 onClick={() => handleSetViewMode('2col')}
-                className={`w-7 h-7 rounded-xl flex items-center justify-center transition-all active:scale-90 ${
+                className={`w-7 h-7 rounded-xl flex items-center justify-center transition-colors duration-150 ease-out active:scale-95 focus-visible:ring-2 focus-visible:ring-paw-500 outline-none ${
                   viewMode === '2col'
                     ? 'bg-white text-paw-600 shadow-xs'
                     : 'text-slate-400 hover:text-slate-600'
@@ -461,7 +493,7 @@ export default function App() {
 
               <button
                 onClick={() => handleSetViewMode('list')}
-                className={`w-7 h-7 rounded-xl flex items-center justify-center transition-all active:scale-90 ${
+                className={`w-7 h-7 rounded-xl flex items-center justify-center transition-colors duration-150 ease-out active:scale-95 focus-visible:ring-2 focus-visible:ring-paw-500 outline-none ${
                   viewMode === 'list'
                     ? 'bg-white text-paw-600 shadow-xs'
                     : 'text-slate-400 hover:text-slate-600'
@@ -476,7 +508,7 @@ export default function App() {
         </header>
 
         {/* Pure Pet Cards Feed (Responsive according to viewMode) */}
-        <main className="px-4 sm:px-5 py-4 flex-1">
+        <main className="px-4 sm:px-5 py-4 flex-1" style={{ overflowAnchor: 'none' }}>
           {filteredPets.length > 0 ? (
             viewMode === 'list' ? (
               /* 3. Card List View */
@@ -523,20 +555,26 @@ export default function App() {
               </div>
             )
           ) : pets.length === 0 ? (
-            /* Empty State */
-            <div className="py-28 px-6 text-center">
-              <div className="w-20 h-20 mx-auto rounded-3xl bg-paw-100 text-paw-600 flex items-center justify-center text-3xl shadow-inner mb-4">
+            /* Empty State: เริ่มต้นที่ 0 ตัวสำหรับผู้ใช้ใหม่ */
+            <div className="py-24 px-6 text-center max-w-sm mx-auto">
+              <div className="w-20 h-20 mx-auto rounded-3xl bg-gradient-to-br from-paw-100 to-amber-100 text-paw-500 flex items-center justify-center text-3xl shadow-inner mb-4">
                 <FontAwesomeIcon icon={faPaw} />
               </div>
+              <h2 className="font-mitr text-xl font-medium text-slate-800 mb-1.5">
+                ยังไม่มีข้อมูลน้องเหมียว
+              </h2>
+              <p className="text-xs text-slate-500 mb-6 leading-relaxed">
+                เริ่มต้นบันทึกวันเกิด ความทรงจำ และช่วงเวลาดีๆ ของเจ้าตัวโปรดกันเถอะ
+              </p>
               <button
                 onClick={() => {
                   setEditingPet(null);
                   setIsModalOpen(true);
                 }}
-                className="mt-2 px-6 py-3 rounded-2xl bg-paw-500 hover:bg-paw-600 text-white font-bold text-sm shadow-lg shadow-paw-500/25 transition-all inline-flex items-center gap-2 active:scale-95"
+                className="px-6 py-3.5 rounded-2xl bg-paw-500 hover:bg-paw-600 text-white font-bold text-sm shadow-lg shadow-paw-500/25 transition-transform transition-colors duration-150 ease-out inline-flex items-center gap-2 active:scale-95 focus-visible:ring-2 focus-visible:ring-paw-500 outline-none"
               >
                 <FontAwesomeIcon icon={faPlus} />
-                <span>Add Pet</span>
+                <span>เพิ่มน้องแมวตัวแรก</span>
               </button>
             </div>
           ) : (
@@ -544,7 +582,7 @@ export default function App() {
               <FontAwesomeIcon icon={faMagnifyingGlass} className="text-3xl text-slate-300 block mx-auto mb-3" />
               <button
                 onClick={() => setActiveTab('all')}
-                className="px-4 py-2 rounded-xl bg-slate-200 text-slate-700 text-xs font-semibold hover:bg-slate-300 transition-colors active:scale-95"
+                className="px-4 py-2 rounded-xl bg-slate-200 text-slate-700 text-xs font-semibold hover:bg-slate-300 transition-colors duration-150 ease-out active:scale-95 focus-visible:ring-2 focus-visible:ring-slate-400 outline-none"
               >
                 Show All
               </button>
@@ -561,13 +599,19 @@ export default function App() {
               : 'translate-y-28 opacity-0 pointer-events-none scale-95'
           }`}
         >
-          <div className="pointer-events-auto bg-white/90 backdrop-blur-xl border border-slate-200/90 shadow-2xl shadow-slate-900/15 rounded-full p-1.5 flex items-center justify-between gap-1.5 transition-all">
+          <div className="pointer-events-auto bg-white/90 backdrop-blur-xl border border-slate-200/90 shadow-2xl shadow-slate-900/15 rounded-full p-1.5 flex items-center justify-between gap-1.5">
             
             {/* Quick Segmented Filter Pills */}
             <div className="flex items-center bg-slate-100/90 p-1 rounded-full text-xs font-bold text-slate-600">
               <button
-                onClick={() => setActiveTab('all')}
-                className={`px-3 py-1.5 rounded-full transition-all active:scale-95 ${
+                onClick={() => {
+                  if (activeTab === 'all') {
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  } else {
+                    setActiveTab('all');
+                  }
+                }}
+                className={`px-3 py-1.5 rounded-full transition-colors duration-150 ease-out active:scale-95 focus-visible:ring-2 focus-visible:ring-paw-500 outline-none ${
                   activeTab === 'all'
                     ? 'bg-white text-slate-900 shadow-xs'
                     : 'text-slate-500 hover:text-slate-800'
@@ -576,8 +620,14 @@ export default function App() {
                 All
               </button>
               <button
-                onClick={() => setActiveTab('alive')}
-                className={`px-2.5 py-1.5 rounded-full transition-all flex items-center gap-1 active:scale-95 ${
+                onClick={() => {
+                  if (activeTab === 'alive') {
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  } else {
+                    setActiveTab('alive');
+                  }
+                }}
+                className={`px-2.5 py-1.5 rounded-full transition-colors duration-150 ease-out flex items-center gap-1 active:scale-95 focus-visible:ring-2 focus-visible:ring-paw-500 outline-none ${
                   activeTab === 'alive'
                     ? 'bg-white text-emerald-700 shadow-xs'
                     : 'text-slate-500 hover:text-slate-800'
@@ -587,8 +637,14 @@ export default function App() {
                 <span>With Us</span>
               </button>
               <button
-                onClick={() => setActiveTab('deceased')}
-                className={`px-2.5 py-1.5 rounded-full transition-all flex items-center gap-1 active:scale-95 ${
+                onClick={() => {
+                  if (activeTab === 'deceased') {
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  } else {
+                    setActiveTab('deceased');
+                  }
+                }}
+                className={`px-2.5 py-1.5 rounded-full transition-colors duration-150 ease-out flex items-center gap-1 active:scale-95 focus-visible:ring-2 focus-visible:ring-paw-500 outline-none ${
                   activeTab === 'deceased'
                     ? 'bg-white text-sky-700 shadow-xs'
                     : 'text-slate-500 hover:text-slate-800'
@@ -607,7 +663,7 @@ export default function App() {
                   setEditingPet(null);
                   setIsModalOpen(true);
                 }}
-                className="w-10 h-10 rounded-full bg-paw-500 hover:bg-paw-600 text-white flex items-center justify-center shadow-md shadow-paw-500/35 active:scale-90 transition-transform"
+                className="w-10 h-10 rounded-full bg-paw-500 hover:bg-paw-600 text-white flex items-center justify-center shadow-md shadow-paw-500/35 active:scale-95 transition-transform duration-150 ease-out focus-visible:ring-2 focus-visible:ring-paw-500 outline-none"
                 title="Add Pet"
                 aria-label="Add Pet"
               >
@@ -630,7 +686,6 @@ export default function App() {
         }}
         onOpenBackup={() => setIsBackupOpen(true)}
         onOpenFamily={() => setIsFamilyOpen(true)}
-        onResetDefault={() => setPets(initialPets)}
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         sortBy={sortBy}
@@ -647,6 +702,7 @@ export default function App() {
         pet={editingPet ? pets.find(p => p.id === editingPet.id) || editingPet : null}
         allPets={pets}
         isOpen={isModalOpen}
+        dateFormat={dateFormat}
         onClose={() => {
           setIsModalOpen(false);
           setEditingPet(null);

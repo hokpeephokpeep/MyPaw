@@ -1,8 +1,10 @@
 from PIL import Image
 import os
+from pathlib import Path
 
-src_path = r"d:\Project\app-backup\mypetsage-modern\public\paw_icon.png"
-res_dir = r"d:\Project\app-backup\mypetsage-modern\android\app\src\main\res"
+BASE_DIR = Path(__file__).resolve().parent
+src_path = BASE_DIR / "public" / "paw_icon.png"
+res_dir = BASE_DIR / "android" / "app" / "src" / "main" / "res"
 
 sizes = {
     'mipmap-mdpi': 48,

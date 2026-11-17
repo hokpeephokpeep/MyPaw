@@ -78,7 +78,7 @@ export default function FamilyTreeModal({ isOpen, onClose, pets = [], onSelectPe
 
   return (
     <div 
-      className="fixed inset-0 z-50 flex flex-col bg-slate-100 text-slate-800 animate-fadeIn"
+      className="fixed inset-0 z-50 flex flex-col bg-slate-100 text-slate-800 animate-fadeIn overscroll-contain"
     >
       {/* Clean Full-Screen Header */}
       <div className="px-5 py-3.5 sm:py-4 border-b border-slate-200/80 bg-white/95 backdrop-blur-md flex items-center justify-between sticky top-0 z-30 shadow-2xs pt-[max(0.875rem,env(safe-area-inset-top))]">
@@ -90,7 +90,7 @@ export default function FamilyTreeModal({ isOpen, onClose, pets = [], onSelectPe
         </div>
         <button 
           onClick={onClose}
-          className="w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 hover:text-slate-800 transition-colors active:scale-95"
+          className="w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 hover:text-slate-800 transition-colors duration-150 ease-out active:scale-95 focus-visible:ring-2 focus-visible:ring-paw-500 outline-none"
           aria-label="Close"
         >
           <FontAwesomeIcon icon={faXmark} className="text-sm" />
@@ -98,7 +98,7 @@ export default function FamilyTreeModal({ isOpen, onClose, pets = [], onSelectPe
       </div>
 
       {/* Smooth Scrollable Inverted Pyramid Block Stream */}
-      <div className="flex-1 overflow-y-auto p-5 sm:p-8 pb-16 bg-gradient-to-b from-slate-100 via-paw-50/20 to-slate-100 pb-[max(4rem,env(safe-area-inset-bottom))]">
+      <div className="flex-1 overflow-y-auto p-5 sm:p-8 pb-16 bg-gradient-to-b from-slate-100 via-paw-50/20 to-slate-100 pb-[max(4rem,env(safe-area-inset-bottom))] overscroll-contain">
         <div className="flex flex-col items-center w-full space-y-6 sm:space-y-7 max-w-lg mx-auto">
           
           {/* 1. ชายน้อย: พ่อตังค์ทอน อยู่ฝั่งตังค์ทอนเท่านั้น */}
@@ -116,7 +116,7 @@ export default function FamilyTreeModal({ isOpen, onClose, pets = [], onSelectPe
               {tangthon && renderPetCard(tangthon)}
             </div>
             <div className="w-8 sm:w-10 flex items-center justify-center flex-shrink-0">
-              <div className="w-7 h-7 rounded-full bg-rose-100 text-rose-500 flex items-center justify-center text-xs shadow-2xs animate-pulse">
+              <div className="w-7 h-7 rounded-full bg-rose-100 text-rose-500 flex items-center justify-center text-xs shadow-2xs animate-pulse motion-reduce:animate-none">
                 <FontAwesomeIcon icon={faHeart} />
               </div>
             </div>

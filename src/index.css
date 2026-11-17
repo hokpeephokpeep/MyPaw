@@ -67,11 +67,67 @@
   src: url('/fonts/GoogleSans-Bold.ttf') format('truetype');
 }
 
+/* 📝 Prompt (Numbers & Highlights - ตัวเลขสถิติและอายุ) */
+@font-face {
+  font-family: 'Prompt';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/Prompt-Regular.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Prompt';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fonts/Prompt-Medium.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Prompt';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/fonts/Prompt-SemiBold.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Prompt';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/Prompt-Bold.ttf') format('truetype');
+}
+
 @layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-text-size-adjust: 100%;
+    overscroll-behavior-y: none;
+    overflow-anchor: none;
+  }
   body {
     @apply bg-slate-100 text-slate-800 antialiased select-none;
     -webkit-tap-highlight-color: transparent;
     font-family: "Google Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    overflow-anchor: none;
+  }
+  button, a, [role="button"] {
+    touch-action: manipulation;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  input, textarea, select {
+    font-size: 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }
 
@@ -229,6 +285,38 @@
 
 .animate-star-3 {
   animation: starTwinkle 3.8s ease-in-out infinite 0.7s;
+}
+
+/* 🐾 Alive Card Transition: กระฉับกระเฉง ร่าเริง สปริงน่ารัก */
+.card-alive-transition {
+  transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), 
+              box-shadow 0.2s ease-out, 
+              border-color 0.2s ease-out;
+  will-change: transform, box-shadow;
+}
+.card-alive-transition:hover {
+  transform: translateY(-4px) scale(1.01);
+  box-shadow: 0 14px 28px -4px rgba(249, 115, 22, 0.16), 0 4px 10px -2px rgba(0, 0, 0, 0.05);
+}
+.card-alive-transition:active {
+  transform: scale(0.965);
+  transition-duration: 0.12s;
+}
+
+/* 🌈 Deceased Card Transition: Feel good แต่คิดถึง ปนเหงา ลอยนุ่มนวล แสงอบอุ่น */
+.card-deceased-transition {
+  transition: transform 0.65s cubic-bezier(0.16, 1, 0.3, 1), 
+              box-shadow 0.65s ease-out, 
+              border-color 0.5s ease-out;
+  will-change: transform, box-shadow;
+}
+.card-deceased-transition:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 20px 38px -6px rgba(125, 211, 252, 0.35), 0 0 26px 4px rgba(253, 230, 138, 0.22);
+}
+.card-deceased-transition:active {
+  transform: scale(0.985);
+  transition-duration: 0.35s;
 }
 
 /* Custom smooth scrollbar */

@@ -6,8 +6,9 @@ import {
   faSeedling, faRainbow, faPaw, faPlus, faCalendarDays, faNoteSticky
 } from '@fortawesome/free-solid-svg-icons';
 import { toLocalDateString } from '../utils';
+import DateField from './DateField';
 
-export default function PetModal({ pet, allPets = [], isOpen, onClose, onSave, onDelete }) {
+export default function PetModal({ pet, allPets = [], isOpen, onClose, onSave, onDelete, dateFormat = 'th' }) {
   const [name, setName] = useState('');
   const [gender, setGender] = useState('male');
   const [neutered, setNeutered] = useState(true);
@@ -221,11 +222,11 @@ export default function PetModal({ pet, allPets = [], isOpen, onClose, onSave, o
   return (
     <div 
       onClick={onClose}
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 sm:p-4 backdrop-blur-xs animate-fadeIn"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 sm:p-4 backdrop-blur-xs animate-fadeIn overscroll-contain"
     >
       <div 
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-md rounded-t-[32px] sm:rounded-[32px] bg-white shadow-2xl overflow-hidden flex flex-col max-h-[92vh] sm:max-h-[88vh] animate-slideUpSheet sm:animate-scaleUp pb-[env(safe-area-inset-bottom)]"
+        className="w-full max-w-md rounded-t-[32px] sm:rounded-[32px] bg-white shadow-2xl overflow-hidden flex flex-col max-h-[92vh] sm:max-h-[88vh] animate-slideUpSheet sm:animate-scaleUp pb-[env(safe-area-inset-bottom)] overscroll-contain"
       >
         {/* Mobile Pull Handle */}
         <div className="w-12 h-1.5 bg-slate-300 rounded-full mx-auto mt-2.5 -mb-1 sm:hidden flex-shrink-0" />
@@ -245,14 +246,15 @@ export default function PetModal({ pet, allPets = [], isOpen, onClose, onSave, o
 
           <button 
             onClick={onClose}
-            className="w-8 h-8 text-slate-400 hover:text-slate-600 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors"
+            aria-label="Close"
+            className="w-8 h-8 text-slate-400 hover:text-slate-600 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors duration-150 ease-out active:scale-95 focus-visible:ring-2 focus-visible:ring-paw-500 outline-none"
           >
             <FontAwesomeIcon icon={faXmark} className="text-sm" />
           </button>
         </div>
 
         {/* Form Body */}
-        <div className="p-6 overflow-y-auto space-y-4">
+        <div className="p-6 overflow-y-auto space-y-4 overscroll-contain">
           
           {/* Photos Management (Multiple Photos for Fade Slideshow) */}
           <div className="flex flex-col items-center">
@@ -266,7 +268,7 @@ export default function PetModal({ pet, allPets = [], isOpen, onClose, onSave, o
               </div>
               <label 
                 htmlFor="avatar-upload"
-                className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-paw-500 text-white shadow-md cursor-pointer hover:bg-paw-600 flex items-center justify-center active:scale-95 transition-all"
+                className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-paw-500 text-white shadow-md cursor-pointer hover:bg-paw-600 flex items-center justify-center active:scale-95 transition-transform transition-colors duration-150 ease-out"
                 title="เพิ่มรูปภาพ"
               >
                 <FontAwesomeIcon icon={faCamera} className="text-xs" />
@@ -286,8 +288,10 @@ export default function PetModal({ pet, allPets = [], isOpen, onClose, onSave, o
               {photos.map((src, idx) => (
                 <div 
                   key={idx} 
+                  role="button"
+                  tabIndex={0}
                   onClick={() => handleSetPrimaryPhoto(idx)}
-                  className={`relative group/thumb w-12 h-12 rounded-xl overflow-hidden border cursor-pointer shadow-2xs transition-all ${
+                  className={`relative group/thumb w-12 h-12 rounded-xl overflow-hidden border cursor-pointer shadow-2xs transition-transform duration-150 ease-out active:scale-95 ${
                     idx === 0 ? 'border-paw-500 ring-2 ring-paw-200' : 'border-slate-200 bg-slate-100 hover:border-slate-300'
                   }`}
                   title={idx === 0 ? 'รูปหลัก' : 'คลิกเพื่อตั้งเป็นรูปหลัก'}
@@ -299,6 +303,7 @@ export default function PetModal({ pet, allPets = [], isOpen, onClose, onSave, o
                       e.stopPropagation();
                       handleRemovePhoto(idx);
                     }}
+                    aria-label="ลบรูปภาพนี้"
                     className="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-black/60 text-white text-[9px] flex items-center justify-center hover:bg-red-500 transition-colors"
                     title="ลบรูปนี้"
                   >
@@ -312,7 +317,7 @@ export default function PetModal({ pet, allPets = [], isOpen, onClose, onSave, o
                 </div>
               ))}
               <label 
-                className="w-12 h-12 rounded-xl border-2 border-dashed border-slate-300 hover:border-paw-400 bg-slate-50 hover:bg-paw-50/50 flex flex-col items-center justify-center cursor-pointer text-slate-400 hover:text-paw-600 transition-all active:scale-95"
+                className="w-12 h-12 rounded-xl border-2 border-dashed border-slate-300 hover:border-paw-400 bg-slate-50 hover:bg-paw-50/50 flex flex-col items-center justify-center cursor-pointer text-slate-400 hover:text-paw-600 transition-colors transition-transform duration-150 ease-out active:scale-95"
                 title="เพิ่มรูปภาพเพิ่มเติม"
               >
                 <FontAwesomeIcon icon={faCamera} className="text-xs" />
@@ -334,6 +339,8 @@ export default function PetModal({ pet, allPets = [], isOpen, onClose, onSave, o
             <input
               type="text"
               required
+              autoComplete="off"
+              aria-label="ชื่อน้องแมว"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="ชื่อน้อง..."
@@ -346,7 +353,7 @@ export default function PetModal({ pet, allPets = [], isOpen, onClose, onSave, o
             <button
               type="button"
               onClick={() => setGender('male')}
-              className={`py-2.5 px-3 rounded-2xl text-xs font-bold border flex items-center justify-center gap-1.5 transition-all ${
+              className={`py-2.5 px-3 rounded-2xl text-xs font-bold border flex items-center justify-center gap-1.5 transition-colors transition-transform duration-150 ease-out active:scale-97 focus-visible:ring-2 focus-visible:ring-paw-500 outline-none ${
                 gender === 'male'
                   ? 'bg-sky-50 border-sky-400 text-sky-700 shadow-2xs'
                   : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'
@@ -359,7 +366,7 @@ export default function PetModal({ pet, allPets = [], isOpen, onClose, onSave, o
             <button
               type="button"
               onClick={() => setGender('female')}
-              className={`py-2.5 px-3 rounded-2xl text-xs font-bold border flex items-center justify-center gap-1.5 transition-all ${
+              className={`py-2.5 px-3 rounded-2xl text-xs font-bold border flex items-center justify-center gap-1.5 transition-colors transition-transform duration-150 ease-out active:scale-97 focus-visible:ring-2 focus-visible:ring-paw-500 outline-none ${
                 gender === 'female'
                   ? 'bg-pink-50 border-pink-400 text-pink-700 shadow-2xs'
                   : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'
@@ -372,7 +379,7 @@ export default function PetModal({ pet, allPets = [], isOpen, onClose, onSave, o
             <button
               type="button"
               onClick={() => setNeutered(!neutered)}
-              className={`py-2.5 px-2 rounded-2xl text-xs font-bold border flex items-center justify-center gap-1.5 transition-all ${
+              className={`py-2.5 px-2 rounded-2xl text-xs font-bold border flex items-center justify-center gap-1.5 transition-colors transition-transform duration-150 ease-out active:scale-97 focus-visible:ring-2 focus-visible:ring-paw-500 outline-none ${
                 neutered 
                   ? 'bg-emerald-50 border-emerald-400 text-emerald-700 shadow-2xs' 
                   : 'bg-white border-slate-200 text-slate-400'
@@ -388,7 +395,7 @@ export default function PetModal({ pet, allPets = [], isOpen, onClose, onSave, o
             <button
               type="button"
               onClick={() => setStatus('alive')}
-              className={`py-2.5 px-3 rounded-2xl text-xs font-bold border flex items-center justify-center gap-1.5 transition-all ${
+              className={`py-2.5 px-3 rounded-2xl text-xs font-bold border flex items-center justify-center gap-1.5 transition-colors transition-transform duration-150 ease-out active:scale-97 focus-visible:ring-2 focus-visible:ring-paw-500 outline-none ${
                 status === 'alive'
                   ? 'bg-emerald-50 border-emerald-400 text-emerald-700 shadow-2xs'
                   : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'
@@ -400,7 +407,7 @@ export default function PetModal({ pet, allPets = [], isOpen, onClose, onSave, o
             <button
               type="button"
               onClick={() => setStatus('deceased')}
-              className={`py-2.5 px-3 rounded-2xl text-xs font-bold border flex items-center justify-center gap-1.5 transition-all ${
+              className={`py-2.5 px-3 rounded-2xl text-xs font-bold border flex items-center justify-center gap-1.5 transition-colors transition-transform duration-150 ease-out active:scale-97 focus-visible:ring-2 focus-visible:ring-paw-500 outline-none ${
                 status === 'deceased'
                   ? 'bg-sky-50 border-sky-400 text-sky-700 shadow-2xs'
                   : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'
@@ -413,33 +420,29 @@ export default function PetModal({ pet, allPets = [], isOpen, onClose, onSave, o
 
           {/* Dates Row */}
           <div className={`grid gap-2 ${status === 'deceased' ? 'grid-cols-2' : 'grid-cols-1'}`}>
-            <div className="p-3 rounded-2xl bg-slate-50 border border-slate-100">
-              <div className="text-[10px] font-bold text-slate-400 uppercase flex items-center gap-1.5 mb-1">
-                <FontAwesomeIcon icon={faCalendarDays} className="text-paw-500" />
-                <span>วันเกิด</span>
-              </div>
-              <input
-                type="date"
-                required
-                value={birthDate}
-                onChange={(e) => setBirthDate(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 focus:border-paw-500 focus:outline-hidden"
-              />
-            </div>
+            <DateField
+              label="วันเกิด"
+              value={birthDate}
+              onChange={setBirthDate}
+              required
+              showAgePreview={true}
+              title="เลือกวันเกิดน้องแมว"
+              dateFormat={dateFormat}
+            />
 
             {status === 'deceased' && (
-              <div className="p-3 rounded-2xl bg-sky-50/60 border border-sky-100 animate-fadeIn">
-                <div className="text-[10px] font-bold text-sky-700 uppercase flex items-center gap-1.5 mb-1">
-                  <FontAwesomeIcon icon={faRainbow} className="text-amber-500" />
-                  <span>สู่สายรุ้ง</span>
-                </div>
-                <input
-                  type="date"
-                  value={deceasedDate}
-                  onChange={(e) => setDeceasedDate(e.target.value)}
-                  className="w-full rounded-xl border border-sky-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 focus:border-sky-500 focus:outline-hidden"
-                />
-              </div>
+              <DateField
+                label="สู่สายรุ้ง"
+                value={deceasedDate}
+                onChange={setDeceasedDate}
+                title="เลือกวันที่สู่สายรุ้ง"
+                dateFormat={dateFormat}
+                icon={faRainbow}
+                iconColor="text-amber-500"
+                minDate={birthDate || undefined}
+                allowClear={true}
+                className="bg-sky-50/60 border-sky-100"
+              />
             )}
           </div>
 
