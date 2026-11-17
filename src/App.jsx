@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { initialPets } from './defaultPets';
 import PetCard from './components/PetCard';
+import PetListItem from './components/PetListItem';
 import PetModal from './components/PetModal';
 import ImageViewerModal from './components/ImageViewerModal';
 import BackupModal from './components/BackupModal';
@@ -13,7 +14,10 @@ import SplashScreen from './components/SplashScreen';
 import { resolveAllKinships } from './kinshipEngine';
 import { parseLocalDate, getTodayLocal } from './utils';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBars, faPlus, faXmark, faPaw, faMagnifyingGlass, faSitemap } from '@fortawesome/free-solid-svg-icons';
+import { 
+  faBars, faPlus, faXmark, faPaw, faMagnifyingGlass, 
+  faSeedling, faRainbow, faSquare, faTableCellsLarge, faList 
+} from '@fortawesome/free-solid-svg-icons';
 import confetti from 'canvas-confetti';
 
 const STORAGE_KEY = 'mypetsage_modern_pets_v2';
@@ -22,7 +26,34 @@ export default function App() {
   const [pets, setPets] = useState(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
-      return saved ? JSON.parse(saved) : initialPets;
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        // Data integrity migration: Only pet-2 (ตังค์ทอน) is female, ensure others are male
+        const reconciled = parsed.map(p => {
+          if (p.id === 'pet-4' || p.id === 'pet-6') {
+            return { 
+              ...p, 
+              gender: 'male',
+              note: p.id === 'pet-6' && p.note?.includes('สาวน้อย') 
+                ? p.note.replace('สาวน้อย', 'หนุ่มน้อย') 
+                : p.note
+            };
+          }
+          if (p.id === 'pet-2' || p.id === 'pet-3') {
+            // Update child relationship labels to ลูกชาย
+            const updatedRels = (p.relationships || []).map(r => {
+              if (r.targetPetId === 'pet-4' || r.targetPetId === 'pet-6') {
+                return { ...r, label: 'ลูกชาย' };
+              }
+              return r;
+            });
+            return { ...p, relationships: updatedRels };
+          }
+          return p;
+        });
+        return reconciled;
+      }
+      return initialPets;
     } catch (e) {
       return initialPets;
     }
@@ -30,7 +61,6 @@ export default function App() {
 
   const [activeTab, setActiveTab] = useState('all'); // 'all', 'alive', 'deceased'
   const [sortBy, setSortBy] = useState('age_desc'); // 'age_desc', 'age_asc', 'bday_near'
-  const [searchQuery, setSearchQuery] = useState('');
   
   // Modals & Drawer
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -58,6 +88,22 @@ export default function App() {
     try {
       localStorage.setItem('mypaw_date_format', fmt);
     } catch(e) {}
+  };
+
+  // 🔲 View Mode: '1col' (1-col Hero) | '2col' (2-col Grid) | 'list' (Card List)
+  const [viewMode, setViewMode] = useState(() => {
+    try {
+      return localStorage.getItem('mypaw_view_mode') || '1col';
+    } catch (e) {
+      return '1col';
+    }
+  });
+
+  const handleSetViewMode = (mode) => {
+    setViewMode(mode);
+    try {
+      localStorage.setItem('mypaw_view_mode', mode);
+    } catch (e) {}
   };
 
   // Save to localStorage
@@ -197,11 +243,6 @@ export default function App() {
       if (activeTab === 'deceased') return p.status === 'deceased';
       return true;
     })
-    .filter(p => {
-      if (!searchQuery.trim()) return true;
-      return p.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-             (p.note && p.note.toLowerCase().includes(searchQuery.toLowerCase()));
-    })
     .sort((a, b) => {
       if (sortBy === 'age_desc') {
         return (parseLocalDate(a.birthDate) || 0) - (parseLocalDate(b.birthDate) || 0);
@@ -226,71 +267,125 @@ export default function App() {
 
   const aliveCount = pets.filter(p => p.status !== 'deceased').length;
   const deceasedCount = pets.filter(p => p.status === 'deceased').length;
-  const isFiltered = activeTab !== 'all' || searchQuery.trim() !== '';
+  const isFiltered = activeTab !== 'all';
 
   return (
     <div className="min-h-screen bg-slate-100 text-slate-800 flex flex-col items-center">
       {/* App Container */}
-      <div className="w-full max-w-lg min-h-screen bg-slate-50 shadow-2xl flex flex-col relative pb-8">
+      <div className="w-full max-w-lg md:max-w-3xl min-h-screen bg-slate-50 shadow-2xl flex flex-col relative pb-28">
         
-        {/* Clean Sticky App Bar */}
-        <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md px-5 py-3.5 border-b border-slate-200/60 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            {/* Hamburger Menu Button */}
+        {/* Clean Sticky App Bar (Glance Zone) */}
+        <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md px-4 sm:px-5 py-3 border-b border-slate-200/60 flex items-center justify-between pt-[max(0.75rem,env(safe-area-inset-top))]">
+          {/* Left: Hamburger Button (slides in from left) + Brand Title */}
+          <div className="flex items-center gap-2.5">
             <button
               onClick={() => setIsDrawerOpen(true)}
-              className="w-10 h-10 -ml-1 rounded-2xl bg-slate-100/90 hover:bg-slate-200 text-slate-700 flex items-center justify-center active:scale-95 transition-all shadow-2xs"
-              title="เมนู"
+              className="w-9 h-9 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center active:scale-90 transition-all shadow-2xs -ml-0.5"
+              title="Menu"
+              aria-label="Menu"
             >
-              <FontAwesomeIcon icon={faBars} className="text-base" />
+              <FontAwesomeIcon icon={faBars} className="text-sm" />
             </button>
 
-            {/* Brand Title in Mitr */}
             <h1 className="font-mitr text-2xl font-semibold text-slate-900 tracking-wide flex items-center gap-1.5">
               <span>MyPaw</span>
               <FontAwesomeIcon icon={faPaw} className="text-paw-500 text-base" />
             </h1>
           </div>
 
+          {/* Right: View Mode Switcher (1cal / 2cal / 3card list) */}
           <div className="flex items-center gap-2">
-            {/* Active Filter Pill */}
-            {isFiltered && (
+            {/* View Mode Switcher: 1col (1cal), 2col (2cal), list (3card list) */}
+            <div className="flex items-center bg-slate-100/90 p-1 rounded-2xl border border-slate-200/60 shadow-2xs">
               <button
-                onClick={() => {
-                  setActiveTab('all');
-                  setSearchQuery('');
-                }}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-paw-50 border border-paw-200 text-[11px] font-bold text-paw-700 hover:bg-paw-100 transition-colors animate-fadeIn"
+                onClick={() => handleSetViewMode('1col')}
+                className={`w-7 h-7 rounded-xl flex items-center justify-center transition-all active:scale-90 ${
+                  viewMode === '1col'
+                    ? 'bg-white text-paw-600 shadow-xs'
+                    : 'text-slate-400 hover:text-slate-600'
+                }`}
+                title="1 Column (Large Hero)"
+                aria-label="1 Column"
               >
-                <span>{activeTab === 'alive' ? 'อยู่ด้วยกัน' : activeTab === 'deceased' ? 'ดาวแมว' : searchQuery}</span>
-                <FontAwesomeIcon icon={faXmark} className="text-[10px]" />
+                <FontAwesomeIcon icon={faSquare} className="text-xs" />
               </button>
-            )}
 
-            {/* Quick Family Tree Access Button */}
-            <button
-              onClick={() => setIsFamilyOpen(true)}
-              className="w-10 h-10 rounded-2xl bg-amber-50 hover:bg-amber-100 text-amber-600 border border-amber-200/60 flex items-center justify-center active:scale-95 transition-all shadow-2xs"
-              title="ผังครอบครัว"
-            >
-              <FontAwesomeIcon icon={faSitemap} className="text-sm" />
-            </button>
+              <button
+                onClick={() => handleSetViewMode('2col')}
+                className={`w-7 h-7 rounded-xl flex items-center justify-center transition-all active:scale-90 ${
+                  viewMode === '2col'
+                    ? 'bg-white text-paw-600 shadow-xs'
+                    : 'text-slate-400 hover:text-slate-600'
+                }`}
+                title="2 Columns (Grid)"
+                aria-label="2 Columns"
+              >
+                <FontAwesomeIcon icon={faTableCellsLarge} className="text-xs" />
+              </button>
+
+              <button
+                onClick={() => handleSetViewMode('list')}
+                className={`w-7 h-7 rounded-xl flex items-center justify-center transition-all active:scale-90 ${
+                  viewMode === 'list'
+                    ? 'bg-white text-paw-600 shadow-xs'
+                    : 'text-slate-400 hover:text-slate-600'
+                }`}
+                title="Card List View"
+                aria-label="Card List View"
+              >
+                <FontAwesomeIcon icon={faList} className="text-xs" />
+              </button>
+            </div>
           </div>
         </header>
 
-        {/* Pure Pet Cards Feed */}
-        <main className="px-5 py-4 flex-1 space-y-4">
+        {/* Pure Pet Cards Feed (Responsive according to viewMode) */}
+        <main className="px-4 sm:px-5 py-4 flex-1">
           {filteredPets.length > 0 ? (
-            filteredPets.map(pet => (
-              <PetCard
-                key={pet.id}
-                pet={pet}
-                allPets={pets}
-                dateFormat={dateFormat}
-                onOpenMore={(p) => setDetailPet(p)}
-                onViewImage={(p) => setViewingImagePet(p)}
-              />
-            ))
+            viewMode === 'list' ? (
+              /* 3. Card List View */
+              <div className="flex flex-col gap-2.5 max-w-lg mx-auto animate-fadeIn">
+                {filteredPets.map(pet => (
+                  <PetListItem
+                    key={pet.id}
+                    pet={pet}
+                    dateFormat={dateFormat}
+                    onOpenMore={(p) => setDetailPet(p)}
+                    onViewImage={(p) => setViewingImagePet(p)}
+                  />
+                ))}
+              </div>
+            ) : viewMode === '2col' ? (
+              /* 2. Two Columns Grid */
+              <div className="grid grid-cols-2 gap-3 max-w-3xl mx-auto animate-fadeIn">
+                {filteredPets.map(pet => (
+                  <PetCard
+                    key={pet.id}
+                    pet={pet}
+                    compact={true}
+                    allPets={pets}
+                    dateFormat={dateFormat}
+                    onOpenMore={(p) => setDetailPet(p)}
+                    onViewImage={(p) => setViewingImagePet(p)}
+                  />
+                ))}
+              </div>
+            ) : (
+              /* 1. One Column Full Hero Card */
+              <div className="grid grid-cols-1 gap-4 max-w-lg mx-auto animate-fadeIn">
+                {filteredPets.map(pet => (
+                  <PetCard
+                    key={pet.id}
+                    pet={pet}
+                    compact={false}
+                    allPets={pets}
+                    dateFormat={dateFormat}
+                    onOpenMore={(p) => setDetailPet(p)}
+                    onViewImage={(p) => setViewingImagePet(p)}
+                  />
+                ))}
+              </div>
+            )
           ) : pets.length === 0 ? (
             /* Empty State */
             <div className="py-28 px-6 text-center">
@@ -302,27 +397,86 @@ export default function App() {
                   setEditingPet(null);
                   setIsModalOpen(true);
                 }}
-                className="mt-2 px-6 py-3 rounded-2xl bg-paw-500 hover:bg-paw-600 text-white font-bold text-sm shadow-lg shadow-paw-500/25 transition-all inline-flex items-center gap-2"
+                className="mt-2 px-6 py-3 rounded-2xl bg-paw-500 hover:bg-paw-600 text-white font-bold text-sm shadow-lg shadow-paw-500/25 transition-all inline-flex items-center gap-2 active:scale-95"
               >
                 <FontAwesomeIcon icon={faPlus} />
-                <span>เพิ่มสมาชิก</span>
+                <span>Add Pet</span>
               </button>
             </div>
           ) : (
             <div className="py-20 text-center text-slate-400">
               <FontAwesomeIcon icon={faMagnifyingGlass} className="text-3xl text-slate-300 block mx-auto mb-3" />
               <button
-                onClick={() => {
-                  setActiveTab('all');
-                  setSearchQuery('');
-                }}
-                className="px-4 py-1.5 rounded-xl bg-slate-200 text-slate-700 text-xs font-semibold hover:bg-slate-300 transition-colors"
+                onClick={() => setActiveTab('all')}
+                className="px-4 py-2 rounded-xl bg-slate-200 text-slate-700 text-xs font-semibold hover:bg-slate-300 transition-colors active:scale-95"
               >
-                แสดงทั้งหมด
+                Show All
               </button>
             </div>
           )}
         </main>
+
+        {/* 📱 Mobile Floating Thumb Bar (Optimal Thumb Zone Ergonomics) */}
+        <nav 
+          aria-label="Mobile Bottom Navigation"
+          className="fixed bottom-4 inset-x-0 mx-auto max-w-sm px-3 z-40 pointer-events-none pb-[env(safe-area-inset-bottom)]"
+        >
+          <div className="pointer-events-auto bg-white/90 backdrop-blur-xl border border-slate-200/90 shadow-2xl shadow-slate-900/15 rounded-full p-1.5 flex items-center justify-between gap-1.5 transition-all">
+            
+            {/* Quick Segmented Filter Pills */}
+            <div className="flex items-center bg-slate-100/90 p-1 rounded-full text-xs font-bold text-slate-600">
+              <button
+                onClick={() => setActiveTab('all')}
+                className={`px-3 py-1.5 rounded-full transition-all active:scale-95 ${
+                  activeTab === 'all'
+                    ? 'bg-white text-slate-900 shadow-xs'
+                    : 'text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                All
+              </button>
+              <button
+                onClick={() => setActiveTab('alive')}
+                className={`px-2.5 py-1.5 rounded-full transition-all flex items-center gap-1 active:scale-95 ${
+                  activeTab === 'alive'
+                    ? 'bg-white text-emerald-700 shadow-xs'
+                    : 'text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                <FontAwesomeIcon icon={faSeedling} className="text-[10px]" />
+                <span>With Us</span>
+              </button>
+              <button
+                onClick={() => setActiveTab('deceased')}
+                className={`px-2.5 py-1.5 rounded-full transition-all flex items-center gap-1 active:scale-95 ${
+                  activeTab === 'deceased'
+                    ? 'bg-white text-sky-700 shadow-xs'
+                    : 'text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                <FontAwesomeIcon icon={faRainbow} className="text-[10px]" />
+                <span>Memorial</span>
+              </button>
+            </div>
+
+            {/* Quick Primary Actions in Easy Thumb Reach */}
+            <div className="flex items-center gap-1 pr-0.5">
+              {/* Add Pet Primary FAB */}
+              <button
+                onClick={() => {
+                  setEditingPet(null);
+                  setIsModalOpen(true);
+                }}
+                className="w-10 h-10 rounded-full bg-paw-500 hover:bg-paw-600 text-white flex items-center justify-center shadow-md shadow-paw-500/35 active:scale-90 transition-transform"
+                title="Add Pet"
+                aria-label="Add Pet"
+              >
+                <FontAwesomeIcon icon={faPlus} className="text-sm" />
+              </button>
+            </div>
+
+          </div>
+        </nav>
 
       </div>
 
@@ -337,8 +491,6 @@ export default function App() {
         onOpenBackup={() => setIsBackupOpen(true)}
         onOpenFamily={() => setIsFamilyOpen(true)}
         onResetDefault={() => setPets(initialPets)}
-        searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         sortBy={sortBy}

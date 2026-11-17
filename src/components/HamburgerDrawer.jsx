@@ -1,7 +1,7 @@
 import React from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
-  faXmark, faPlus, faDatabase, faRotateLeft, faMagnifyingGlass, 
+  faXmark, faPlus, faDatabase, faRotateLeft, 
   faArrowDownWideShort, faFilter, faHeart, faPaw, faSitemap, faGlobe,
   faSeedling, faRainbow
 } from '@fortawesome/free-solid-svg-icons';
@@ -13,8 +13,6 @@ export default function HamburgerDrawer({
   onOpenBackup,
   onOpenFamily,
   onResetDefault,
-  searchQuery,
-  setSearchQuery,
   activeTab,
   setActiveTab,
   sortBy,
@@ -87,7 +85,7 @@ export default function HamburgerDrawer({
                 <div className="w-9 h-9 rounded-xl bg-paw-500 text-white flex items-center justify-center shadow-xs">
                   <FontAwesomeIcon icon={faPlus} className="text-sm" />
                 </div>
-                <span>เพิ่มสมาชิก</span>
+                <span>Add Pet</span>
               </button>
 
               <button
@@ -100,31 +98,11 @@ export default function HamburgerDrawer({
                 <div className="w-9 h-9 rounded-xl bg-amber-500 text-white flex items-center justify-center shadow-xs">
                   <FontAwesomeIcon icon={faSitemap} className="text-sm" />
                 </div>
-                <span>ผังครอบครัว</span>
+                <span>Family Tree</span>
               </button>
             </div>
 
-            {/* 2. Search Input */}
-            <div className="relative">
-              <FontAwesomeIcon icon={faMagnifyingGlass} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="ค้นหาชื่อ..."
-                className="w-full pl-9 pr-8 py-2.5 rounded-2xl bg-slate-100 border border-slate-200 text-xs focus:bg-white focus:ring-2 focus:ring-paw-200 focus:outline-hidden"
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                >
-                  <FontAwesomeIcon icon={faXmark} className="text-xs" />
-                </button>
-              )}
-            </div>
-
-            {/* 3. Filter Options */}
+            {/* 2. Filter Options */}
             <div className="space-y-1.5">
               <div className="grid grid-cols-3 gap-1 bg-slate-100 p-1 rounded-2xl">
                 <button
@@ -135,7 +113,7 @@ export default function HamburgerDrawer({
                       : 'text-slate-500 hover:text-slate-800'
                   }`}
                 >
-                  ทั้งหมด
+                  All
                 </button>
                 <button
                   onClick={() => setActiveTab('alive')}
@@ -146,7 +124,7 @@ export default function HamburgerDrawer({
                   }`}
                 >
                   <FontAwesomeIcon icon={faSeedling} className="text-[10px]" />
-                  <span>อยู่ด้วยกัน</span>
+                  <span>With Us</span>
                 </button>
                 <button
                   onClick={() => setActiveTab('deceased')}
@@ -157,7 +135,7 @@ export default function HamburgerDrawer({
                   }`}
                 >
                   <FontAwesomeIcon icon={faRainbow} className="text-[10px]" />
-                  <span>ดาวแมว</span>
+                  <span>Memorial</span>
                 </button>
               </div>
             </div>
@@ -170,13 +148,13 @@ export default function HamburgerDrawer({
                 onChange={(e) => setSortBy(e.target.value)}
                 className="w-full py-2.5 pl-9 pr-3.5 rounded-2xl bg-slate-100 border border-slate-200 text-xs font-semibold text-slate-700 focus:bg-white focus:outline-hidden cursor-pointer"
               >
-                <option value="age_desc">พี่ใหญ่ ➔ น้องเล็ก</option>
-                <option value="age_asc">น้องเล็ก ➔ พี่ใหญ่</option>
-                <option value="bday_near">วันเกิดใกล้ถึง</option>
+                <option value="age_desc">Oldest First</option>
+                <option value="age_asc">Youngest First</option>
+                <option value="bday_near">Upcoming Birthday</option>
               </select>
             </div>
 
-            {/* 5. Date Format System (สากล หรือ ไทย) */}
+            {/* 5. Date Format System (Default or Thai Format) */}
             <div className="grid grid-cols-2 gap-1 bg-slate-100 p-1 rounded-2xl">
               <button
                 type="button"
@@ -188,7 +166,7 @@ export default function HamburgerDrawer({
                 }`}
               >
                 <FontAwesomeIcon icon={faGlobe} className="text-[10px]" />
-                <span>ค.ศ. (2026)</span>
+                <span>Default</span>
               </button>
               <button
                 type="button"
@@ -200,7 +178,7 @@ export default function HamburgerDrawer({
                 }`}
               >
                 <FontAwesomeIcon icon={faGlobe} className="text-[10px]" />
-                <span>พ.ศ. (2569)</span>
+                <span>Thai Format</span>
               </button>
             </div>
 
@@ -218,12 +196,12 @@ export default function HamburgerDrawer({
                 <div className="w-7 h-7 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center">
                   <FontAwesomeIcon icon={faDatabase} className="text-xs" />
                 </div>
-                <span>สำรอง / กู้คืนข้อมูล</span>
+                <span>Backup & Restore</span>
               </button>
 
               <button
                 onClick={() => {
-                  if (window.confirm('รีเซ็ตข้อมูลกลับเป็นน้องแมวทั้ง 7 ตัวดั้งเดิม?')) {
+                  if (window.confirm('Reset data back to original 7 cats?')) {
                     onResetDefault();
                     onClose();
                   }
@@ -233,20 +211,39 @@ export default function HamburgerDrawer({
                 <div className="w-7 h-7 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center">
                   <FontAwesomeIcon icon={faRotateLeft} className="text-xs" />
                 </div>
-                <span>รีเซ็ตค่าเริ่มต้น (7 ตัว)</span>
+                <span>Reset to Default (7 Cats)</span>
               </button>
             </div>
 
           </div>
         </div>
 
-        {/* Footer info */}
-        <div className="p-4 border-t border-slate-100 bg-slate-50/50 flex items-center justify-between text-xs text-slate-400">
-          <div className="flex items-center gap-1.5 font-mitr">
-            <FontAwesomeIcon icon={faPaw} className="text-paw-400 text-xs" />
-            <span>MyPaw</span>
+        {/* Footer info & Credit */}
+        <div className="p-4 border-t border-slate-100 bg-slate-50/80 flex flex-col gap-2 text-xs">
+          <div className="flex items-center justify-between text-slate-600">
+            <div className="flex items-center gap-1.5 font-mitr font-medium text-slate-800">
+              <FontAwesomeIcon icon={faPaw} className="text-paw-500 text-xs" />
+              <span>MyPaw</span>
+              <span className="text-[10px] font-sans text-slate-400 font-normal">v1.3.0</span>
+            </div>
+
+            <a
+              href="https://github.com/tonwtch"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900 font-semibold text-[11px] transition-colors"
+            >
+              <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
+                <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
+              </svg>
+              <span>GitHub</span>
+            </a>
           </div>
-          <span className="text-[11px] font-sans">v1.3.0</span>
+
+          <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1 border-t border-slate-200/60 font-sans">
+            <span>© tonwtch</span>
+            <span>All rights reserved</span>
+          </div>
         </div>
       </div>
     </div>

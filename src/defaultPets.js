@@ -26,9 +26,9 @@ export const initialPets = [
     "relationships": [
       { "targetPetId": "pet-1", "type": "parent", "label": "พ่อ" },
       { "targetPetId": "pet-3", "type": "partner", "label": "แฟน (ตัวผู้)" },
-      { "targetPetId": "pet-4", "type": "child", "label": "ลูกสาว" },
+      { "targetPetId": "pet-4", "type": "child", "label": "ลูกชาย" },
       { "targetPetId": "pet-5", "type": "child", "label": "ลูกชาย" },
-      { "targetPetId": "pet-6", "type": "child", "label": "ลูกสาว" },
+      { "targetPetId": "pet-6", "type": "child", "label": "ลูกชาย" },
       { "targetPetId": "pet-7", "type": "child", "label": "ลูกชาย" }
     ]
   },
@@ -44,21 +44,21 @@ export const initialPets = [
     "avatar": "/avatars/khaitom.png",
     "relationships": [
       { "targetPetId": "pet-2", "type": "partner", "label": "แฟน (ตัวเมีย)" },
-      { "targetPetId": "pet-4", "type": "child", "label": "ลูกสาว" },
+      { "targetPetId": "pet-4", "type": "child", "label": "ลูกชาย" },
       { "targetPetId": "pet-5", "type": "child", "label": "ลูกชาย" },
-      { "targetPetId": "pet-6", "type": "child", "label": "ลูกสาว" },
+      { "targetPetId": "pet-6", "type": "child", "label": "ลูกชาย" },
       { "targetPetId": "pet-7", "type": "child", "label": "ลูกชาย" }
     ]
   },
   {
     "id": "pet-4",
     "name": "พวยพวย",
-    "gender": "female",
+    "gender": "male",
     "neutered": true,
     "birthDate": "2021-08-14",
     "status": "alive",
     "deceasedDate": "",
-    "note": "พี่น้องฝาแฝดกับทัศนัยภูวดล",
+    "note": "ลูกชุดแรก • พี่น้องฝาแฝดกับทัศนัยภูวดล",
     "avatar": "/avatars/phuayphuay.png",
     "relationships": [
       { "targetPetId": "pet-2", "type": "parent", "label": "แม่" },
@@ -74,7 +74,7 @@ export const initialPets = [
     "birthDate": "2021-08-14",
     "status": "alive",
     "deceasedDate": "",
-    "note": "พี่น้องฝาแฝดกับพวยพวย",
+    "note": "ลูกชุดแรก • พี่น้องฝาแฝดกับพวยพวย",
     "avatar": "/avatars/tassanai.png",
     "relationships": [
       { "targetPetId": "pet-2", "type": "parent", "label": "แม่" },
@@ -85,12 +85,12 @@ export const initialPets = [
   {
     "id": "pet-6",
     "name": "ทองจิ๋ว",
-    "gender": "female",
+    "gender": "male",
     "neutered": true,
     "birthDate": "2021-12-01",
     "status": "alive",
     "deceasedDate": "",
-    "note": "",
+    "note": "ลูกชุดสอง • หนุ่มน้อยเรียบร้อย ตาแป๋ว",
     "avatar": "/avatars/thongjiew.png",
     "relationships": [
       { "targetPetId": "pet-2", "type": "parent", "label": "แม่" },
@@ -105,7 +105,7 @@ export const initialPets = [
     "birthDate": "2023-07-03",
     "status": "alive",
     "deceasedDate": "",
-    "note": "น้องเล็กสุดประจำบ้าน",
+    "note": "ลูกชุดสาม • น้องเล็กสุดประจำบ้าน ซนที่สุด",
     "avatar": "/avatars/kuaytiew.png",
     "relationships": [
       { "targetPetId": "pet-2", "type": "parent", "label": "แม่" },

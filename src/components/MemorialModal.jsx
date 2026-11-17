@@ -35,12 +35,14 @@ export default function MemorialModal({ pet, isOpen, dateFormat = 'en', onClose,
   return (
     <div 
       onClick={onClose}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-md animate-fadeIn"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/75 sm:p-4 backdrop-blur-md animate-fadeIn"
     >
       <div 
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-md rounded-[32px] bg-gradient-to-b from-slate-900 via-indigo-950 to-slate-900 text-white shadow-2xl overflow-hidden flex flex-col max-h-[88vh] border border-sky-400/20 animate-scaleUp"
+        className="w-full max-w-md rounded-t-[32px] sm:rounded-[32px] bg-gradient-to-b from-slate-900 via-indigo-950 to-slate-900 text-white shadow-2xl overflow-hidden flex flex-col max-h-[92vh] sm:max-h-[88vh] border border-sky-400/20 animate-slideUpSheet sm:animate-scaleUp pb-[env(safe-area-inset-bottom)]"
       >
+        {/* Mobile Pull Handle */}
+        <div className="w-12 h-1.5 bg-white/30 rounded-full mx-auto mt-2.5 -mb-1 sm:hidden flex-shrink-0" />
         
         {/* Header with Close */}
         <div className="px-6 py-4 border-b border-white/10 flex items-center justify-between">

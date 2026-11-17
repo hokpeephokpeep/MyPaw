@@ -3,15 +3,20 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
   faXmark, faPenToSquare, faWeightScale, faFire, faSitemap, 
   faCalendarDays, faWandMagicSparkles, faVenus, faMars, faLink,
-  faPaw, faScissors, faRainbow, faSeedling, faCakeCandles, faInfinity
+  faPaw, faScissors, faRainbow, faSeedling, faCakeCandles, faInfinity, faExpand
 } from '@fortawesome/free-solid-svg-icons';
 import { calculateAge, calculateCatToHumanAge, formatDate, getLifeStage, getDaysUntilBirthday } from '../utils';
 
-export default function PetDetailModal({ pet, allPets = [], dateFormat = 'en', isOpen, onClose, onEdit, onOpenMemorial, onOpenHealth, onOpenFamily, onSelectPet }) {
+export default function PetDetailModal({ pet, allPets = [], dateFormat = 'en', isOpen, onClose, onEdit, onOpenMemorial, onOpenHealth, onOpenFamily, onSelectPet, onViewImage }) {
   if (!isOpen || !pet) return null;
 
   const isDeceased = pet.status === 'deceased';
-  const age = calculateAge(pet.birthDate, isDeceased ? pet.deceasedDate : null);
+  // 🐾 Continuous age counting from birthdate until today for all pets
+  const age = calculateAge(pet.birthDate);
+  // 🌈 For deceased pets, summarize their earthly lifespan (how old they were at passing)
+  const lifespan = isDeceased && pet.deceasedDate 
+    ? calculateAge(pet.birthDate, pet.deceasedDate)
+    : null;
   const humanAge = calculateCatToHumanAge(age.years, age.months);
   const lifeStage = getLifeStage(age.years, age.months);
   const daysUntilBday = !isDeceased ? getDaysUntilBirthday(pet.birthDate) : null;
@@ -26,12 +31,14 @@ export default function PetDetailModal({ pet, allPets = [], dateFormat = 'en', i
   return (
     <div 
       onClick={onClose}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs animate-fadeIn"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 sm:p-4 backdrop-blur-xs animate-fadeIn"
     >
       <div 
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-md rounded-[32px] bg-white text-slate-800 shadow-2xl overflow-hidden flex flex-col max-h-[88vh] animate-scaleUp"
+        className="w-full max-w-md rounded-t-[32px] sm:rounded-[32px] bg-white text-slate-800 shadow-2xl overflow-hidden flex flex-col max-h-[92vh] sm:max-h-[88vh] animate-slideUpSheet sm:animate-scaleUp pb-[env(safe-area-inset-bottom)] relative"
       >
+        {/* Mobile Pull Handle */}
+        <div className="w-12 h-1.5 bg-white/60 rounded-full mx-auto my-2.5 sm:hidden absolute top-0 inset-x-0 z-30 pointer-events-none" />
         
         {/* Header with Hero preview */}
         <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-900 flex-shrink-0">
@@ -131,16 +138,19 @@ export default function PetDetailModal({ pet, allPets = [], dateFormat = 'en', i
 
             <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-100 flex items-center gap-3">
               <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                isDeceased ? 'bg-purple-100 text-purple-600' : 'bg-amber-100 text-amber-600'
+                isDeceased ? 'bg-amber-100 text-amber-600' : 'bg-amber-100 text-amber-600'
               }`}>
-                <FontAwesomeIcon icon={isDeceased ? faInfinity : faWandMagicSparkles} className="text-sm" />
+                <FontAwesomeIcon icon={isDeceased ? faRainbow : faWandMagicSparkles} className="text-sm" />
               </div>
               <div className="min-w-0">
                 <div className="text-sm font-bold text-slate-800 truncate">
-                  {isDeceased ? `${age.totalDays.toLocaleString()} วัน` : `~${humanAge} ปีคน`}
+                  {age.years > 0 ? `${age.years}y ` : ''}{age.months > 0 ? `${age.months}m ` : ''}{age.days}d
                 </div>
-                <div className="text-[11px] text-slate-400 mt-0.5 truncate">
-                  {age.years > 0 ? `${age.years} ปี ` : ''}{age.months > 0 ? `${age.months} ด. ` : ''}{age.days} วัน
+                <div className="text-[11px] text-slate-400 mt-0.5 font-mono font-semibold tracking-tight truncate">
+                  {isDeceased && lifespan 
+                    ? `ช่วงชีวิต ${lifespan.years}y ${lifespan.months}m ${lifespan.days}d`
+                    : `~${humanAge}y human`
+                  }
                 </div>
               </div>
             </div>
@@ -160,9 +170,9 @@ export default function PetDetailModal({ pet, allPets = [], dateFormat = 'en', i
                   <FontAwesomeIcon icon={faWeightScale} className="text-sm" />
                 </div>
                 <div className="min-w-0">
-                  <div className="text-xs font-bold text-slate-800">สมุดสุขภาพ</div>
+                  <div className="text-xs font-bold text-slate-800">Health Log</div>
                   <div className="text-[11px] text-paw-600 font-semibold truncate">
-                    {pet.latestWeight ? `${pet.latestWeight} กก.` : 'น้ำหนัก • วัคซีน'}
+                    {pet.latestWeight ? `${pet.latestWeight} kg` : 'Weight • Vaccine'}
                   </div>
                 </div>
               </button>
@@ -178,8 +188,8 @@ export default function PetDetailModal({ pet, allPets = [], dateFormat = 'en', i
                   <FontAwesomeIcon icon={faFire} className="text-sm" />
                 </div>
                 <div className="min-w-0">
-                  <div className="text-xs font-bold text-slate-800">วิมานดาวแมว</div>
-                  <div className="text-[11px] text-amber-700 font-medium truncate">จุดเทียน • จดหมาย</div>
+                  <div className="text-xs font-bold text-slate-800">Memorial</div>
+                  <div className="text-[11px] text-amber-700 font-medium truncate">Candle • Letters</div>
                 </div>
               </button>
             )}
@@ -195,8 +205,8 @@ export default function PetDetailModal({ pet, allPets = [], dateFormat = 'en', i
                 <FontAwesomeIcon icon={faSitemap} className="text-sm" />
               </div>
               <div className="min-w-0">
-                <div className="text-xs font-bold text-slate-800">ผังครอบครัว</div>
-                <div className="text-[11px] text-blue-600 font-semibold">{relations.length} สายสัมพันธ์</div>
+                <div className="text-xs font-bold text-slate-800">Family Tree</div>
+                <div className="text-[11px] text-blue-600 font-semibold">{relations.length} relatives</div>
               </div>
             </button>
           </div>

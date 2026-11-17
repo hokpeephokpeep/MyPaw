@@ -50,12 +50,14 @@ export default function BackupModal({ isOpen, onClose, pets, onRestore }) {
   return (
     <div 
       onClick={onClose}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs animate-fadeIn"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 sm:p-4 backdrop-blur-xs animate-fadeIn"
     >
       <div 
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-sm rounded-[32px] bg-white shadow-2xl overflow-hidden flex flex-col animate-scaleUp"
+        className="w-full max-w-sm rounded-t-[32px] sm:rounded-[32px] bg-white shadow-2xl overflow-hidden flex flex-col animate-slideUpSheet sm:animate-scaleUp pb-[env(safe-area-inset-bottom)]"
       >
+        {/* Mobile Pull Handle */}
+        <div className="w-12 h-1.5 bg-slate-300 rounded-full mx-auto mt-2.5 -mb-1 sm:hidden flex-shrink-0" />
         {/* Header */}
         <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
           <div className="flex items-center gap-2.5">
@@ -63,7 +65,7 @@ export default function BackupModal({ isOpen, onClose, pets, onRestore }) {
               <FontAwesomeIcon icon={faDatabase} className="text-sm" />
             </div>
             <h2 className="font-mitr text-lg font-medium text-slate-800">
-              ข้อมูล
+              Backup & Restore
             </h2>
           </div>
           <button
@@ -85,7 +87,7 @@ export default function BackupModal({ isOpen, onClose, pets, onRestore }) {
               <div className="w-9 h-9 rounded-xl bg-paw-100 text-paw-600 flex items-center justify-center">
                 <FontAwesomeIcon icon={faDownload} className="text-xs" />
               </div>
-              <span className="font-bold text-xs text-slate-800">ส่งออกไฟล์ (.json)</span>
+              <span className="font-bold text-xs text-slate-800">Export Backup (.json)</span>
             </div>
             <span className="text-[11px] font-bold bg-paw-50 text-paw-700 border border-paw-200 px-2.5 py-0.5 rounded-full">
               {pets.length}
@@ -101,7 +103,7 @@ export default function BackupModal({ isOpen, onClose, pets, onRestore }) {
               <div className="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center">
                 <FontAwesomeIcon icon={faUpload} className="text-xs" />
               </div>
-              <span className="font-bold text-xs text-slate-800">นำเข้าไฟล์ (.json)</span>
+              <span className="font-bold text-xs text-slate-800">Import Backup (.json)</span>
             </button>
             <input
               type="file"
@@ -120,7 +122,7 @@ export default function BackupModal({ isOpen, onClose, pets, onRestore }) {
             <div className="w-9 h-9 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center">
               <FontAwesomeIcon icon={faRotateLeft} className="text-xs" />
             </div>
-            <span className="font-bold text-xs text-slate-800">ค่าเริ่มต้น (7 ตัว)</span>
+            <span className="font-bold text-xs text-slate-800">Reset to Default (7 Cats)</span>
           </button>
         </div>
       </div>
