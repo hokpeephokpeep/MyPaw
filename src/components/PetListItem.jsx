@@ -1,9 +1,9 @@
 import React, { useRef } from 'react';
-import { calculateAge, calculateCatToHumanAge, formatDate, getDaysUntilBirthday } from '../utils';
+import { calculateAge, calculateCatToHumanAge, formatDate, getDaysUntilBirthday, getHumanAgeIcon } from '../utils';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
   faVenus, faMars, faRainbow, faCakeCandles, faPaw, 
-  faChevronRight, faWandMagicSparkles, faInfinity 
+  faChevronRight, faInfinity 
 } from '@fortawesome/free-solid-svg-icons';
 
 export default function PetListItem({ pet, dateFormat = 'en', onOpenMore, onToggleBottomNav }) {
@@ -133,7 +133,7 @@ export default function PetListItem({ pet, dateFormat = 'en', onOpenMore, onTogg
       <div className="flex items-center gap-2 flex-shrink-0">
         {!isDeceased ? (
           <div className="bg-amber-50/90 border border-amber-200/70 rounded-full px-3 py-1 flex items-center gap-1.5 shadow-2xs whitespace-nowrap">
-            <FontAwesomeIcon icon={faWandMagicSparkles} className="text-amber-500 text-[10px]" />
+            <FontAwesomeIcon icon={getHumanAgeIcon(humanAge)} className="text-amber-500 text-[10px]" />
             <span className="text-xs font-bold text-amber-900 tabular-nums">
               ~{humanAge} <span className="font-semibold text-amber-700/90 text-[11px] font-sans">human yrs</span>
             </span>

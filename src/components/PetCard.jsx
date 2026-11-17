@@ -1,8 +1,8 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { calculateAge, calculateCatToHumanAge, formatDate, getDaysUntilBirthday } from '../utils';
+import { calculateAge, calculateCatToHumanAge, formatDate, getDaysUntilBirthday, getHumanAgeIcon } from '../utils';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
-  faCalendarDays, faWandMagicSparkles, faVenus, faMars, 
+  faCalendarDays, faVenus, faMars, 
   faRainbow, faCakeCandles, faPaw, faInfinity 
 } from '@fortawesome/free-solid-svg-icons';
 
@@ -24,6 +24,73 @@ export default function PetCard({ pet, allPets = [], dateFormat = 'en', compact 
   // 📱 Scroll-in View Zoom (Optimal for mobile where hover does not exist)
   const cardRef = useRef(null);
   const [isInView, setIsInView] = useState(false);
+
+  // 📸 Multi-photo Slideshow with Staggered / Randomized Transitions & Focus Visibility Guard
+  const [photoIndex, setPhotoIndex] = useState(0);
+  const [showIndicator, setShowIndicator] = useState(false);
+  const indicatorTimeoutRef = useRef(null);
+
+  const triggerIndicator = () => {
+    setShowIndicator(true);
+    if (indicatorTimeoutRef.current) {
+      clearTimeout(indicatorTimeoutRef.current);
+    }
+    indicatorTimeoutRef.current = setTimeout(() => {
+      setShowIndicator(false);
+    }, 2200);
+  };
+
+  // Touch & Swipe tracking (Swipe left / right to change photo & reveal indicator)
+  const touchStartPosRef = useRef({ x: 0, y: 0 });
+  const isSwipingRef = useRef(false);
+
+  // Normalize photos list
+  const photos = React.useMemo(() => {
+    const list = [];
+    if (pet.avatar) list.push(pet.avatar);
+    if (Array.isArray(pet.photos)) {
+      pet.photos.forEach(p => {
+        if (p && typeof p === 'string' && !list.includes(p)) {
+          list.push(p);
+        }
+      });
+    }
+    return list;
+  }, [pet.avatar, pet.photos]);
+
+  const hasMultiplePhotos = photos.length > 1;
+
+  useEffect(() => {
+    // 🛑 Zero CPU usage when:
+    // 1. Not in focal view (!isInView)
+    // 2. Only 1 photo or no photos
+    if (!isInView || !hasMultiplePhotos) return;
+
+    let timer = null;
+    let isCancelled = false;
+
+    // Randomize time per card so they don't fade in sync like robots:
+    // Staggered interval between 4.8s and 8.0s with per-card random variance
+    const scheduleNext = (delay) => {
+      timer = setTimeout(() => {
+        if (isCancelled) return;
+        setPhotoIndex(prev => (prev + 1) % photos.length);
+        // Next transition with random interval (4800ms - 8000ms)
+        const nextDelay = 4800 + Math.floor(Math.random() * 3200);
+        scheduleNext(nextDelay);
+      }, delay);
+    };
+
+    // Initial stagger delay so cards loaded simultaneously don't fade at the same second
+    const initialDelay = 2500 + Math.floor(Math.random() * 3000);
+    scheduleNext(initialDelay);
+
+    return () => {
+      isCancelled = true;
+      if (timer) clearTimeout(timer);
+      if (indicatorTimeoutRef.current) clearTimeout(indicatorTimeoutRef.current);
+    };
+  }, [isInView, hasMultiplePhotos, photos.length]);
 
   useEffect(() => {
     const el = cardRef.current;
@@ -62,10 +129,58 @@ export default function PetCard({ pet, allPets = [], dateFormat = 'en', compact 
     }
   };
 
+  const handleTouchStart = (e) => {
+    startPress();
+    if (e.touches && e.touches[0]) {
+      touchStartPosRef.current = {
+        x: e.touches[0].clientX,
+        y: e.touches[0].clientY
+      };
+      isSwipingRef.current = false;
+    }
+  };
+
+  const handleTouchMove = (e) => {
+    if (!e.touches || !e.touches[0]) return;
+    const currentX = e.touches[0].clientX;
+    const currentY = e.touches[0].clientY;
+    const deltaX = currentX - touchStartPosRef.current.x;
+    const deltaY = currentY - touchStartPosRef.current.y;
+
+    if (Math.abs(deltaX) > 10 || Math.abs(deltaY) > 10) {
+      cancelPress();
+    }
+  };
+
+  const handleTouchEnd = (e) => {
+    cancelPress();
+    if (!e.changedTouches || !e.changedTouches[0]) return;
+    const currentX = e.changedTouches[0].clientX;
+    const currentY = e.changedTouches[0].clientY;
+    const deltaX = currentX - touchStartPosRef.current.x;
+    const deltaY = currentY - touchStartPosRef.current.y;
+
+    // Detect horizontal swipe (at least 35px, predominantly horizontal)
+    if (Math.abs(deltaX) > 35 && Math.abs(deltaX) > Math.abs(deltaY) * 1.2) {
+      isSwipingRef.current = true;
+      if (hasMultiplePhotos) {
+        if (deltaX < 0) {
+          // Swipe Left -> Next Photo
+          setPhotoIndex(prev => (prev + 1) % photos.length);
+        } else {
+          // Swipe Right -> Prev Photo
+          setPhotoIndex(prev => (prev - 1 + photos.length) % photos.length);
+        }
+        triggerIndicator();
+      }
+    }
+  };
+
   const handleClickCard = (e) => {
-    if (isLongPressRef.current) {
+    if (isLongPressRef.current || isSwipingRef.current) {
       e.preventDefault();
       e.stopPropagation();
+      isSwipingRef.current = false;
       return;
     }
     // Normal short tap toggles bottom nav bar
@@ -78,9 +193,9 @@ export default function PetCard({ pet, allPets = [], dateFormat = 'en', compact 
   return (
     <div 
       ref={cardRef}
-      onTouchStart={startPress}
-      onTouchEnd={cancelPress}
-      onTouchMove={cancelPress}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+      onTouchMove={handleTouchMove}
       onMouseDown={startPress}
       onMouseUp={cancelPress}
       onMouseLeave={cancelPress}
@@ -96,8 +211,8 @@ export default function PetCard({ pet, allPets = [], dateFormat = 'en', compact 
       {/* ☁️ OVERSHOOT CLOUDS GRAPHIC (3 CLOUDS: 1 LEFT, 2 RIGHT STAGGERED) - Middle zone, 100% Opacity (No alpha blending to save CPU/GPU) */}
       {isDeceased && (
         <div className="absolute inset-0 pointer-events-none z-30 overflow-visible select-none">
-          {/* 1. Left Cloud (1 ก้อนซ้าย: ขนาดกลาง ในโหมด 2cal ย่อให้เล็กลงน่ารักพอดีการ์ด) */}
-          <div className={`absolute ${compact ? '-left-2 top-[34%] w-[68px]' : '-left-14 sm:-left-18 top-[34%] sm:top-[36%] w-40 sm:w-44'}`}>
+          {/* 1. Left Cloud (1 ก้อนซ้าย: ขยับออกไปทางซ้ายตามลูกศร) */}
+          <div className={`absolute ${compact ? '-left-5 top-[34%] w-[68px]' : '-left-14 sm:-left-18 top-[34%] sm:top-[36%] w-40 sm:w-44'}`}>
             <img
               src="/clouds/C3.svg"
               alt=""
@@ -110,8 +225,8 @@ export default function PetCard({ pet, allPets = [], dateFormat = 'en', compact 
             />
           </div>
 
-          {/* 2. Right Cloud 1 (ก้อนขวาบน: ในโหมด 2cal คุมตำแหน่งไม่ให้ล้นไปทับการ์ดข้างๆ) */}
-          <div className={`absolute ${compact ? 'right-0.5 top-[18%] w-[50px]' : '-right-10 sm:-right-14 top-[18%] sm:top-[20%] w-32 sm:w-36'}`}>
+          {/* 2. Right Cloud 1 (ก้อนขวาบน: ขยับออกไปทางขวาตามลูกศร) */}
+          <div className={`absolute ${compact ? '-right-3.5 top-[18%] w-[50px]' : '-right-10 sm:-right-14 top-[18%] sm:top-[20%] w-32 sm:w-36'}`}>
             <img
               src="/clouds/C1.svg"
               alt=""
@@ -124,8 +239,8 @@ export default function PetCard({ pet, allPets = [], dateFormat = 'en', compact 
             />
           </div>
 
-          {/* 3. Right Cloud 2 (ก้อนขวาล่าง: ในโหมด 2cal คุมตำแหน่งไม่ให้ล้นไปทับการ์ดข้างๆ) */}
-          <div className={`absolute ${compact ? 'right-1 top-[50%] w-[56px]' : '-right-14 sm:-right-18 top-[50%] sm:top-[52%] w-36 sm:w-40'}`}>
+          {/* 3. Right Cloud 2 (ก้อนขวาล่าง: ขยับออกไปทางขวาตามลูกศร) */}
+          <div className={`absolute ${compact ? '-right-4 top-[50%] w-[56px]' : '-right-14 sm:-right-18 top-[50%] sm:top-[52%] w-36 sm:w-40'}`}>
             <img
               src="/clouds/C2.svg"
               alt=""
@@ -159,23 +274,47 @@ export default function PetCard({ pet, allPets = [], dateFormat = 'en', compact 
         {/* Main Content Container */}
         <div className="relative z-10">
 
-        {/* 📸 HERO PHOTO - STRICT 1:1 SQUARE ASPECT RATIO WITH CLEAN CORNER RADIUS */}
+        {/* 📸 HERO PHOTO SLIDESHOW - STRICT 1:1 SQUARE ASPECT RATIO WITH CLEAN CORNER RADIUS */}
         <div 
           className={`relative w-full aspect-square overflow-hidden bg-slate-100 ${
             compact ? 'rounded-t-[14px]' : 'rounded-t-[30px]'
           } group`}
         >
-          {pet.avatar ? (
-            <img
-              src={pet.avatar}
-              alt={pet.name}
-              className={`w-full h-full object-cover transition-transform duration-700 ease-out ${
-                isInView ? 'scale-105' : 'scale-100 group-hover:scale-105'
-              }`}
-            />
+          {photos.length > 0 ? (
+            photos.map((src, idx) => {
+              const isCurrent = idx === photoIndex;
+              return (
+                <img
+                  key={`${src}-${idx}`}
+                  src={src}
+                  alt={pet.name}
+                  className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ease-in-out select-none pointer-events-none ${
+                    isCurrent ? 'opacity-100 z-10' : 'opacity-0 z-0'
+                  } ${isInView ? 'scale-105' : 'scale-100 group-hover:scale-105'} transition-transform duration-700 ease-out`}
+                />
+              );
+            })
           ) : (
             <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-paw-100 to-amber-100 text-paw-400">
               <FontAwesomeIcon icon={faPaw} className="text-6xl" />
+            </div>
+          )}
+
+          {/* Minimal Circle Dots Indicator: centered at bottom of image, appears ONLY on swipe then times out */}
+          {hasMultiplePhotos && (
+            <div className={`absolute bottom-2 left-1/2 -translate-x-1/2 z-30 flex items-center gap-1.5 bg-black/25 backdrop-blur-xs px-2 py-0.5 rounded-full pointer-events-none transition-all duration-300 ${
+              showIndicator ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'
+            }`}>
+              {photos.map((_, idx) => (
+                <span
+                  key={idx}
+                  className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${
+                    idx === photoIndex
+                      ? 'bg-white shadow-xs'
+                      : 'bg-white/40'
+                  }`}
+                />
+              ))}
             </div>
           )}
 
@@ -268,7 +407,7 @@ export default function PetCard({ pet, allPets = [], dateFormat = 'en', compact 
             {!isDeceased ? (
               <div className={`bg-amber-50/90 border border-amber-200/70 rounded-xl ${compact ? 'px-2 py-0.5' : 'px-3 py-1.5'} flex items-center gap-1 shadow-2xs flex-shrink-0`}>
                 {!compact && (
-                  <FontAwesomeIcon icon={faWandMagicSparkles} className="text-amber-500 text-[10px]" />
+                  <FontAwesomeIcon icon={getHumanAgeIcon(humanAge)} className="text-amber-500 text-[10px]" />
                 )}
                 <span className={`${compact ? 'text-[11px]' : 'text-xs'} font-bold text-amber-900 tabular-nums`}>
                   ~{humanAge}<span className="font-semibold text-amber-600/90 text-[10px] font-sans ml-0.5">{compact ? 'y' : ' human yrs'}</span>

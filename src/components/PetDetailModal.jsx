@@ -2,10 +2,10 @@ import React from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
   faXmark, faPenToSquare, faWeightScale, faFire, faSitemap, 
-  faCalendarDays, faWandMagicSparkles, faVenus, faMars, faLink,
+  faCalendarDays, faVenus, faMars, faLink,
   faPaw, faScissors, faRainbow, faSeedling, faCakeCandles, faInfinity, faExpand
 } from '@fortawesome/free-solid-svg-icons';
-import { calculateAge, calculateCatToHumanAge, formatDate, getLifeStage, getDaysUntilBirthday } from '../utils';
+import { calculateAge, calculateCatToHumanAge, formatDate, getLifeStage, getDaysUntilBirthday, getHumanAgeIcon } from '../utils';
 
 export default function PetDetailModal({ pet, allPets = [], dateFormat = 'en', isOpen, onClose, onEdit, onOpenMemorial, onOpenHealth, onOpenFamily, onSelectPet, onViewImage }) {
   if (!isOpen || !pet) return null;
@@ -28,6 +28,56 @@ export default function PetDetailModal({ pet, allPets = [], dateFormat = 'en', i
     return target ? { ...r, target, targetName: target.name, targetGender: target.gender, targetAvatar: target.avatar } : null;
   }).filter(Boolean);
 
+  // Multi-photo list
+  const photos = React.useMemo(() => {
+    const list = [];
+    if (pet.avatar) list.push(pet.avatar);
+    if (Array.isArray(pet.photos)) {
+      pet.photos.forEach(p => {
+        if (p && !list.includes(p)) list.push(p);
+      });
+    }
+    return list;
+  }, [pet]);
+
+  const [activePhotoIdx, setActivePhotoIdx] = React.useState(0);
+  const touchStartPosRef = React.useRef({ x: 0, y: 0 });
+  const isSwipingRef = React.useRef(false);
+
+  const handleTouchStart = (e) => {
+    if (e.touches && e.touches[0]) {
+      touchStartPosRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      isSwipingRef.current = false;
+    }
+  };
+
+  const handleTouchEnd = (e) => {
+    if (!e.changedTouches || !e.changedTouches[0]) return;
+    const deltaX = e.changedTouches[0].clientX - touchStartPosRef.current.x;
+    const deltaY = e.changedTouches[0].clientY - touchStartPosRef.current.y;
+
+    if (Math.abs(deltaX) > 35 && Math.abs(deltaX) > Math.abs(deltaY) * 1.2) {
+      isSwipingRef.current = true;
+      if (photos.length > 1) {
+        if (deltaX < 0) {
+          // Swipe Left -> Next
+          setActivePhotoIdx(prev => (prev + 1) % photos.length);
+        } else {
+          // Swipe Right -> Prev
+          setActivePhotoIdx(prev => (prev - 1 + photos.length) % photos.length);
+        }
+      }
+    }
+  };
+
+  const handleClickHero = () => {
+    if (isSwipingRef.current) {
+      isSwipingRef.current = false;
+      return;
+    }
+    if (onViewImage) onViewImage(pet);
+  };
+
   return (
     <div 
       onClick={onClose}
@@ -40,28 +90,35 @@ export default function PetDetailModal({ pet, allPets = [], dateFormat = 'en', i
         {/* Mobile Pull Handle */}
         <div className="w-12 h-1.5 bg-white/60 rounded-full mx-auto my-2.5 sm:hidden absolute top-0 inset-x-0 z-30 pointer-events-none" />
         
-        {/* Header with Hero preview - Click to view full image */}
+        {/* Header with Hero preview - Click to view full image / Swipe to change photo */}
         <div 
-          onClick={() => onViewImage && onViewImage(pet)}
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+          onClick={handleClickHero}
           className="relative aspect-[16/10] w-full overflow-hidden bg-slate-900 flex-shrink-0 cursor-pointer group select-none"
-          title="แตะเพื่อดูรูปขนาดเต็ม"
+          title="แตะเพื่อดูรูปขนาดเต็ม หรือปัดซ้ายขวาเพื่อเปลี่ยนรูป"
         >
-          {pet.avatar ? (
-            <img 
-              src={pet.avatar} 
-              alt={pet.name} 
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" 
-            />
+          {photos.length > 0 ? (
+            photos.map((src, idx) => (
+              <img 
+                key={`${src}-${idx}`}
+                src={src} 
+                alt={pet.name} 
+                className={`absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-all duration-500 ${
+                  idx === activePhotoIdx ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'
+                }`} 
+              />
+            ))
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-paw-100 text-paw-400">
               <FontAwesomeIcon icon={faPaw} className="text-5xl" />
             </div>
           )}
 
-          <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-black/30 pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-black/30 pointer-events-none z-10" />
 
           {/* Quick expand full image button */}
-          <div className="absolute top-4 left-4 w-9 h-9 rounded-full bg-black/40 text-white backdrop-blur-md group-hover:bg-black/60 flex items-center justify-center transition-colors pointer-events-none">
+          <div className="absolute top-4 left-4 w-9 h-9 rounded-full bg-black/40 text-white backdrop-blur-md group-hover:bg-black/60 flex items-center justify-center transition-colors pointer-events-none z-20">
             <FontAwesomeIcon icon={faExpand} className="text-sm" />
           </div>
 
@@ -76,9 +133,25 @@ export default function PetDetailModal({ pet, allPets = [], dateFormat = 'en', i
             <FontAwesomeIcon icon={faXmark} className="text-base" />
           </button>
 
+          {/* Minimal Circle Dots Indicator - ALWAYS VISIBLE, centered at bottom of image */}
+          {photos.length > 1 && (
+            <div className="absolute bottom-2.5 left-1/2 -translate-x-1/2 z-30 flex items-center gap-1.5 bg-black/25 backdrop-blur-xs px-2 py-0.5 rounded-full pointer-events-none shadow-xs">
+              {photos.map((_, idx) => (
+                <span
+                  key={idx}
+                  className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${
+                    idx === activePhotoIdx
+                      ? 'bg-white shadow-xs'
+                      : 'bg-white/40'
+                  }`}
+                />
+              ))}
+            </div>
+          )}
+
           {/* Name overlay */}
-          <div className="absolute bottom-4 left-5 right-5 flex items-end justify-between">
-            <div>
+          <div className="absolute bottom-4 left-5 right-5 z-20 flex items-end justify-between pointer-events-none">
+            <div className="pointer-events-auto">
               <div className="flex items-center gap-2">
                 <h2 className="font-mitr text-3xl font-medium text-white tracking-wide drop-shadow-md">
                   {pet.name}
@@ -92,7 +165,7 @@ export default function PetDetailModal({ pet, allPets = [], dateFormat = 'en', i
               </div>
 
               {/* Self-explanatory Icon Chips */}
-              <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+              <div className="flex flex-wrap items-center gap-1.5 mt-1.5 max-w-[210px]">
                 <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold inline-flex items-center gap-1 ${
                   isDeceased ? 'bg-sky-500/80 text-white' : 'bg-emerald-500/80 text-white'
                 }`}>
@@ -120,7 +193,7 @@ export default function PetDetailModal({ pet, allPets = [], dateFormat = 'en', i
                 onClose();
                 onEdit(pet);
               }}
-              className="w-10 h-10 rounded-full bg-paw-500 hover:bg-paw-600 text-white shadow-lg flex items-center justify-center active:scale-95 transition-transform"
+              className="w-10 h-10 rounded-full bg-paw-500 hover:bg-paw-600 text-white shadow-lg flex items-center justify-center active:scale-95 transition-transform pointer-events-auto"
               title="แก้ไข"
             >
               <FontAwesomeIcon icon={faPenToSquare} className="text-sm" />
@@ -156,7 +229,7 @@ export default function PetDetailModal({ pet, allPets = [], dateFormat = 'en', i
               <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${
                 isDeceased ? 'bg-amber-100 text-amber-600' : 'bg-amber-100 text-amber-600'
               }`}>
-                <FontAwesomeIcon icon={isDeceased ? faRainbow : faWandMagicSparkles} className="text-sm" />
+                <FontAwesomeIcon icon={isDeceased ? faRainbow : getHumanAgeIcon(humanAge)} className="text-sm" />
               </div>
               <div className="min-w-0">
                 <div className="text-sm font-bold text-slate-800 truncate">

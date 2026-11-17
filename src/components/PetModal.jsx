@@ -16,6 +16,7 @@ export default function PetModal({ pet, allPets = [], isOpen, onClose, onSave, o
   const [deceasedDate, setDeceasedDate] = useState('');
   const [note, setNote] = useState('');
   const [avatar, setAvatar] = useState('');
+  const [photos, setPhotos] = useState([]);
   const [relationships, setRelationships] = useState([]);
   
   // Double-check Delete State (2-step confirmation)
@@ -39,7 +40,11 @@ export default function PetModal({ pet, allPets = [], isOpen, onClose, onSave, o
       setStatus(pet.status || 'alive');
       setDeceasedDate(pet.deceasedDate || '');
       setNote(pet.note || '');
-      setAvatar(pet.avatar || '');
+      const petPhotos = Array.isArray(pet.photos) && pet.photos.length > 0
+        ? pet.photos
+        : (pet.avatar ? [pet.avatar] : []);
+      setPhotos(petPhotos);
+      setAvatar(pet.avatar || (petPhotos[0] || ''));
       setRelationships(pet.relationships || []);
     } else {
       sessionPetIdRef.current = `pet-${Date.now()}`;
@@ -51,6 +56,7 @@ export default function PetModal({ pet, allPets = [], isOpen, onClose, onSave, o
       setDeceasedDate('');
       setNote('');
       setAvatar('');
+      setPhotos([]);
       setRelationships([]);
     }
     setDeleteStep(0);
@@ -80,25 +86,28 @@ export default function PetModal({ pet, allPets = [], isOpen, onClose, onSave, o
         status,
         deceasedDate: status === 'deceased' ? (deceasedDate || toLocalDateString()) : '',
         note: note.trim(),
-        avatar,
+        avatar: photos[0] || avatar,
+        photos: photos.length > 0 ? photos : (avatar ? [avatar] : []),
         relationships
       });
     }, 280);
 
     return () => clearTimeout(timer);
-  }, [name, gender, neutered, birthDate, status, deceasedDate, note, avatar, relationships, isOpen]);
+  }, [name, gender, neutered, birthDate, status, deceasedDate, note, avatar, photos, relationships, isOpen]);
 
   if (!isOpen) return null;
 
   const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    files.forEach(file => {
       const reader = new FileReader();
       reader.onload = (event) => {
         const img = new Image();
         img.onload = () => {
           const canvas = document.createElement('canvas');
-          const maxDim = 600;
+          const maxDim = 800;
           let width = img.width;
           let height = img.height;
           if (width > height) {
@@ -117,12 +126,37 @@ export default function PetModal({ pet, allPets = [], isOpen, onClose, onSave, o
           const ctx = canvas.getContext('2d');
           ctx.drawImage(img, 0, 0, width, height);
           const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
-          setAvatar(dataUrl);
+
+          setPhotos(prev => {
+            const next = [...prev, dataUrl];
+            if (!avatar) setAvatar(next[0]);
+            return next;
+          });
         };
         img.src = event.target.result;
       };
       reader.readAsDataURL(file);
-    }
+    });
+    e.target.value = '';
+  };
+
+  const handleRemovePhoto = (idxToRemove) => {
+    setPhotos(prev => {
+      const next = prev.filter((_, idx) => idx !== idxToRemove);
+      setAvatar(next[0] || '');
+      return next;
+    });
+  };
+
+  const handleSetPrimaryPhoto = (idx) => {
+    setPhotos(prev => {
+      if (idx === 0 || !prev[idx]) return prev;
+      const target = prev[idx];
+      const rest = prev.filter((_, i) => i !== idx);
+      const next = [target, ...rest];
+      setAvatar(next[0]);
+      return next;
+    });
   };
 
   const getRelationLabel = (type, targetPet) => {
@@ -220,12 +254,12 @@ export default function PetModal({ pet, allPets = [], isOpen, onClose, onSave, o
         {/* Form Body */}
         <div className="p-6 overflow-y-auto space-y-4">
           
-          {/* Avatar 1:1 Upload */}
+          {/* Photos Management (Multiple Photos for Fade Slideshow) */}
           <div className="flex flex-col items-center">
             <div className="relative group">
               <div className="w-24 h-24 rounded-3xl overflow-hidden bg-paw-50 border-2 border-paw-200 shadow-sm flex items-center justify-center">
-                {avatar ? (
-                  <img src={avatar} alt="Preview" className="w-full h-full object-cover" />
+                {photos[0] || avatar ? (
+                  <img src={photos[0] || avatar} alt="Preview" className="w-full h-full object-cover" />
                 ) : (
                   <FontAwesomeIcon icon={faPaw} className="text-3xl text-paw-300" />
                 )}
@@ -233,17 +267,66 @@ export default function PetModal({ pet, allPets = [], isOpen, onClose, onSave, o
               <label 
                 htmlFor="avatar-upload"
                 className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-paw-500 text-white shadow-md cursor-pointer hover:bg-paw-600 flex items-center justify-center active:scale-95 transition-all"
+                title="เพิ่มรูปภาพ"
               >
                 <FontAwesomeIcon icon={faCamera} className="text-xs" />
                 <input 
                   id="avatar-upload" 
                   type="file" 
                   accept="image/*" 
+                  multiple
                   onChange={handleImageChange}
                   className="hidden" 
                 />
               </label>
             </div>
+
+            {/* Thumbnail Gallery & Add Photo Trigger */}
+            <div className="mt-3 flex items-center gap-2 flex-wrap justify-center max-w-xs">
+              {photos.map((src, idx) => (
+                <div 
+                  key={idx} 
+                  onClick={() => handleSetPrimaryPhoto(idx)}
+                  className={`relative group/thumb w-12 h-12 rounded-xl overflow-hidden border cursor-pointer shadow-2xs transition-all ${
+                    idx === 0 ? 'border-paw-500 ring-2 ring-paw-200' : 'border-slate-200 bg-slate-100 hover:border-slate-300'
+                  }`}
+                  title={idx === 0 ? 'รูปหลัก' : 'คลิกเพื่อตั้งเป็นรูปหลัก'}
+                >
+                  <img src={src} alt={`Thumb ${idx + 1}`} className="w-full h-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleRemovePhoto(idx);
+                    }}
+                    className="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-black/60 text-white text-[9px] flex items-center justify-center hover:bg-red-500 transition-colors"
+                    title="ลบรูปนี้"
+                  >
+                    <FontAwesomeIcon icon={faXmark} />
+                  </button>
+                  {idx === 0 && (
+                    <span className="absolute bottom-0 inset-x-0 bg-paw-600 text-[8px] text-white text-center font-bold">
+                      หลัก
+                    </span>
+                  )}
+                </div>
+              ))}
+              <label 
+                className="w-12 h-12 rounded-xl border-2 border-dashed border-slate-300 hover:border-paw-400 bg-slate-50 hover:bg-paw-50/50 flex flex-col items-center justify-center cursor-pointer text-slate-400 hover:text-paw-600 transition-all active:scale-95"
+                title="เพิ่มรูปภาพเพิ่มเติม"
+              >
+                <FontAwesomeIcon icon={faCamera} className="text-xs" />
+                <span className="text-[8px] font-medium mt-0.5">+รูป</span>
+                <input 
+                  type="file" 
+                  accept="image/*" 
+                  multiple
+                  onChange={handleImageChange}
+                  className="hidden" 
+                />
+              </label>
+            </div>
+            <span className="text-[11px] text-slate-400 mt-1">ใส่ได้มากกว่า 1 รูปเพื่อเล่น Slideshow บนการ์ด</span>
           </div>
 
           {/* Name Input */}

@@ -48,6 +48,23 @@ export default function App() {
             });
             updated.relationships = updatedRels;
           }
+          // Multi-photo support: populate authentic photos from For Icon/cat
+          const defaultPhotoMap = {
+            'pet-1': ['/avatars/chainoi.png', '/photos/chainoi/1.jpg', '/photos/chainoi/2.jpg', '/photos/chainoi/3.jpg'],
+            'pet-2': ['/avatars/tangthon.png', '/photos/tangthon/1.jpg'],
+            'pet-3': ['/avatars/khaitom.png', '/photos/khaitom/1.jpg', '/photos/khaitom/2.jpg', '/photos/khaitom/3.jpg'],
+            'pet-4': ['/avatars/phuayphuay.png', '/photos/phuayphuay/1.jpg', '/photos/phuayphuay/2.jpg', '/photos/phuayphuay/3.jpg', '/photos/phuayphuay/4.jpg', '/photos/phuayphuay/5.jpg'],
+            'pet-5': ['/avatars/tassanai.png', '/photos/tassanai/1.jpg', '/photos/tassanai/2.jpg', '/photos/tassanai/3.jpg'],
+            'pet-6': ['/avatars/thongjiew.png', '/photos/thongjiew/1.jpg', '/photos/thongjiew/2.jpg'],
+            'pet-7': ['/avatars/kuaytiew.png', '/photos/kuaytiew/1.jpg']
+          };
+          if (!updated.photos || updated.photos.length <= 2 || updated.photos.some(p => p.includes('_2.png'))) {
+            if (defaultPhotoMap[updated.id]) {
+              updated.photos = defaultPhotoMap[updated.id];
+            } else if (updated.avatar && (!updated.photos || updated.photos.length === 0)) {
+              updated.photos = [updated.avatar];
+            }
+          }
           return updated;
         });
         return reconciled;

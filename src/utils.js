@@ -1,6 +1,6 @@
 // Date & Life Stage calculation utilities (Local Timezone Safe)
 import { 
-  faBaby, faBolt, faSun, faCrown, faFeather, faGem 
+  faBaby, faChild, faPerson, faPersonCane, faBolt, faSun, faCrown, faFeather, faGem 
 } from '@fortawesome/free-solid-svg-icons';
 
 /**
@@ -70,6 +70,20 @@ export function calculateCatToHumanAge(years, months) {
   if (age <= 1) return Math.max(1, Math.round(age * 15));
   if (age <= 2) return Math.round(15 + (age - 1) * 9);
   return Math.round(24 + (age - 2) * 4);
+}
+
+/**
+ * Human age stage icon from FontAwesome:
+ * - เด็กแรกเกิด (Newborn/Infant): humanAge <= 2 -> faBaby
+ * - เด็ก (Child/Kid): humanAge < 18 -> faChild
+ * - วัยกลางคน (Adult/Middle-aged): humanAge < 60 -> faPerson
+ * - คนแก่ (Senior/Elderly): humanAge >= 60 -> faPersonCane
+ */
+export function getHumanAgeIcon(humanAge) {
+  if (humanAge <= 2) return faBaby;
+  if (humanAge < 18) return faChild;
+  if (humanAge < 60) return faPerson;
+  return faPersonCane;
 }
 
 // Life stage categorization based on AAFP / AAHA Feline Life Stage Guidelines
