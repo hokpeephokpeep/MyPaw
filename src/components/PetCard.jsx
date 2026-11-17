@@ -351,16 +351,24 @@ export default function PetCard({ pet, allPets = [], dateFormat = 'en', compact 
             </div>
           )}
 
-          {/* 🌟 Top-Left Special Event Badges (Rainbow Bridge, Birthday, Checkup, Vaccine) */}
+          {/* 🌟 Top-Left Special Event Badges (Expands to full pill when in focus/hover, collapses to icon only) */}
           {specialEvents.length > 0 && (
             <div className="absolute top-3.5 left-3.5 z-20 flex flex-col gap-1.5 items-start max-w-[85%] pointer-events-none">
               {specialEvents.slice(0, compact ? 1 : 2).map((ev, idx) => (
                 <div 
                   key={idx}
-                  className={`inline-flex items-center gap-1.5 ${compact ? 'px-2.5 py-0.5 text-[11px]' : 'px-3 py-1 text-xs'} rounded-full font-semibold shadow-md border ${ev.bgClass}`}
+                  className={`inline-flex items-center rounded-full font-semibold shadow-md border ${ev.bgClass} transition-all duration-300 ease-out overflow-hidden ${
+                    isInView
+                      ? `${compact ? 'px-2.5 py-0.5 text-[11px] gap-1.5 max-w-[160px]' : 'px-3 py-1 text-xs gap-1.5 max-w-[200px]'}`
+                      : `${compact ? 'w-6 h-6 justify-center p-0' : 'w-7 h-7 justify-center p-0'}`
+                  }`}
                 >
-                  <FontAwesomeIcon icon={ev.icon} className={`${compact ? 'text-[10px]' : 'text-xs'} ${ev.iconClass}`} />
-                  <span className="truncate">{ev.label}</span>
+                  <FontAwesomeIcon icon={ev.icon} className={`${compact ? 'text-[10px]' : 'text-xs'} ${ev.iconClass} flex-shrink-0`} />
+                  <span className={`truncate transition-all duration-300 whitespace-nowrap ${
+                    isInView ? 'opacity-100 max-w-[140px]' : 'opacity-0 max-w-0 pointer-events-none'
+                  }`}>
+                    {ev.label}
+                  </span>
                 </div>
               ))}
             </div>
