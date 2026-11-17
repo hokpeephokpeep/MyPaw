@@ -378,9 +378,6 @@ export default function PetCard({ pet, allPets = [], dateFormat = 'en', compact 
               <div className="flex items-center gap-1.5">
                 <h2 className={`font-mitr ${compact ? 'text-xl' : 'text-3xl'} font-medium text-white tracking-wide drop-shadow-[0_2px_6px_rgba(0,0,0,0.7)] truncate flex items-center gap-1.5`}>
                   <span>{pet.name}</span>
-                  {isDeceased && (
-                    <span className="text-amber-200/90 text-xs sm:text-sm font-normal drop-shadow-xs">✨</span>
-                  )}
                 </h2>
 
                 {/* 🚻 Minimal Gender Icon */}
