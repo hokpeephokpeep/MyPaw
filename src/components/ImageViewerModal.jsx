@@ -15,7 +15,7 @@ export default function ImageViewerModal({ pet, onClose }) {
   return (
     <div 
       onClick={onClose}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4 backdrop-blur-md animate-fadeIn"
+      className="fixed inset-0 z-[60] flex items-center justify-center bg-black/90 p-4 backdrop-blur-md animate-fadeIn"
     >
       {/* Close button */}
       <button

@@ -6,7 +6,7 @@ import {
   faRainbow, faCakeCandles, faPaw, faInfinity 
 } from '@fortawesome/free-solid-svg-icons';
 
-export default function PetCard({ pet, allPets = [], dateFormat = 'en', compact = false, onOpenMore, onViewImage }) {
+export default function PetCard({ pet, allPets = [], dateFormat = 'en', compact = false, onOpenMore, onToggleBottomNav }) {
   const isDeceased = pet.status === 'deceased';
   // 🐾 Continuous age counting from birthdate until today (living memory in our hearts)
   const age = calculateAge(pet.birthDate);
@@ -17,7 +17,7 @@ export default function PetCard({ pet, allPets = [], dateFormat = 'en', compact 
   const humanAge = calculateCatToHumanAge(age.years, age.months);
   const daysUntilBday = !isDeceased ? getDaysUntilBirthday(pet.birthDate) : 999;
 
-  // Long press handling (mobile touch & desktop mouse hold)
+  // Long press handling: 380ms hold enters detail profile
   const timerRef = useRef(null);
   const isLongPressRef = useRef(false);
 
@@ -52,7 +52,7 @@ export default function PetCard({ pet, allPets = [], dateFormat = 'en', compact 
         try { window.navigator.vibrate(40); } catch(e) {}
       }
       onOpenMore(pet);
-    }, 420);
+    }, 380);
   };
 
   const cancelPress = () => {
@@ -62,18 +62,17 @@ export default function PetCard({ pet, allPets = [], dateFormat = 'en', compact 
     }
   };
 
-  const handleClickPhoto = (e) => {
+  const handleClickCard = (e) => {
     if (isLongPressRef.current) {
       e.preventDefault();
       e.stopPropagation();
       return;
     }
-    onViewImage(pet);
-  };
-
-  const handleClickStats = (e) => {
-    if (isLongPressRef.current) return;
-    onOpenMore(pet);
+    // Normal short tap toggles bottom nav bar
+    if (onToggleBottomNav) {
+      e.stopPropagation();
+      onToggleBottomNav();
+    }
   };
 
   return (
@@ -85,6 +84,7 @@ export default function PetCard({ pet, allPets = [], dateFormat = 'en', compact 
       onMouseDown={startPress}
       onMouseUp={cancelPress}
       onMouseLeave={cancelPress}
+      onClick={handleClickCard}
       onContextMenu={(e) => {
         e.preventDefault();
         onOpenMore(pet);
@@ -161,7 +161,6 @@ export default function PetCard({ pet, allPets = [], dateFormat = 'en', compact 
 
         {/* 📸 HERO PHOTO - STRICT 1:1 SQUARE ASPECT RATIO WITH CLEAN CORNER RADIUS */}
         <div 
-          onClick={handleClickPhoto}
           className={`relative w-full aspect-square overflow-hidden bg-slate-100 ${
             compact ? 'rounded-t-[14px]' : 'rounded-t-[30px]'
           } group`}
@@ -228,9 +227,8 @@ export default function PetCard({ pet, allPets = [], dateFormat = 'en', compact 
           </div>
         </div>
 
-        {/* 📊 SELF-EXPLANATORY STATS BAR (Tap or Hold to view full profile) */}
+        {/* 📊 SELF-EXPLANATORY STATS BAR */}
         <div 
-          onClick={handleClickStats}
           className={`${compact ? 'px-2.5 py-2 rounded-b-2xl' : 'px-5 py-3.5'} relative ${
             isDeceased 
               ? 'bg-white/95 backdrop-blur-md border-t border-sky-100' 
@@ -269,14 +267,18 @@ export default function PetCard({ pet, allPets = [], dateFormat = 'en', compact 
             {/* Cat-to-Human Age or Memorial Lifespan Summary Capsule */}
             {!isDeceased ? (
               <div className={`bg-amber-50/90 border border-amber-200/70 rounded-xl ${compact ? 'px-2 py-0.5' : 'px-3 py-1.5'} flex items-center gap-1 shadow-2xs flex-shrink-0`}>
-                <FontAwesomeIcon icon={faWandMagicSparkles} className="text-amber-500 text-[10px]" />
+                {!compact && (
+                  <FontAwesomeIcon icon={faWandMagicSparkles} className="text-amber-500 text-[10px]" />
+                )}
                 <span className={`${compact ? 'text-[11px]' : 'text-xs'} font-bold text-amber-900 tabular-nums`}>
                   ~{humanAge}<span className="font-semibold text-amber-600/90 text-[10px] font-sans ml-0.5">{compact ? 'y' : ' human yrs'}</span>
                 </span>
               </div>
             ) : (
               <div className={`bg-amber-50/90 border border-amber-200/80 rounded-xl ${compact ? 'px-1.5 py-0.5' : 'px-2.5 py-1'} flex items-center gap-1 shadow-2xs flex-shrink-0`}>
-                <FontAwesomeIcon icon={faRainbow} className="text-amber-500 text-[10px]" />
+                {!compact && (
+                  <FontAwesomeIcon icon={faRainbow} className="text-amber-500 text-[10px]" />
+                )}
                 <span className={`${compact ? 'text-[10px]' : 'text-xs'} font-bold text-amber-900 tabular-nums whitespace-nowrap`}>
                   {lifespan ? `${lifespan.years}y ${lifespan.months}m ${lifespan.days}d` : `${age.totalDays.toLocaleString()}d`}
                 </span>

@@ -40,22 +40,38 @@ export default function PetDetailModal({ pet, allPets = [], dateFormat = 'en', i
         {/* Mobile Pull Handle */}
         <div className="w-12 h-1.5 bg-white/60 rounded-full mx-auto my-2.5 sm:hidden absolute top-0 inset-x-0 z-30 pointer-events-none" />
         
-        {/* Header with Hero preview */}
-        <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-900 flex-shrink-0">
+        {/* Header with Hero preview - Click to view full image */}
+        <div 
+          onClick={() => onViewImage && onViewImage(pet)}
+          className="relative aspect-[16/10] w-full overflow-hidden bg-slate-900 flex-shrink-0 cursor-pointer group select-none"
+          title="แตะเพื่อดูรูปขนาดเต็ม"
+        >
           {pet.avatar ? (
-            <img src={pet.avatar} alt={pet.name} className="w-full h-full object-cover" />
+            <img 
+              src={pet.avatar} 
+              alt={pet.name} 
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" 
+            />
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-paw-100 text-paw-400">
               <FontAwesomeIcon icon={faPaw} className="text-5xl" />
             </div>
           )}
 
-          <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-black/30" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-black/30 pointer-events-none" />
+
+          {/* Quick expand full image button */}
+          <div className="absolute top-4 left-4 w-9 h-9 rounded-full bg-black/40 text-white backdrop-blur-md group-hover:bg-black/60 flex items-center justify-center transition-colors pointer-events-none">
+            <FontAwesomeIcon icon={faExpand} className="text-sm" />
+          </div>
 
           {/* Close button */}
           <button
-            onClick={onClose}
-            className="absolute top-4 right-4 w-9 h-9 rounded-full bg-black/40 text-white backdrop-blur-md hover:bg-black/60 flex items-center justify-center transition-colors"
+            onClick={(e) => {
+              e.stopPropagation();
+              onClose();
+            }}
+            className="absolute top-4 right-4 w-9 h-9 rounded-full bg-black/40 text-white backdrop-blur-md hover:bg-black/60 flex items-center justify-center transition-colors z-20"
           >
             <FontAwesomeIcon icon={faXmark} className="text-base" />
           </button>

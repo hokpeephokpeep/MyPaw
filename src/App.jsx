@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { initialPets } from './defaultPets';
 import PetCard from './components/PetCard';
 import PetListItem from './components/PetListItem';
@@ -28,28 +28,27 @@ export default function App() {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
-        // Data integrity migration: Only pet-2 (ตังค์ทอน) is female, ensure others are male
+        // Data integrity migration: Only pet-2 (ตังค์ทอน) is female, all others are male
         const reconciled = parsed.map(p => {
-          if (p.id === 'pet-4' || p.id === 'pet-6') {
-            return { 
-              ...p, 
-              gender: 'male',
-              note: p.id === 'pet-6' && p.note?.includes('สาวน้อย') 
-                ? p.note.replace('สาวน้อย', 'หนุ่มน้อย') 
-                : p.note
-            };
+          let updated = { ...p };
+          if (p.id === 'pet-2') {
+            updated.gender = 'female';
+          } else if (['pet-1', 'pet-3', 'pet-4', 'pet-5', 'pet-6', 'pet-7'].includes(p.id)) {
+            updated.gender = 'male';
+            if (p.id === 'pet-6' && updated.note?.includes('สาวน้อย')) {
+              updated.note = updated.note.replace('สาวน้อย', 'หนุ่มน้อย');
+            }
           }
           if (p.id === 'pet-2' || p.id === 'pet-3') {
-            // Update child relationship labels to ลูกชาย
             const updatedRels = (p.relationships || []).map(r => {
-              if (r.targetPetId === 'pet-4' || r.targetPetId === 'pet-6') {
+              if (['pet-4', 'pet-5', 'pet-6', 'pet-7'].includes(r.targetPetId)) {
                 return { ...r, label: 'ลูกชาย' };
               }
               return r;
             });
-            return { ...p, relationships: updatedRels };
+            updated.relationships = updatedRels;
           }
-          return p;
+          return updated;
         });
         return reconciled;
       }
@@ -104,6 +103,123 @@ export default function App() {
     try {
       localStorage.setItem('mypaw_view_mode', mode);
     } catch (e) {}
+  };
+
+  // 📱 Interactive Bottom Navigation Bar Visibility with Directional Scroll & Timeout
+  const [isBottomNavVisible, setIsBottomNavVisible] = useState(true);
+  const idleTimerRef = useRef(null);
+  const lastScrollYRef = useRef(0);
+  const touchStartYRef = useRef(0);
+
+  const resetIdleTimer = (duration = 3200) => {
+    if (idleTimerRef.current) {
+      clearTimeout(idleTimerRef.current);
+    }
+    idleTimerRef.current = setTimeout(() => {
+      setIsBottomNavVisible(false);
+    }, duration);
+  };
+
+  useEffect(() => {
+    // Initial display timeout on load
+    resetIdleTimer(3500);
+
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY || document.documentElement.scrollTop || 0;
+      const diff = currentScrollY - lastScrollYRef.current;
+
+      // When near the top, keep visible with timeout
+      if (currentScrollY <= 20) {
+        setIsBottomNavVisible(true);
+        resetIdleTimer(3200);
+        lastScrollYRef.current = currentScrollY;
+        return;
+      }
+
+      // Ignore micro jitters (< 6px)
+      if (Math.abs(diff) < 6) return;
+
+      if (diff > 0) {
+        // User scrolling DOWN to view cards -> hide immediately!
+        if (idleTimerRef.current) {
+          clearTimeout(idleTimerRef.current);
+          idleTimerRef.current = null;
+        }
+        setIsBottomNavVisible(false);
+      } else {
+        // User scrolling UP -> bounce menu back up, then timeout!
+        setIsBottomNavVisible(true);
+        resetIdleTimer(3200);
+      }
+
+      lastScrollYRef.current = currentScrollY;
+    };
+
+    const handleTouchStart = (e) => {
+      if (e.touches && e.touches[0]) {
+        touchStartYRef.current = e.touches[0].clientY;
+      }
+    };
+
+    const handleTouchMove = (e) => {
+      if (!e.touches || !e.touches[0]) return;
+      const currentY = e.touches[0].clientY;
+      const diff = touchStartYRef.current - currentY; // > 0 means dragging finger up (page scrolls down)
+
+      if (Math.abs(diff) > 10) {
+        if (diff > 0) {
+          // Scrolling down -> hide immediately
+          if (idleTimerRef.current) {
+            clearTimeout(idleTimerRef.current);
+            idleTimerRef.current = null;
+          }
+          setIsBottomNavVisible(false);
+        } else {
+          // Scrolling up -> bounce menu up + timeout
+          setIsBottomNavVisible(true);
+          resetIdleTimer(3200);
+        }
+        touchStartYRef.current = currentY;
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    window.addEventListener('touchstart', handleTouchStart, { passive: true });
+    window.addEventListener('touchmove', handleTouchMove, { passive: true });
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('touchstart', handleTouchStart);
+      window.removeEventListener('touchmove', handleTouchMove);
+      if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
+    };
+  }, []);
+
+  const toggleBottomNav = () => {
+    setIsBottomNavVisible(prev => {
+      const next = !prev;
+      if (next) {
+        resetIdleTimer(3200);
+      } else if (idleTimerRef.current) {
+        clearTimeout(idleTimerRef.current);
+      }
+      return next;
+    });
+  };
+
+  const handleScreenClick = (e) => {
+    // If any modal or drawer is open, don't toggle
+    if (
+      isModalOpen || isDrawerOpen || detailPet || memorialPet || healthPet || 
+      isFamilyOpen || isBackupOpen || viewingImagePet
+    ) {
+      return;
+    }
+    // If clicking an interactive button or control, ignore
+    if (e.target.closest('button, a, input, select, textarea, [role="button"]')) {
+      return;
+    }
+    toggleBottomNav();
   };
 
   // Save to localStorage
@@ -270,7 +386,10 @@ export default function App() {
   const isFiltered = activeTab !== 'all';
 
   return (
-    <div className="min-h-screen bg-slate-100 text-slate-800 flex flex-col items-center">
+    <div 
+      onClick={handleScreenClick}
+      className="min-h-screen bg-slate-100 text-slate-800 flex flex-col items-center select-none"
+    >
       {/* App Container */}
       <div className="w-full max-w-lg md:max-w-3xl min-h-screen bg-slate-50 shadow-2xl flex flex-col relative pb-28">
         
@@ -351,7 +470,7 @@ export default function App() {
                     pet={pet}
                     dateFormat={dateFormat}
                     onOpenMore={(p) => setDetailPet(p)}
-                    onViewImage={(p) => setViewingImagePet(p)}
+                    onToggleBottomNav={toggleBottomNav}
                   />
                 ))}
               </div>
@@ -366,7 +485,7 @@ export default function App() {
                     allPets={pets}
                     dateFormat={dateFormat}
                     onOpenMore={(p) => setDetailPet(p)}
-                    onViewImage={(p) => setViewingImagePet(p)}
+                    onToggleBottomNav={toggleBottomNav}
                   />
                 ))}
               </div>
@@ -381,7 +500,7 @@ export default function App() {
                     allPets={pets}
                     dateFormat={dateFormat}
                     onOpenMore={(p) => setDetailPet(p)}
-                    onViewImage={(p) => setViewingImagePet(p)}
+                    onToggleBottomNav={toggleBottomNav}
                   />
                 ))}
               </div>
@@ -416,10 +535,14 @@ export default function App() {
           )}
         </main>
 
-        {/* 📱 Mobile Floating Thumb Bar (Optimal Thumb Zone Ergonomics) */}
+        {/* 📱 Mobile Floating Thumb Bar (Optimal Thumb Zone Ergonomics with Soft Spring Bounce) */}
         <nav 
           aria-label="Mobile Bottom Navigation"
-          className="fixed bottom-4 inset-x-0 mx-auto max-w-sm px-3 z-40 pointer-events-none pb-[env(safe-area-inset-bottom)]"
+          className={`fixed bottom-4 inset-x-0 mx-auto max-w-sm px-3 z-40 spring-bounce-bottom pb-[env(safe-area-inset-bottom)] ${
+            isBottomNavVisible 
+              ? 'translate-y-0 opacity-100 pointer-events-auto scale-100' 
+              : 'translate-y-28 opacity-0 pointer-events-none scale-95'
+          }`}
         >
           <div className="pointer-events-auto bg-white/90 backdrop-blur-xl border border-slate-200/90 shadow-2xl shadow-slate-900/15 rounded-full p-1.5 flex items-center justify-between gap-1.5 transition-all">
             
@@ -571,6 +694,7 @@ export default function App() {
         onOpenHealth={(p) => setHealthPet(p)}
         onOpenFamily={() => setIsFamilyOpen(true)}
         onSelectPet={(targetPet) => setDetailPet(targetPet)}
+        onViewImage={(p) => setViewingImagePet(p)}
       />
 
       {/* 🐾 Animated Splash Screen */}
