@@ -1,9 +1,9 @@
-import React from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
   faXmark, faPlus, faDatabase, 
   faArrowDownWideShort, faFilter, faHeart, faPaw, faSitemap, faGlobe,
-  faSeedling, faRainbow
+  faSeedling, faRainbow, faImages
 } from '@fortawesome/free-solid-svg-icons';
 
 export default function HamburgerDrawer({ 
@@ -12,6 +12,7 @@ export default function HamburgerDrawer({
   onAddNewPet, 
   onOpenBackup,
   onOpenFamily,
+  onOpenSharedImport,
   activeTab,
   setActiveTab,
   sortBy,
@@ -22,18 +23,76 @@ export default function HamburgerDrawer({
   dateFormat = 'en',
   onSetDateFormat
 }) {
-  if (!isOpen) return null;
+  const [shouldRender, setShouldRender] = useState(Boolean(isOpen));
+  const [isClosing, setIsClosing] = useState(false);
+  const timerRef = useRef(null);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+
+  useEffect(() => {
+    if (isOpen) {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
+      setShouldRender(true);
+      setIsClosing(false);
+    } else if (shouldRender) {
+      setIsClosing(true);
+      if (!timerRef.current) {
+        timerRef.current = setTimeout(() => {
+          timerRef.current = null;
+          setShouldRender(false);
+          setIsClosing(false);
+        }, 220);
+      }
+    }
+  }, [isOpen, shouldRender]);
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, []);
+
+  const requestClose = useCallback((afterClose) => {
+    if (timerRef.current) return;
+    setIsClosing(true);
+    timerRef.current = setTimeout(() => {
+      timerRef.current = null;
+      setShouldRender(false);
+      setIsClosing(false);
+      if (onCloseRef.current) onCloseRef.current();
+      if (typeof afterClose === 'function') afterClose();
+    }, 220);
+  }, []);
+
+  const isVisible = Boolean(isOpen || shouldRender);
+  const isExiting = Boolean(isClosing || (!isOpen && shouldRender));
+
+  if (!isVisible) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex animate-fadeIn overscroll-contain">
+    <div className="fixed inset-0 z-50 flex overscroll-contain">
       {/* Backdrop */}
       <div 
-        onClick={onClose} 
-        className="fixed inset-0 bg-black/45 backdrop-blur-xs transition-opacity overscroll-contain"
+        onClick={() => requestClose()} 
+        className={`fixed inset-0 bg-black/45 backdrop-blur-xs transition-opacity duration-200 overscroll-contain ${
+          isExiting ? 'opacity-0 pointer-events-none' : 'animate-fadeIn opacity-100'
+        }`}
       />
 
-      {/* Drawer Panel */}
-      <div className="relative w-4/5 max-w-xs bg-white h-full shadow-2xl z-10 flex flex-col justify-between overflow-y-auto animate-slideInLeft overscroll-contain">
+      {/* Drawer Panel (Slides in from left -> Slides back out to left on close) */}
+      <div
+        style={
+          isExiting
+            ? { transform: 'translateX(-100%)', transition: 'transform 220ms cubic-bezier(0.32, 0, 0.67, 0)' }
+            : undefined
+        }
+        className={`relative w-4/5 max-w-xs bg-white h-full shadow-2xl z-10 flex flex-col justify-between overflow-y-auto ${
+          isExiting ? '' : 'animate-slideInLeft'
+        } overscroll-contain`}
+      >
         <div>
           {/* Header */}
           <div className="p-6 bg-gradient-to-br from-paw-500 to-amber-500 text-white">
@@ -42,7 +101,7 @@ export default function HamburgerDrawer({
                 <FontAwesomeIcon icon={faPaw} />
               </div>
               <button 
-                onClick={onClose}
+                onClick={() => requestClose()}
                 aria-label="Close menu"
                 className="w-8 h-8 rounded-full bg-white/15 hover:bg-white/25 text-white flex items-center justify-center transition-colors duration-150 ease-out active:scale-95 focus-visible:ring-2 focus-visible:ring-white outline-none"
               >
@@ -76,10 +135,7 @@ export default function HamburgerDrawer({
             {/* 1. Primary Quick Actions Grid */}
             <div className="grid grid-cols-2 gap-2.5">
               <button
-                onClick={() => {
-                  onClose();
-                  onAddNewPet();
-                }}
+                onClick={() => requestClose(onAddNewPet)}
                 className="flex flex-col items-center justify-center gap-2 p-3.5 rounded-2xl bg-paw-50 hover:bg-paw-100 text-paw-700 font-bold text-xs transition-colors transition-transform duration-150 ease-out border border-paw-200/80 active:scale-95 focus-visible:ring-2 focus-visible:ring-paw-500 outline-none"
               >
                 <div className="w-9 h-9 rounded-xl bg-paw-500 text-white flex items-center justify-center shadow-xs">
@@ -89,10 +145,7 @@ export default function HamburgerDrawer({
               </button>
 
               <button
-                onClick={() => {
-                  onClose();
-                  onOpenFamily();
-                }}
+                onClick={() => requestClose(onOpenFamily)}
                 className="flex flex-col items-center justify-center gap-2 p-3.5 rounded-2xl bg-amber-50 hover:bg-amber-100 text-amber-900 font-bold text-xs transition-colors transition-transform duration-150 ease-out border border-amber-200/80 active:scale-95 focus-visible:ring-2 focus-visible:ring-amber-500 outline-none"
               >
                 <div className="w-9 h-9 rounded-xl bg-amber-500 text-white flex items-center justify-center shadow-xs">
@@ -101,6 +154,26 @@ export default function HamburgerDrawer({
                 <span>Family Tree</span>
               </button>
             </div>
+
+            {/* Quick Share / Import Photos Button */}
+            <button
+              type="button"
+              onClick={() => requestClose(onOpenSharedImport)}
+              className="w-full flex items-center justify-between p-3 rounded-2xl bg-gradient-to-r from-paw-50 to-orange-50 hover:from-paw-100/70 hover:to-orange-100/70 text-slate-800 font-bold text-xs transition-colors transition-transform duration-150 [transition-timing-function:var(--ease-out)] border border-paw-200/80 active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-paw-500 outline-none shadow-2xs"
+            >
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-paw-500 text-white flex items-center justify-center shadow-xs">
+                  <FontAwesomeIcon icon={faImages} className="text-xs" />
+                </div>
+                <div className="text-left">
+                  <div>แชร์ / นำเข้ารูปภาพ</div>
+                  <div className="text-[10px] text-slate-500 font-normal">เดี่ยวหรือเป็นกลุ่ม (Batch)</div>
+                </div>
+              </div>
+              <span className="text-[10px] bg-white px-2 py-0.5 rounded-full border border-paw-200 text-paw-700 font-semibold shadow-2xs">
+                จากภายนอก
+              </span>
+            </button>
 
             {/* 2. Filter Options */}
             <div className="space-y-1.5">
@@ -187,11 +260,8 @@ export default function HamburgerDrawer({
             {/* 6. Secondary Actions: Backup */}
             <div className="space-y-1">
               <button
-                onClick={() => {
-                  onClose();
-                  onOpenBackup();
-                }}
-                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl hover:bg-slate-50 text-slate-700 font-semibold text-xs transition-colors"
+                onClick={() => requestClose(onOpenBackup)}
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl hover:bg-slate-50 text-slate-700 font-semibold text-xs transition-colors transition-transform duration-150 [transition-timing-function:var(--ease-out)] active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-paw-500 outline-none"
               >
                 <div className="w-7 h-7 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center">
                   <FontAwesomeIcon icon={faDatabase} className="text-xs" />

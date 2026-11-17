@@ -1,7 +1,7 @@
 // Utility functions for Image Resizing, Thumbnails, Focus Area, and Memory Optimization
 
 export const MAX_LONG_EDGE = 2048;
-export const THUMB_SIZE = 360;
+export const THUMB_SIZE = 960;
 
 export const getPhotoSrc = (photo) => {
   if (!photo) return '';
@@ -20,7 +20,7 @@ export const getPhotoThumb = (photo) => {
 };
 
 export function estimateDataUrlBytes(dataUrl) {
-  if (!dataUrl || typeof dataUrl !== 'string') return 0;
+  if (!dataUrl || typeof dataUrl !== 'string' || !dataUrl.startsWith('data:')) return 0;
   const base64Str = dataUrl.split(',')[1] || '';
   return Math.round((base64Str.length * 3) / 4);
 }
@@ -55,15 +55,15 @@ export function loadImage(src) {
 
 /**
  * Process image:
- * 1. Full Image: Preserves full original uncropped photo, resized so longest edge <= 2048px (for viewing large photos)
- * 2. Focused Thumbnail: 1:1 Square thumbnail based on user's focus area (for fast card & list rendering)
+ * 1. Full Image: Preserves full original uncropped photo (keeps original URL if unrotated static asset, or max 2048px)
+ * 2. Focused High-DPI Thumbnail: Crisp 1:1 Square image (up to 960x960 at 0.92 quality) based on user's focus area
  */
 export async function processImageWithFocus({
-  imageSource, // HTMLImageElement or dataUrl
+  imageSource, // HTMLImageElement or dataUrl or static path
   focusParams = {}, // { panX, panY, zoom, frameSize }
   rotation = 0, // 0, 90, 180, 270
-  maxLongEdge = MAX_LONG_EDGE, // 2048px fixed
-  thumbSize = THUMB_SIZE // 360px square
+  maxLongEdge = MAX_LONG_EDGE, // 2048px
+  thumbSize = THUMB_SIZE // 960px high-DPI square
 }) {
   const img = typeof imageSource === 'string' ? await loadImage(imageSource) : imageSource;
 
@@ -76,44 +76,52 @@ export async function processImageWithFocus({
   const effectiveWidth = isPerpendicular ? naturalH : naturalW;
   const effectiveHeight = isPerpendicular ? naturalW : naturalH;
 
-  // Render rotated image to offscreen canvas
-  const rotCanvas = document.createElement('canvas');
-  rotCanvas.width = effectiveWidth;
-  rotCanvas.height = effectiveHeight;
-  const rotCtx = rotCanvas.getContext('2d');
-  rotCtx.imageSmoothingEnabled = true;
-  rotCtx.imageSmoothingQuality = 'high';
+  // Only create intermediate rotated canvas if rotation !== 0
+  let sourceDrawable = img;
+  if (normRot !== 0) {
+    const rotCanvas = document.createElement('canvas');
+    rotCanvas.width = effectiveWidth;
+    rotCanvas.height = effectiveHeight;
+    const rotCtx = rotCanvas.getContext('2d');
+    rotCtx.imageSmoothingEnabled = true;
+    rotCtx.imageSmoothingQuality = 'high';
 
-  rotCtx.translate(effectiveWidth / 2, effectiveHeight / 2);
-  rotCtx.rotate((normRot * Math.PI) / 180);
-  rotCtx.drawImage(img, -naturalW / 2, -naturalH / 2);
+    rotCtx.translate(effectiveWidth / 2, effectiveHeight / 2);
+    rotCtx.rotate((normRot * Math.PI) / 180);
+    rotCtx.drawImage(img, -naturalW / 2, -naturalH / 2);
+    sourceDrawable = rotCanvas;
+  }
 
-  // 📸 1. FULL UNMODIFIED-CROP IMAGE (Resized to max 2048px long edge if larger)
-  // Keeps 100% of the original photo for full-screen viewing
+  // 📸 1. FULL UNMODIFIED-CROP IMAGE
+  const isStaticAssetUrl = typeof imageSource === 'string' && !imageSource.startsWith('data:');
   const longEdge = Math.max(effectiveWidth, effectiveHeight);
   const fullScale = longEdge > maxLongEdge ? maxLongEdge / longEdge : 1;
   const fullW = Math.max(1, Math.round(effectiveWidth * fullScale));
   const fullH = Math.max(1, Math.round(effectiveHeight * fullScale));
 
-  const fullCanvas = document.createElement('canvas');
-  fullCanvas.width = fullW;
-  fullCanvas.height = fullH;
-  const fullCtx = fullCanvas.getContext('2d');
-  fullCtx.imageSmoothingEnabled = true;
-  fullCtx.imageSmoothingQuality = 'high';
-  fullCtx.drawImage(rotCanvas, 0, 0, fullW, fullH);
+  let fullDataUrl;
+  if (isStaticAssetUrl && normRot === 0 && fullScale === 1) {
+    // Preserve original crisp static asset URL without lossy re-encoding
+    fullDataUrl = imageSource;
+  } else {
+    const fullCanvas = document.createElement('canvas');
+    fullCanvas.width = fullW;
+    fullCanvas.height = fullH;
+    const fullCtx = fullCanvas.getContext('2d');
+    fullCtx.imageSmoothingEnabled = true;
+    fullCtx.imageSmoothingQuality = 'high';
+    fullCtx.drawImage(sourceDrawable, 0, 0, fullW, fullH);
+    fullDataUrl = fullCanvas.toDataURL('image/jpeg', 0.92);
+  }
 
-  const fullDataUrl = fullCanvas.toDataURL('image/jpeg', 0.86);
-
-  // 🎯 2. FOCUSED 1:1 SQUARE CARD THUMBNAIL (For Cards & List Avatars)
+  // 🎯 2. FOCUSED 1:1 SQUARE CARD IMAGE (High-DPI 960px for crisp Retina/Mobile cards)
   const {
     panX = 0,
     panY = 0,
     zoom = 1,
-    frameSize = 260
+    frameSize = 300
   } = focusParams;
 
-  // Focus math: frameSize is square
   const baseScale = Math.max(frameSize / effectiveWidth, frameSize / effectiveHeight);
   const currentScale = Math.max(0.001, baseScale * zoom);
 
@@ -129,25 +137,38 @@ export async function processImageWithFocus({
   cropX = Math.max(0, Math.min(effectiveWidth - cropSide, cropX));
   cropY = Math.max(0, Math.min(effectiveHeight - cropSide, cropY));
 
+  // Output resolution matches source crop resolution up to thumbSize (960px), minimum 600px
+  const targetThumbSize = Math.round(Math.min(thumbSize, Math.max(600, cropSide)));
+
   const thumbCanvas = document.createElement('canvas');
-  thumbCanvas.width = thumbSize;
-  thumbCanvas.height = thumbSize;
+  thumbCanvas.width = targetThumbSize;
+  thumbCanvas.height = targetThumbSize;
   const thumbCtx = thumbCanvas.getContext('2d');
   thumbCtx.imageSmoothingEnabled = true;
   thumbCtx.imageSmoothingQuality = 'high';
-  thumbCtx.drawImage(rotCanvas, cropX, cropY, cropSide, cropSide, 0, 0, thumbSize, thumbSize);
+  thumbCtx.drawImage(
+    sourceDrawable,
+    cropX,
+    cropY,
+    cropSide,
+    cropSide,
+    0,
+    0,
+    targetThumbSize,
+    targetThumbSize
+  );
 
-  const thumbDataUrl = thumbCanvas.toDataURL('image/jpeg', 0.80);
+  const thumbDataUrl = thumbCanvas.toDataURL('image/jpeg', 0.92);
 
   return {
-    src: fullDataUrl, // Full uncropped image (max 2048px)
-    thumb: thumbDataUrl, // Focused 1:1 square thumbnail (360px)
+    src: fullDataUrl, // Full uncropped image
+    thumb: thumbDataUrl, // Focused 1:1 square high-res card image (up to 960x960 @ 0.92)
     width: fullW,
     height: fullH,
-    thumbWidth: thumbSize,
-    thumbHeight: thumbSize,
+    thumbWidth: targetThumbSize,
+    thumbHeight: targetThumbSize,
     sizeBytes: estimateDataUrlBytes(fullDataUrl),
     thumbSizeBytes: estimateDataUrlBytes(thumbDataUrl),
-    focus: { panX, panY, zoom, rotation }
+    focus: { panX, panY, zoom, rotation: normRot }
   };
 }

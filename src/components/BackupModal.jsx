@@ -3,11 +3,13 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
   faXmark, faDownload, faUpload, faDatabase 
 } from '@fortawesome/free-solid-svg-icons';
+import { useSheetDrag } from '../useSheetDrag';
 
 export default function BackupModal({ isOpen, onClose, pets, onRestore }) {
   const fileInputRef = useRef(null);
+  const { isVisible, requestClose, backdropAnimationClass, sheetAnimationClass, handleProps, sheetProps } = useSheetDrag(onClose, isOpen);
 
-  if (!isOpen) return null;
+  if (!isVisible) return null;
 
   // Export to JSON file
   const handleExport = () => {
@@ -40,15 +42,18 @@ export default function BackupModal({ isOpen, onClose, pets, onRestore }) {
 
   return (
     <div 
-      onClick={onClose}
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 sm:p-4 backdrop-blur-xs animate-fadeIn overscroll-contain"
+      onClick={requestClose}
+      className={`fixed inset-0 z-50 flex items-end justify-center bg-black/60 sm:px-4 backdrop-blur-xs overscroll-contain ${backdropAnimationClass}`}
     >
       <div 
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-sm rounded-t-[32px] sm:rounded-[32px] bg-white shadow-2xl overflow-hidden flex flex-col animate-slideUpSheet sm:animate-scaleUp pb-[env(safe-area-inset-bottom)] overscroll-contain"
+        {...sheetProps}
+        className={`w-full max-w-sm rounded-t-[32px] bg-white shadow-2xl overflow-hidden flex flex-col ${sheetAnimationClass} pb-[var(--safe-bottom)] overscroll-contain`}
       >
-        {/* Mobile Pull Handle */}
-        <div className="w-12 h-1.5 bg-slate-300 rounded-full mx-auto mt-2.5 -mb-1 sm:hidden flex-shrink-0" />
+        {/* Pull Handle Grab Zone */}
+        <div {...handleProps} className="w-full pt-2.5 pb-1 flex justify-center cursor-grab active:cursor-grabbing flex-shrink-0 select-none bg-slate-50/50" title="ลากลงเพื่อปิด">
+          <div className="w-12 h-1.5 bg-slate-300 hover:bg-slate-400 rounded-full transition-colors" />
+        </div>
         {/* Header */}
         <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
           <div className="flex items-center gap-2.5">
@@ -60,7 +65,7 @@ export default function BackupModal({ isOpen, onClose, pets, onRestore }) {
             </h2>
           </div>
           <button
-            onClick={onClose}
+            onClick={requestClose}
             aria-label="Close"
             className="w-8 h-8 text-slate-400 hover:text-slate-600 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors duration-150 ease-out active:scale-95 focus-visible:ring-2 focus-visible:ring-paw-500 outline-none"
           >

@@ -9,14 +9,53 @@ export const initialPets = [
     "deceasedDate": "2020-10-04",
     "note": "พี่ใหญ่สุดผู้น่ารัก เดินทางข้ามสะพานสายรุ้งเมื่อ 4 ต.ค. 2020 อยู่ในความทรงจำตลอดไป 🌈",
     "avatar": "/avatars/chainoi.png",
+    "latestWeight": 5.2,
+    "weightHistory": [
+      {
+        "id": "w-1",
+        "date": "2019-03-10",
+        "weight": 5.6
+      },
+      {
+        "id": "w-2",
+        "date": "2020-01-15",
+        "weight": 5.4
+      },
+      {
+        "id": "w-3",
+        "date": "2020-08-20",
+        "weight": 5.2
+      }
+    ],
+    "letters": [
+      {
+        "id": "let-1",
+        "date": "2020-10-04",
+        "text": "พี่ใหญ่สุดผู้น่ารัก เดินทางข้ามสะพานสายรุ้งเมื่อ 4 ต.ค. 2020 อยู่ในความทรงจำตลอดไป 🌈"
+      },
+      {
+        "id": "let-2",
+        "date": "2021-10-04",
+        "text": "ครบรอบ 1 ปีที่พี่ชายน้อยไปวิ่งเล่นบนดาวแมว คิดถึงพี่เสมอเลยนะ ✨"
+      },
+      {
+        "id": "let-3",
+        "date": "2023-10-04",
+        "text": "น้องๆ ทุกตัวที่บ้านสบายดีและคิดถึงพี่ใหญ่อยู่ตลอดนะ ❤️"
+      }
+    ],
+    "relationships": [
+      {
+        "targetPetId": "pet-2",
+        "type": "child",
+        "label": "ลูกสาว"
+      }
+    ],
     "photos": [
       "/avatars/chainoi.png",
       "/photos/chainoi/1.jpg",
       "/photos/chainoi/2.jpg",
       "/photos/chainoi/3.jpg"
-    ],
-    "relationships": [
-      { "targetPetId": "pet-2", "type": "child", "label": "ลูกสาว" }
     ]
   },
   {
@@ -27,19 +66,62 @@ export const initialPets = [
     "birthDate": "2018-05-02",
     "status": "alive",
     "deceasedDate": "",
-    "note": "",
+    "note": "คุณแม่ผู้ใจดีและเรียบร้อย รักลูกๆ ทุกตัว",
     "avatar": "/avatars/tangthon.png",
+    "latestWeight": 4.3,
+    "fleaDate": "2024-10-10",
+    "weightHistory": [
+      {
+        "id": "w-201",
+        "date": "2023-11-05",
+        "weight": 4.1
+      },
+      {
+        "id": "w-202",
+        "date": "2024-03-12",
+        "weight": 4.2
+      },
+      {
+        "id": "w-203",
+        "date": "2024-09-18",
+        "weight": 4.3
+      }
+    ],
+    "relationships": [
+      {
+        "targetPetId": "pet-1",
+        "type": "parent",
+        "label": "พ่อ"
+      },
+      {
+        "targetPetId": "pet-3",
+        "type": "partner",
+        "label": "แฟน (ตัวผู้)"
+      },
+      {
+        "targetPetId": "pet-4",
+        "type": "child",
+        "label": "ลูกชาย"
+      },
+      {
+        "targetPetId": "pet-5",
+        "type": "child",
+        "label": "ลูกชาย"
+      },
+      {
+        "targetPetId": "pet-6",
+        "type": "child",
+        "label": "ลูกชาย"
+      },
+      {
+        "targetPetId": "pet-7",
+        "type": "child",
+        "label": "ลูกชาย"
+      }
+    ],
     "photos": [
       "/avatars/tangthon.png",
       "/photos/tangthon/1.jpg"
-    ],
-    "relationships": [
-      { "targetPetId": "pet-1", "type": "parent", "label": "พ่อ" },
-      { "targetPetId": "pet-3", "type": "partner", "label": "แฟน (ตัวผู้)" },
-      { "targetPetId": "pet-4", "type": "child", "label": "ลูกชาย" },
-      { "targetPetId": "pet-5", "type": "child", "label": "ลูกชาย" },
-      { "targetPetId": "pet-6", "type": "child", "label": "ลูกชาย" },
-      { "targetPetId": "pet-7", "type": "child", "label": "ลูกชาย" }
     ]
   },
   {
@@ -50,20 +132,59 @@ export const initialPets = [
     "birthDate": "2020-10-22",
     "status": "alive",
     "deceasedDate": "",
-    "note": "",
+    "note": "คุณพ่อจอมซน ขี้อ้อน ชอบนอนตัก",
     "avatar": "/avatars/khaitom.png",
+    "latestWeight": 5.1,
+    "fleaDate": "2024-10-12",
+    "weightHistory": [
+      {
+        "id": "w-301",
+        "date": "2023-10-15",
+        "weight": 4.7
+      },
+      {
+        "id": "w-302",
+        "date": "2024-04-20",
+        "weight": 4.9
+      },
+      {
+        "id": "w-303",
+        "date": "2024-10-01",
+        "weight": 5.1
+      }
+    ],
+    "relationships": [
+      {
+        "targetPetId": "pet-2",
+        "type": "partner",
+        "label": "แฟน (ตัวเมีย)"
+      },
+      {
+        "targetPetId": "pet-4",
+        "type": "child",
+        "label": "ลูกชาย"
+      },
+      {
+        "targetPetId": "pet-5",
+        "type": "child",
+        "label": "ลูกชาย"
+      },
+      {
+        "targetPetId": "pet-6",
+        "type": "child",
+        "label": "ลูกชาย"
+      },
+      {
+        "targetPetId": "pet-7",
+        "type": "child",
+        "label": "ลูกชาย"
+      }
+    ],
     "photos": [
       "/avatars/khaitom.png",
       "/photos/khaitom/1.jpg",
       "/photos/khaitom/2.jpg",
       "/photos/khaitom/3.jpg"
-    ],
-    "relationships": [
-      { "targetPetId": "pet-2", "type": "partner", "label": "แฟน (ตัวเมีย)" },
-      { "targetPetId": "pet-4", "type": "child", "label": "ลูกชาย" },
-      { "targetPetId": "pet-5", "type": "child", "label": "ลูกชาย" },
-      { "targetPetId": "pet-6", "type": "child", "label": "ลูกชาย" },
-      { "targetPetId": "pet-7", "type": "child", "label": "ลูกชาย" }
     ]
   },
   {
@@ -74,8 +195,44 @@ export const initialPets = [
     "birthDate": "2021-08-14",
     "status": "alive",
     "deceasedDate": "",
-    "note": "ลูกชุดแรก • พี่น้องฝาแฝดกับทัศนัยภูวดล",
+    "note": "ลูกชุดแรก • พี่น้องฝาแฝดกับทัศนัยภูวดล เรียบร้อย พูดเก่ง",
     "avatar": "/avatars/phuayphuay.png",
+    "latestWeight": 3.8,
+    "fleaDate": "2024-10-10",
+    "weightHistory": [
+      {
+        "id": "w-401",
+        "date": "2023-08-14",
+        "weight": 3.5
+      },
+      {
+        "id": "w-402",
+        "date": "2024-02-14",
+        "weight": 3.7
+      },
+      {
+        "id": "w-403",
+        "date": "2024-08-14",
+        "weight": 3.8
+      }
+    ],
+    "relationships": [
+      {
+        "targetPetId": "pet-2",
+        "type": "parent",
+        "label": "แม่"
+      },
+      {
+        "targetPetId": "pet-3",
+        "type": "parent",
+        "label": "พ่อ"
+      },
+      {
+        "targetPetId": "pet-5",
+        "type": "twin",
+        "label": "ฝาแฝด"
+      }
+    ],
     "photos": [
       "/avatars/phuayphuay.png",
       "/photos/phuayphuay/1.jpg",
@@ -83,11 +240,6 @@ export const initialPets = [
       "/photos/phuayphuay/3.jpg",
       "/photos/phuayphuay/4.jpg",
       "/photos/phuayphuay/5.jpg"
-    ],
-    "relationships": [
-      { "targetPetId": "pet-2", "type": "parent", "label": "แม่" },
-      { "targetPetId": "pet-3", "type": "parent", "label": "พ่อ" },
-      { "targetPetId": "pet-5", "type": "twin", "label": "ฝาแฝด" }
     ]
   },
   {
@@ -98,18 +250,49 @@ export const initialPets = [
     "birthDate": "2021-08-14",
     "status": "alive",
     "deceasedDate": "",
-    "note": "ลูกชุดแรก • พี่น้องฝาแฝดกับพวยพวย",
+    "note": "ลูกชุดแรก • พี่น้องฝาแฝดกับพวยพวย ตัวแน่น ขนปุย",
     "avatar": "/avatars/tassanai.png",
+    "latestWeight": 5.4,
+    "fleaDate": "2024-10-10",
+    "weightHistory": [
+      {
+        "id": "w-501",
+        "date": "2023-08-14",
+        "weight": 4.9
+      },
+      {
+        "id": "w-502",
+        "date": "2024-03-10",
+        "weight": 5.2
+      },
+      {
+        "id": "w-503",
+        "date": "2024-09-01",
+        "weight": 5.4
+      }
+    ],
+    "relationships": [
+      {
+        "targetPetId": "pet-2",
+        "type": "parent",
+        "label": "แม่"
+      },
+      {
+        "targetPetId": "pet-3",
+        "type": "parent",
+        "label": "พ่อ"
+      },
+      {
+        "targetPetId": "pet-4",
+        "type": "twin",
+        "label": "ฝาแฝด"
+      }
+    ],
     "photos": [
       "/avatars/tassanai.png",
       "/photos/tassanai/1.jpg",
       "/photos/tassanai/2.jpg",
       "/photos/tassanai/3.jpg"
-    ],
-    "relationships": [
-      { "targetPetId": "pet-2", "type": "parent", "label": "แม่" },
-      { "targetPetId": "pet-3", "type": "parent", "label": "พ่อ" },
-      { "targetPetId": "pet-4", "type": "twin", "label": "ฝาแฝด" }
     ]
   },
   {
@@ -120,16 +303,43 @@ export const initialPets = [
     "birthDate": "2021-12-01",
     "status": "alive",
     "deceasedDate": "",
-    "note": "ลูกชุดสอง • หนุ่มน้อยเรียบร้อย ตาแป๋ว",
+    "note": "ลูกชุดสอง • หนุ่มน้อยเรียบร้อย ตาแป๋ว ชอบกินขนมแมวเลีย",
     "avatar": "/avatars/thongjiew.png",
+    "latestWeight": 3.6,
+    "fleaDate": "2024-10-05",
+    "weightHistory": [
+      {
+        "id": "w-601",
+        "date": "2023-12-01",
+        "weight": 3.3
+      },
+      {
+        "id": "w-602",
+        "date": "2024-06-15",
+        "weight": 3.5
+      },
+      {
+        "id": "w-603",
+        "date": "2024-10-20",
+        "weight": 3.6
+      }
+    ],
+    "relationships": [
+      {
+        "targetPetId": "pet-2",
+        "type": "parent",
+        "label": "แม่"
+      },
+      {
+        "targetPetId": "pet-3",
+        "type": "parent",
+        "label": "พ่อ"
+      }
+    ],
     "photos": [
       "/avatars/thongjiew.png",
       "/photos/thongjiew/1.jpg",
       "/photos/thongjiew/2.jpg"
-    ],
-    "relationships": [
-      { "targetPetId": "pet-2", "type": "parent", "label": "แม่" },
-      { "targetPetId": "pet-3", "type": "parent", "label": "พ่อ" }
     ]
   },
   {
@@ -140,15 +350,47 @@ export const initialPets = [
     "birthDate": "2023-07-03",
     "status": "alive",
     "deceasedDate": "",
-    "note": "ลูกชุดสาม • น้องเล็กสุดประจำบ้าน ซนที่สุด",
+    "note": "ลูกชุดสาม • น้องเล็กสุดประจำบ้าน ซนที่สุด วิ่งไล่พี่ๆ ทั้งวัน",
     "avatar": "/avatars/kuaytiew.png",
+    "latestWeight": 4,
+    "fleaDate": "2024-10-25",
+    "weightHistory": [
+      {
+        "id": "w-701",
+        "date": "2023-10-01",
+        "weight": 1.5
+      },
+      {
+        "id": "w-702",
+        "date": "2024-01-10",
+        "weight": 2.8
+      },
+      {
+        "id": "w-703",
+        "date": "2024-07-03",
+        "weight": 3.7
+      },
+      {
+        "id": "w-704",
+        "date": "2024-10-28",
+        "weight": 4
+      }
+    ],
+    "relationships": [
+      {
+        "targetPetId": "pet-2",
+        "type": "parent",
+        "label": "แม่"
+      },
+      {
+        "targetPetId": "pet-3",
+        "type": "parent",
+        "label": "พ่อ"
+      }
+    ],
     "photos": [
       "/avatars/kuaytiew.png",
       "/photos/kuaytiew/1.jpg"
-    ],
-    "relationships": [
-      { "targetPetId": "pet-2", "type": "parent", "label": "แม่" },
-      { "targetPetId": "pet-3", "type": "parent", "label": "พ่อ" }
     ]
   }
 ];

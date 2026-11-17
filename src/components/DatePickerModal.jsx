@@ -8,6 +8,7 @@ import {
   parseLocalDate, toLocalDateString, getTodayLocal, 
   formatDate, calculateAge 
 } from '../utils';
+import { useSheetDrag } from '../useSheetDrag';
 
 export default function DatePickerModal({
   isOpen,
@@ -21,6 +22,15 @@ export default function DatePickerModal({
   minDate = null,
   allowClear = false
 }) {
+  const {
+    isVisible,
+    requestClose,
+    scrollRef,
+    backdropAnimationClass,
+    sheetAnimationClass,
+    handleProps,
+    sheetProps
+  } = useSheetDrag(onClose, isOpen);
   const today = useMemo(() => getTodayLocal(), []);
   
   // Current temporary selected date while picker is open
@@ -46,7 +56,7 @@ export default function DatePickerModal({
     }
   }, [isOpen, value, today]);
 
-  if (!isOpen) return null;
+  if (!isVisible) return null;
 
   // Month names
   const thaiMonths = [
@@ -136,18 +146,21 @@ export default function DatePickerModal({
 
   return (
     <div 
-      onClick={onClose}
-      className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center bg-black/60 sm:p-4 backdrop-blur-xs animate-fadeIn overscroll-contain"
+      onClick={requestClose}
+      className={`fixed inset-0 z-[70] flex items-end justify-center bg-black/60 sm:px-4 backdrop-blur-xs overscroll-contain ${backdropAnimationClass}`}
     >
       <div 
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-sm rounded-t-[32px] sm:rounded-[32px] bg-white text-slate-800 shadow-2xl overflow-hidden flex flex-col max-h-[92vh] sm:max-h-[88vh] animate-slideUpSheet sm:animate-scaleUp pb-[env(safe-area-inset-bottom)] overscroll-contain"
+        {...sheetProps}
+        className={`w-full max-w-sm rounded-t-[32px] bg-white text-slate-800 shadow-2xl overflow-hidden flex flex-col max-h-[92dvh] sm:max-h-[88vh] ${sheetAnimationClass} pb-[var(--safe-bottom)] overscroll-contain`}
       >
-        {/* Mobile Pull Handle */}
-        <div className="w-12 h-1.5 bg-slate-300 rounded-full mx-auto mt-2.5 -mb-1 sm:hidden flex-shrink-0" />
+        {/* Pull Handle Grab Zone */}
+        <div {...handleProps} className="w-full pt-2.5 pb-1 flex justify-center cursor-grab active:cursor-grabbing flex-shrink-0 select-none bg-slate-50/60" title="ลากลงเพื่อปิด">
+          <div className="w-12 h-1.5 bg-slate-300 hover:bg-slate-400 rounded-full transition-colors" />
+        </div>
 
         {/* Header with Title & Close */}
-        <div className="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/60">
+        <div className="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/60 flex-shrink-0">
           <div className="flex items-center gap-2">
             <div className="w-7 h-7 rounded-xl bg-paw-100 text-paw-600 flex items-center justify-center text-xs">
               <FontAwesomeIcon icon={faCalendarDays} />
@@ -157,7 +170,9 @@ export default function DatePickerModal({
             </h3>
           </div>
           <button 
-            onClick={onClose}
+            type="button"
+            data-back-close="picker"
+            onClick={requestClose}
             aria-label="Close"
             className="w-8 h-8 text-slate-400 hover:text-slate-600 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors active:scale-95"
           >
@@ -166,7 +181,7 @@ export default function DatePickerModal({
         </div>
 
         {/* Selected Date Summary & Live Age Display */}
-        <div className="px-5 pt-3.5 pb-2 bg-gradient-to-b from-paw-50/40 to-transparent border-b border-slate-100/80">
+        <div className="px-5 pt-3.5 pb-2 bg-gradient-to-b from-paw-50/40 to-transparent border-b border-slate-100/80 flex-shrink-0">
           <div className="flex items-baseline justify-between">
             <span className="text-xs font-bold text-slate-400">วันที่เลือก</span>
             {liveAge && (
@@ -181,7 +196,7 @@ export default function DatePickerModal({
         </div>
 
         {/* Calendar Body */}
-        <div className="p-4 space-y-3 overflow-y-auto">
+        <div ref={scrollRef} className="p-4 space-y-3 flex-1 min-h-0 overflow-y-auto touch-pan-y">
 
           {/* Month & Year Navigation Bar */}
           <div className="flex items-center justify-between px-1">
@@ -260,7 +275,7 @@ export default function DatePickerModal({
                       key={day}
                       type="button"
                       onClick={() => handleSelectDay(day)}
-                      className={`w-9 h-9 mx-auto rounded-full text-xs font-bold transition-all duration-150 active:scale-90 flex items-center justify-center relative ${
+                      className={`w-9 h-9 mx-auto rounded-full text-xs font-bold transition-[background-color,color,transform] duration-150 [transition-timing-function:var(--ease-out)] active:scale-95 flex items-center justify-center relative ${
                         isSelected 
                           ? 'bg-paw-500 text-white shadow-md shadow-paw-500/35 font-extrabold scale-105' 
                           : isCurrentToday

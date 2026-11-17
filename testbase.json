@@ -70,7 +70,6 @@
     "avatar": "/avatars/tangthon.png",
     "latestWeight": 4.3,
     "fleaDate": "2024-10-10",
-    "vaccineDate": "2024-05-20",
     "weightHistory": [
       {
         "id": "w-201",
@@ -137,7 +136,6 @@
     "avatar": "/avatars/khaitom.png",
     "latestWeight": 5.1,
     "fleaDate": "2024-10-12",
-    "vaccineDate": "2024-04-18",
     "weightHistory": [
       {
         "id": "w-301",
@@ -201,7 +199,6 @@
     "avatar": "/avatars/phuayphuay.png",
     "latestWeight": 3.8,
     "fleaDate": "2024-10-10",
-    "vaccineDate": "2024-08-10",
     "weightHistory": [
       {
         "id": "w-401",
@@ -257,7 +254,6 @@
     "avatar": "/avatars/tassanai.png",
     "latestWeight": 5.4,
     "fleaDate": "2024-10-10",
-    "vaccineDate": "2024-08-10",
     "weightHistory": [
       {
         "id": "w-501",
@@ -311,7 +307,6 @@
     "avatar": "/avatars/thongjiew.png",
     "latestWeight": 3.6,
     "fleaDate": "2024-10-05",
-    "vaccineDate": "2024-07-22",
     "weightHistory": [
       {
         "id": "w-601",
@@ -359,7 +354,6 @@
     "avatar": "/avatars/kuaytiew.png",
     "latestWeight": 4,
     "fleaDate": "2024-10-25",
-    "vaccineDate": "2024-07-03",
     "weightHistory": [
       {
         "id": "w-701",

@@ -4,15 +4,27 @@ import {
   faXmark, faHeart, faPaperPlane, faCalendarDays, faRainbow, faDove, faStar 
 } from '@fortawesome/free-solid-svg-icons';
 import { formatDate, toLocalDateString } from '../utils';
+import { useSheetDrag } from '../useSheetDrag';
 
 export default function MemorialModal({ pet, isOpen, dateFormat = 'en', onClose, onUpdatePet }) {
-  if (!isOpen || !pet) return null;
-
+  const {
+    isVisible,
+    activeData: activePet,
+    requestClose,
+    scrollRef,
+    backdropAnimationClass,
+    sheetAnimationClass,
+    handleProps,
+    sheetProps
+  } = useSheetDrag(onClose, isOpen, pet);
   const [candleLit, setCandleLit] = useState(true);
   const [newLetter, setNewLetter] = useState('');
 
+  const currentPet = pet || activePet;
+  if (!isVisible || !currentPet) return null;
+
   // Letters array stored in pet.letters
-  const letters = pet.letters || (pet.note ? [{ id: '1', date: pet.deceasedDate || '2020-10-04', text: pet.note }] : []);
+  const letters = currentPet.letters || (currentPet.note ? [{ id: '1', date: currentPet.deceasedDate || '2020-10-04', text: currentPet.note }] : []);
 
   const handleAddLetter = (e) => {
     e.preventDefault();
@@ -26,7 +38,7 @@ export default function MemorialModal({ pet, isOpen, dateFormat = 'en', onClose,
 
     const updatedLetters = [letterItem, ...letters];
     onUpdatePet({
-      ...pet,
+      ...currentPet,
       letters: updatedLetters
     });
     setNewLetter('');
@@ -34,26 +46,29 @@ export default function MemorialModal({ pet, isOpen, dateFormat = 'en', onClose,
 
   return (
     <div 
-      onClick={onClose}
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/75 sm:p-4 backdrop-blur-md animate-fadeIn overscroll-contain"
+      onClick={requestClose}
+      className={`fixed inset-0 z-50 flex items-end justify-center bg-black/75 sm:px-4 backdrop-blur-md overscroll-contain ${backdropAnimationClass}`}
     >
       <div 
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-md rounded-t-[32px] sm:rounded-[32px] bg-gradient-to-b from-slate-900 via-indigo-950 to-slate-900 text-white shadow-2xl overflow-hidden flex flex-col max-h-[92vh] sm:max-h-[88vh] border border-sky-400/20 animate-slideUpSheet sm:animate-scaleUp pb-[env(safe-area-inset-bottom)] overscroll-contain"
+        {...sheetProps}
+        className={`w-full max-w-md rounded-t-[32px] bg-gradient-to-b from-slate-900 via-indigo-950 to-slate-900 text-white shadow-2xl overflow-hidden flex flex-col max-h-[94dvh] sm:max-h-[90vh] border border-sky-400/20 ${sheetAnimationClass} pb-[var(--safe-bottom)] overscroll-contain`}
       >
-        {/* Mobile Pull Handle */}
-        <div className="w-12 h-1.5 bg-white/30 rounded-full mx-auto mt-2.5 -mb-1 sm:hidden flex-shrink-0" />
+        {/* Pull Handle Grab Zone */}
+        <div {...handleProps} className="w-full pt-2.5 pb-1 flex justify-center cursor-grab active:cursor-grabbing flex-shrink-0 select-none" title="ลากลงเพื่อปิด">
+          <div className="w-12 h-1.5 bg-white/35 hover:bg-white/55 rounded-full transition-colors" />
+        </div>
         
         {/* Header with Close */}
-        <div className="px-6 py-4 border-b border-white/10 flex items-center justify-between">
+        <div className="px-[5%] py-3.5 border-b border-white/10 flex items-center justify-between flex-shrink-0">
           <div className="flex items-center gap-2.5">
             <FontAwesomeIcon icon={faRainbow} className="text-amber-300 text-base" />
             <h2 className="font-mitr text-lg font-medium text-amber-200 tracking-wide">
-              {pet.name}
+              {currentPet.name}
             </h2>
           </div>
           <button
-            onClick={onClose}
+            onClick={requestClose}
             aria-label="Close"
             className="w-8 h-8 text-white/60 hover:text-white rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors duration-150 ease-out active:scale-95 focus-visible:ring-2 focus-visible:ring-white outline-none"
           >
@@ -62,7 +77,7 @@ export default function MemorialModal({ pet, isOpen, dateFormat = 'en', onClose,
         </div>
 
         {/* Content Body */}
-        <div className="p-6 overflow-y-auto space-y-5 overscroll-contain">
+        <div ref={scrollRef} className="px-[5%] py-5 flex-1 min-h-0 overflow-y-auto space-y-5 overscroll-contain touch-pan-y">
           
           {/* 🕯️ Virtual Interactive Candle (Self-explanatory) */}
           <div className="rounded-3xl bg-white/5 border border-white/10 p-6 flex flex-col items-center text-center relative overflow-hidden">

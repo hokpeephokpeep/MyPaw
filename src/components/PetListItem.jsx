@@ -80,7 +80,7 @@ export default function PetListItem({ pet, dateFormat = 'en', onOpenMore, onTogg
           : 'card-alive-transition bg-white border border-slate-200/80 hover:border-paw-300'
       }`}
     >
-      <div className="flex items-center gap-3 min-w-0">
+      <div className="flex items-center gap-3 min-w-0 flex-1">
         {/* Avatar thumbnail */}
         <div className={`relative w-14 h-14 rounded-2xl overflow-hidden bg-slate-900 flex-shrink-0 shadow-xs group ${
           isDeceased ? 'ring-2 ring-sky-200/80 shadow-[0_0_12px_rgba(186,230,253,0.35)]' : ''
@@ -111,15 +111,17 @@ export default function PetListItem({ pet, dateFormat = 'en', onOpenMore, onTogg
         </div>
 
         {/* Pet Name & Typographic Age */}
-        <div className="min-w-0">
-          <div className="flex items-center gap-1.5 flex-wrap">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-1.5 min-w-0">
             <h2 className="font-mitr font-medium text-base text-slate-900 truncate">
               {pet.name}
             </h2>
             {specialEvents.length > 0 && (
-              <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border shadow-2xs ${specialEvents[0].bgClass}`}>
+              <span
+                title={specialEvents[0].label}
+                className={`inline-flex items-center justify-center w-5 h-5 rounded-full border shadow-2xs flex-shrink-0 ${specialEvents[0].bgClass}`}
+              >
                 <FontAwesomeIcon icon={specialEvents[0].icon} className={`text-[9px] ${specialEvents[0].iconClass}`} />
-                <span className="truncate max-w-[130px]">{specialEvents[0].label}</span>
               </span>
             )}
           </div>

@@ -10,13 +10,15 @@ import MemorialModal from './components/MemorialModal';
 import HealthLogModal from './components/HealthLogModal';
 import FamilyTreeModal from './components/FamilyTreeModal';
 import PetDetailModal from './components/PetDetailModal';
+import SharedPhotosModal from './components/SharedPhotosModal';
 import SplashScreen from './components/SplashScreen';
 import { resolveAllKinships } from './kinshipEngine';
 import { parseLocalDate, getTodayLocal } from './utils';
+import { fileToDataUrl, processImageWithFocus, getPhotoSrc, getPhotoThumb } from './imageUtils';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
   faBars, faPlus, faXmark, faPaw, faMagnifyingGlass, 
-  faSeedling, faRainbow, faSquare, faTableCellsLarge, faList 
+  faSeedling, faRainbow, faSquare, faTableCellsLarge, faList, faImages 
 } from '@fortawesome/free-solid-svg-icons';
 import confetti from 'canvas-confetti';
 
@@ -28,9 +30,22 @@ export default function App() {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
+        if (!Array.isArray(parsed) || parsed.length === 0) {
+          return initialPets;
+        }
+        const defaultMap = Object.fromEntries(initialPets.map(dp => [dp.id, dp]));
         // Data integrity migration: Only pet-2 (ตังค์ทอน) is female, all others are male
         const reconciled = parsed.map(p => {
-          let updated = { ...p };
+          const seed = defaultMap[p.id] || {};
+          let updated = { ...seed, ...p };
+          if (!updated.note && seed.note) updated.note = seed.note;
+          if (!updated.weightHistory?.length && seed.weightHistory) updated.weightHistory = seed.weightHistory;
+          if (!updated.latestWeight && seed.latestWeight) updated.latestWeight = seed.latestWeight;
+          if (!updated.fleaDate && seed.fleaDate) updated.fleaDate = seed.fleaDate;
+          if (['2024-05-20', '2024-04-18', '2024-08-10', '2024-07-22', '2024-07-03'].includes(updated.vaccineDate)) {
+            delete updated.vaccineDate;
+          }
+          if (!updated.letters?.length && seed.letters) updated.letters = seed.letters;
           if (p.id === 'pet-2') {
             updated.gender = 'female';
           } else if (['pet-1', 'pet-3', 'pet-4', 'pet-5', 'pet-6', 'pet-7'].includes(p.id)) {
@@ -58,22 +73,32 @@ export default function App() {
             'pet-6': ['/avatars/thongjiew.png', '/photos/thongjiew/1.jpg', '/photos/thongjiew/2.jpg'],
             'pet-7': ['/avatars/kuaytiew.png', '/photos/kuaytiew/1.jpg']
           };
-          if (!updated.photos || updated.photos.length <= 2 || updated.photos.some(p => p.includes('_2.png'))) {
+          if (!updated.photos || updated.photos.length === 0 || updated.photos.some(p => typeof p === 'string' && p.includes('_2.png'))) {
             if (defaultPhotoMap[updated.id]) {
               updated.photos = defaultPhotoMap[updated.id];
             } else if (updated.avatar && (!updated.photos || updated.photos.length === 0)) {
               updated.photos = [updated.avatar];
+            }
+          } else {
+            // Upgrade any legacy 360px low-res cropped thumbnails back to full sharpness
+            updated.photos = updated.photos.map((p, idx) => {
+              if (typeof p === 'object' && p !== null && p.thumbWidth && p.thumbWidth <= 360) {
+                const fallbackUrl = defaultPhotoMap[updated.id]?.[idx] || p.src;
+                return fallbackUrl || p;
+              }
+              return p;
+            });
+            if (updated.avatarThumb && typeof updated.photos[0] === 'string') {
+              updated.avatarThumb = updated.photos[0];
             }
           }
           return updated;
         });
         return reconciled;
       }
-      // Fresh app installation: starts with 0 pets for new users.
-      // In development mode, load developer's 7 cats as local dev seed data.
-      return import.meta.env.DEV ? initialPets : [];
+      return initialPets;
     } catch (e) {
-      return import.meta.env.DEV ? initialPets : [];
+      return initialPets;
     }
   });
 
@@ -91,6 +116,258 @@ export default function App() {
   const [isFamilyOpen, setIsFamilyOpen] = useState(false);
   const [detailPet, setDetailPet] = useState(null);
   const [showSplash, setShowSplash] = useState(true);
+
+  // 📸 External Shared Photos State (from Gallery / Share Target / Drag & Drop)
+  const [incomingSharedPhotos, setIncomingSharedPhotos] = useState(null);
+  const [isSharedModalOpen, setIsSharedModalOpen] = useState(false);
+  const [initialSharedPhotosForNew, setInitialSharedPhotosForNew] = useState([]);
+  const [isDragOverWindow, setIsDragOverWindow] = useState(false);
+  const sharedFileInputRef = useRef(null);
+
+  // 🔙 Navigation History Stack & Double-Back-to-Exit Guard
+  const navStackRef = useRef([]);
+  const [exitToastVisible, setExitToastVisible] = useState(false);
+  const exitConfirmUntilRef = useRef(0);
+  const exitToastTimerRef = useRef(null);
+  const handleBackRef = useRef(null);
+
+  const popNavStack = () => {
+    const prev = navStackRef.current.pop();
+    if (!prev) return false;
+    if (prev.type === 'detail' && prev.pet) {
+      setDetailPet(prev.pet);
+      return true;
+    }
+    if (prev.type === 'family') {
+      setIsFamilyOpen(true);
+      return true;
+    }
+    return false;
+  };
+
+  handleBackRef.current = () => {
+    // 1. Topmost nested sub-modals (Image Crop / Date Picker)
+    const cropCloseBtn = document.querySelector('[data-back-close="crop"]');
+    if (cropCloseBtn) {
+      cropCloseBtn.click();
+      return 'handled';
+    }
+    const pickerCloseBtn = document.querySelector('[data-back-close="picker"]');
+    if (pickerCloseBtn) {
+      pickerCloseBtn.click();
+      return 'handled';
+    }
+
+    // 2. Full-screen Image Viewer
+    if (viewingImagePet) {
+      setViewingImagePet(null);
+      return 'handled';
+    }
+
+    // 2.1 Shared Photos Modal
+    if (isSharedModalOpen) {
+      setIsSharedModalOpen(false);
+      setIncomingSharedPhotos(null);
+      return 'handled';
+    }
+
+    // 3. Secondary Modals (Memorial, Health Log, Backup, Add/Edit Pet)
+    if (memorialPet) {
+      setMemorialPet(null);
+      popNavStack();
+      return 'handled';
+    }
+    if (healthPet) {
+      setHealthPet(null);
+      popNavStack();
+      return 'handled';
+    }
+    if (isBackupOpen) {
+      setIsBackupOpen(false);
+      return 'handled';
+    }
+    if (isModalOpen) {
+      setIsModalOpen(false);
+      setEditingPet(null);
+      popNavStack();
+      return 'handled';
+    }
+
+    // 4. Family Tree Modal
+    if (isFamilyOpen) {
+      setIsFamilyOpen(false);
+      popNavStack();
+      return 'handled';
+    }
+
+    // 5. Pet Detail Modal (steps back through visited relatives/tree if any, else closes)
+    if (detailPet) {
+      if (!popNavStack()) {
+        setDetailPet(null);
+      }
+      return 'handled';
+    }
+
+    // 6. Hamburger Drawer
+    if (isDrawerOpen) {
+      setIsDrawerOpen(false);
+      return 'handled';
+    }
+
+    // 7. Active Filter Tab -> Reset to 'all'
+    if (activeTab !== 'all') {
+      setActiveTab('all');
+      return 'handled';
+    }
+
+    // 8. Root Home Screen: Require Double-Back within 2.2s to exit app
+    const now = Date.now();
+    if (now < exitConfirmUntilRef.current) {
+      exitConfirmUntilRef.current = 0;
+      setExitToastVisible(false);
+      if (exitToastTimerRef.current) clearTimeout(exitToastTimerRef.current);
+      return 'exit';
+    }
+
+    exitConfirmUntilRef.current = now + 2200;
+    setExitToastVisible(true);
+    if (exitToastTimerRef.current) clearTimeout(exitToastTimerRef.current);
+    exitToastTimerRef.current = setTimeout(() => {
+      setExitToastVisible(false);
+    }, 2200);
+    return 'handled';
+  };
+
+  useEffect(() => {
+    // Expose global callback for Android MainActivity OnBackPressedCallback
+    window.__handleAndroidBack = () => {
+      return handleBackRef.current ? handleBackRef.current() : 'unhandled';
+    };
+
+    // Browser history guard for Web / Mobile Browser back button
+    if (!window.history.state || !window.history.state.mypawGuard) {
+      window.history.pushState({ mypawGuard: true }, '');
+    }
+
+    const onPopState = () => {
+      const result = handleBackRef.current ? handleBackRef.current() : 'unhandled';
+      if (result === 'handled') {
+        window.history.pushState({ mypawGuard: true }, '');
+      } else if (result === 'exit') {
+        window.history.back();
+      }
+    };
+
+    const onKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        if (handleBackRef.current) {
+          handleBackRef.current();
+        }
+      }
+    };
+
+    window.addEventListener('popstate', onPopState);
+    window.addEventListener('keydown', onKeyDown);
+    return () => {
+      window.removeEventListener('popstate', onPopState);
+      window.removeEventListener('keydown', onKeyDown);
+      delete window.__handleAndroidBack;
+    };
+  }, []);
+
+  // 📸 Handle Incoming Shared Photos (Android Intent + Local File Input + Drag & Drop)
+  const handleProcessIncomingPhotos = async (filesOrDataUrls) => {
+    if (!filesOrDataUrls || filesOrDataUrls.length === 0) return;
+    try {
+      const processed = await Promise.all(
+        Array.from(filesOrDataUrls).map(async (item) => {
+          let dataUrl = typeof item === 'string' ? item : await fileToDataUrl(item);
+          return await processImageWithFocus({
+            imageSource: dataUrl,
+            focusParams: { panX: 0, panY: 0, zoom: 1 }
+          });
+        })
+      );
+      setIncomingSharedPhotos(processed);
+      setIsSharedModalOpen(true);
+    } catch (err) {
+      console.error('Failed to process incoming shared photos:', err);
+    }
+  };
+
+  const handleAddNewPetWithSharedPhotos = (photos) => {
+    setInitialSharedPhotosForNew(photos);
+    setEditingPet(null);
+    setIsModalOpen(true);
+  };
+
+  const handleAddPhotosToExistingPet = async (petId, newPhotos) => {
+    setPets(prev => {
+      const target = prev.find(p => p.id === petId);
+      if (!target) return prev;
+      const existingPhotos = Array.isArray(target.photos) && target.photos.length > 0
+        ? target.photos
+        : (target.avatar ? [target.avatar] : []);
+      const mergedPhotos = [...existingPhotos, ...newPhotos];
+      const updatedPet = {
+        ...target,
+        photos: mergedPhotos,
+        avatar: target.avatar || getPhotoSrc(mergedPhotos[0]),
+        avatarThumb: target.avatarThumb || getPhotoThumb(mergedPhotos[0])
+      };
+      confetti({ particleCount: 35, spread: 70, origin: { y: 0.8 } });
+      return prev.map(p => p.id === petId ? updatedPet : p);
+    });
+  };
+
+  useEffect(() => {
+    // 📸 Support external shared photos from Android Gallery Share Intent
+    window.__handleIncomingSharedPhotos = (photos) => {
+      handleProcessIncomingPhotos(photos);
+    };
+
+    // Check if any shared photos were queued before React mounted
+    if (window.__pendingSharedPhotos && Array.isArray(window.__pendingSharedPhotos)) {
+      handleProcessIncomingPhotos(window.__pendingSharedPhotos);
+      delete window.__pendingSharedPhotos;
+    }
+
+    // 🌐 Local Drag & Drop support (batch or single images)
+    const handleDragOver = (e) => {
+      e.preventDefault();
+      if (e.dataTransfer && Array.from(e.dataTransfer.types).includes('Files')) {
+        setIsDragOverWindow(true);
+      }
+    };
+
+    const handleDragLeave = (e) => {
+      if (e.relatedTarget === null || e.clientX <= 0 || e.clientY <= 0) {
+        setIsDragOverWindow(false);
+      }
+    };
+
+    const handleDrop = (e) => {
+      e.preventDefault();
+      setIsDragOverWindow(false);
+      if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+        const imageFiles = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+        if (imageFiles.length > 0) {
+          handleProcessIncomingPhotos(imageFiles);
+        }
+      }
+    };
+
+    window.addEventListener('dragover', handleDragOver);
+    window.addEventListener('dragleave', handleDragLeave);
+    window.addEventListener('drop', handleDrop);
+
+    return () => {
+      delete window.__handleIncomingSharedPhotos;
+      window.removeEventListener('dragover', handleDragOver);
+      window.removeEventListener('dragleave', handleDragLeave);
+      window.removeEventListener('drop', handleDrop);
+    };
+  }, []);
 
   // 🌍 International vs Thai Date System ('en' | 'th')
   const [dateFormat, setDateFormat] = useState(() => {
@@ -429,13 +706,13 @@ export default function App() {
   return (
     <div 
       onClick={handleScreenClick}
-      className="min-h-screen bg-slate-100 text-slate-800 flex flex-col items-center select-none"
+      className="min-h-screen w-full max-w-[100vw] overflow-x-clip bg-slate-100 text-slate-800 flex flex-col items-center select-none"
     >
       {/* App Container */}
-      <div className="w-full max-w-lg md:max-w-3xl min-h-screen bg-slate-50 shadow-2xl flex flex-col relative pb-28">
+      <div className="w-full max-w-lg md:max-w-3xl min-h-screen overflow-x-clip bg-slate-50 shadow-2xl flex flex-col relative pb-6">
         
         {/* Clean Sticky App Bar (Glance Zone) */}
-        <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md px-4 sm:px-5 py-3 border-b border-slate-200/60 flex items-center justify-between pt-[max(0.75rem,env(safe-area-inset-top))]">
+        <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md px-4 sm:px-5 py-3 border-b border-slate-200/60 flex items-center justify-between pt-[max(0.75rem,var(--safe-top))]">
           {/* Left: Hamburger Button (slides in from left) + Brand Title */}
           <div className="flex items-center gap-2.5">
             <button
@@ -461,58 +738,72 @@ export default function App() {
             </h1>
           </div>
 
-          {/* Right: View Mode Switcher (1cal / 2cal / 3card list) */}
+          {/* Right: View Mode Switcher (Capsule with sliding indicator per animate/SKILL.md) */}
           <div className="flex items-center gap-2">
-            {/* View Mode Switcher: 1col (1cal), 2col (2cal), list (3card list) */}
-            <div className="flex items-center bg-slate-100/90 p-1 rounded-2xl border border-slate-200/60 shadow-2xs">
+            <div className="relative inline-grid grid-cols-3 items-center bg-slate-100/95 p-1 rounded-full border border-slate-200/70 shadow-2xs">
+              {/* Sliding Active Circle Indicator */}
+              <span
+                aria-hidden="true"
+                style={{
+                  transform:
+                    viewMode === '1col'
+                      ? 'translateX(0%)'
+                      : viewMode === '2col'
+                        ? 'translateX(100%)'
+                        : 'translateX(200%)',
+                  transition: 'transform 220ms var(--ease-out)'
+                }}
+                className="pointer-events-none absolute top-1 bottom-1 left-1 w-[34px] rounded-full bg-white shadow-xs"
+              />
+
               <button
                 onClick={() => handleSetViewMode('1col')}
-                className={`w-7 h-7 rounded-xl flex items-center justify-center transition-colors duration-150 ease-out active:scale-95 focus-visible:ring-2 focus-visible:ring-paw-500 outline-none ${
+                className={`relative z-10 w-[34px] h-[34px] rounded-full flex items-center justify-center transition-[color,transform] duration-150 [transition-timing-function:var(--ease-out)] active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-paw-500 outline-none ${
                   viewMode === '1col'
-                    ? 'bg-white text-paw-600 shadow-xs'
+                    ? 'text-paw-600'
                     : 'text-slate-400 hover:text-slate-600'
                 }`}
                 title="1 Column (Large Hero)"
                 aria-label="1 Column"
               >
-                <FontAwesomeIcon icon={faSquare} className="text-xs" />
+                <FontAwesomeIcon icon={faSquare} className="text-[13px]" />
               </button>
 
               <button
                 onClick={() => handleSetViewMode('2col')}
-                className={`w-7 h-7 rounded-xl flex items-center justify-center transition-colors duration-150 ease-out active:scale-95 focus-visible:ring-2 focus-visible:ring-paw-500 outline-none ${
+                className={`relative z-10 w-[34px] h-[34px] rounded-full flex items-center justify-center transition-[color,transform] duration-150 [transition-timing-function:var(--ease-out)] active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-paw-500 outline-none ${
                   viewMode === '2col'
-                    ? 'bg-white text-paw-600 shadow-xs'
+                    ? 'text-paw-600'
                     : 'text-slate-400 hover:text-slate-600'
                 }`}
                 title="2 Columns (Grid)"
                 aria-label="2 Columns"
               >
-                <FontAwesomeIcon icon={faTableCellsLarge} className="text-xs" />
+                <FontAwesomeIcon icon={faTableCellsLarge} className="text-[13px]" />
               </button>
 
               <button
                 onClick={() => handleSetViewMode('list')}
-                className={`w-7 h-7 rounded-xl flex items-center justify-center transition-colors duration-150 ease-out active:scale-95 focus-visible:ring-2 focus-visible:ring-paw-500 outline-none ${
+                className={`relative z-10 w-[34px] h-[34px] rounded-full flex items-center justify-center transition-[color,transform] duration-150 [transition-timing-function:var(--ease-out)] active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-paw-500 outline-none ${
                   viewMode === 'list'
-                    ? 'bg-white text-paw-600 shadow-xs'
+                    ? 'text-paw-600'
                     : 'text-slate-400 hover:text-slate-600'
                 }`}
                 title="Card List View"
                 aria-label="Card List View"
               >
-                <FontAwesomeIcon icon={faList} className="text-xs" />
+                <FontAwesomeIcon icon={faList} className="text-[13px]" />
               </button>
             </div>
           </div>
         </header>
 
         {/* Pure Pet Cards Feed (Responsive according to viewMode) */}
-        <main className="px-4 sm:px-5 py-4 flex-1" style={{ overflowAnchor: 'none' }}>
+        <main className="px-4 sm:px-5 py-4 flex-1 w-full" style={{ overflowAnchor: 'none' }}>
           {filteredPets.length > 0 ? (
             viewMode === 'list' ? (
               /* 3. Card List View */
-              <div className="flex flex-col gap-2.5 max-w-lg mx-auto animate-fadeIn">
+              <div className="flex flex-col gap-2.5 w-full max-w-lg mx-auto animate-fadeIn">
                 {filteredPets.map(pet => (
                   <PetListItem
                     key={pet.id}
@@ -525,32 +816,34 @@ export default function App() {
               </div>
             ) : viewMode === '2col' ? (
               /* 2. Two Columns Grid */
-              <div className="grid grid-cols-2 gap-3 max-w-3xl mx-auto animate-fadeIn">
+              <div className="grid grid-cols-2 gap-3 w-full max-w-3xl mx-auto animate-fadeIn">
                 {filteredPets.map(pet => (
-                  <PetCard
-                    key={pet.id}
-                    pet={pet}
-                    compact={true}
-                    allPets={pets}
-                    dateFormat={dateFormat}
-                    onOpenMore={(p) => setDetailPet(p)}
-                    onToggleBottomNav={toggleBottomNav}
-                  />
+                  <div key={pet.id} className="min-w-0 w-full">
+                    <PetCard
+                      pet={pet}
+                      compact={true}
+                      allPets={pets}
+                      dateFormat={dateFormat}
+                      onOpenMore={(p) => setDetailPet(p)}
+                      onToggleBottomNav={toggleBottomNav}
+                    />
+                  </div>
                 ))}
               </div>
             ) : (
               /* 1. One Column Full Hero Card */
-              <div className="grid grid-cols-1 gap-4 max-w-lg mx-auto animate-fadeIn">
+              <div className="grid grid-cols-1 gap-4 w-full max-w-lg mx-auto animate-fadeIn">
                 {filteredPets.map(pet => (
-                  <PetCard
-                    key={pet.id}
-                    pet={pet}
-                    compact={false}
-                    allPets={pets}
-                    dateFormat={dateFormat}
-                    onOpenMore={(p) => setDetailPet(p)}
-                    onToggleBottomNav={toggleBottomNav}
-                  />
+                  <div key={pet.id} className="min-w-0 w-full">
+                    <PetCard
+                      pet={pet}
+                      compact={false}
+                      allPets={pets}
+                      dateFormat={dateFormat}
+                      onOpenMore={(p) => setDetailPet(p)}
+                      onToggleBottomNav={toggleBottomNav}
+                    />
+                  </div>
                 ))}
               </div>
             )
@@ -590,19 +883,19 @@ export default function App() {
           )}
         </main>
 
-        {/* 📱 Mobile Floating Thumb Bar (Optimal Thumb Zone Ergonomics with Soft Spring Bounce) */}
+        {/* 📱 Mobile Floating Thumb Bar (Percentage-fitted for all phone widths) */}
         <nav 
           aria-label="Mobile Bottom Navigation"
-          className={`fixed bottom-4 inset-x-0 mx-auto max-w-sm px-3 z-40 spring-bounce-bottom pb-[env(safe-area-inset-bottom)] ${
+          className={`fixed bottom-4 inset-x-0 mx-auto w-[92%] max-w-sm z-40 spring-bounce-bottom pb-[var(--safe-bottom)] ${
             isBottomNavVisible 
               ? 'translate-y-0 opacity-100 pointer-events-auto scale-100' 
               : 'translate-y-28 opacity-0 pointer-events-none scale-95'
           }`}
         >
-          <div className="pointer-events-auto bg-white/90 backdrop-blur-xl border border-slate-200/90 shadow-2xl shadow-slate-900/15 rounded-full p-1.5 flex items-center justify-between gap-1.5">
+          <div className="pointer-events-auto bg-white/90 backdrop-blur-xl border border-slate-200/90 shadow-2xl shadow-slate-900/15 rounded-full p-1.5 flex items-center justify-between gap-1.5 w-full">
             
             {/* Quick Segmented Filter Pills */}
-            <div className="flex items-center bg-slate-100/90 p-1 rounded-full text-xs font-bold text-slate-600">
+            <div className="flex-1 min-w-0 grid grid-cols-3 bg-slate-100/90 p-1 rounded-full text-xs font-bold text-slate-600">
               <button
                 onClick={() => {
                   if (activeTab === 'all') {
@@ -611,7 +904,7 @@ export default function App() {
                     setActiveTab('all');
                   }
                 }}
-                className={`px-3 py-1.5 rounded-full transition-colors duration-150 ease-out active:scale-95 focus-visible:ring-2 focus-visible:ring-paw-500 outline-none ${
+                className={`py-1.5 px-1 rounded-full transition-colors duration-150 ease-out active:scale-95 focus-visible:ring-2 focus-visible:ring-paw-500 outline-none text-center truncate ${
                   activeTab === 'all'
                     ? 'bg-white text-slate-900 shadow-xs'
                     : 'text-slate-500 hover:text-slate-800'
@@ -627,14 +920,14 @@ export default function App() {
                     setActiveTab('alive');
                   }
                 }}
-                className={`px-2.5 py-1.5 rounded-full transition-colors duration-150 ease-out flex items-center gap-1 active:scale-95 focus-visible:ring-2 focus-visible:ring-paw-500 outline-none ${
+                className={`py-1.5 px-1 rounded-full transition-colors duration-150 ease-out flex items-center justify-center gap-1 active:scale-95 focus-visible:ring-2 focus-visible:ring-paw-500 outline-none truncate ${
                   activeTab === 'alive'
                     ? 'bg-white text-emerald-700 shadow-xs'
                     : 'text-slate-500 hover:text-slate-800'
                 }`}
               >
-                <FontAwesomeIcon icon={faSeedling} className="text-[10px]" />
-                <span>With Us</span>
+                <FontAwesomeIcon icon={faSeedling} className="text-[10px] flex-shrink-0" />
+                <span className="truncate">With Us</span>
               </button>
               <button
                 onClick={() => {
@@ -644,14 +937,14 @@ export default function App() {
                     setActiveTab('deceased');
                   }
                 }}
-                className={`px-2.5 py-1.5 rounded-full transition-colors duration-150 ease-out flex items-center gap-1 active:scale-95 focus-visible:ring-2 focus-visible:ring-paw-500 outline-none ${
+                className={`py-1.5 px-1 rounded-full transition-colors duration-150 ease-out flex items-center justify-center gap-1 active:scale-95 focus-visible:ring-2 focus-visible:ring-paw-500 outline-none truncate ${
                   activeTab === 'deceased'
                     ? 'bg-white text-sky-700 shadow-xs'
                     : 'text-slate-500 hover:text-slate-800'
                 }`}
               >
-                <FontAwesomeIcon icon={faRainbow} className="text-[10px]" />
-                <span>Memorial</span>
+                <FontAwesomeIcon icon={faRainbow} className="text-[10px] flex-shrink-0" />
+                <span className="truncate">Memorial</span>
               </button>
             </div>
 
@@ -686,6 +979,7 @@ export default function App() {
         }}
         onOpenBackup={() => setIsBackupOpen(true)}
         onOpenFamily={() => setIsFamilyOpen(true)}
+        onOpenSharedImport={() => sharedFileInputRef.current?.click()}
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         sortBy={sortBy}
@@ -697,18 +991,53 @@ export default function App() {
         onSetDateFormat={handleSetDateFormat}
       />
 
+      {/* Hidden File Picker for Batch/Single Shared Image Import */}
+      <input
+        ref={sharedFileInputRef}
+        type="file"
+        multiple
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => {
+          const files = Array.from(e.target.files || []);
+          if (files.length > 0) {
+            handleProcessIncomingPhotos(files);
+          }
+          e.target.value = '';
+        }}
+      />
+
       {/* Modals */}
       <PetModal
         pet={editingPet ? pets.find(p => p.id === editingPet.id) || editingPet : null}
         allPets={pets}
         isOpen={isModalOpen}
         dateFormat={dateFormat}
+        initialPhotos={initialSharedPhotosForNew}
         onClose={() => {
           setIsModalOpen(false);
           setEditingPet(null);
+          setInitialSharedPhotosForNew([]);
+          popNavStack();
         }}
         onSave={handleSavePet}
-        onDelete={handleDeletePet}
+        onDelete={(id) => {
+          navStackRef.current = [];
+          handleDeletePet(id);
+        }}
+      />
+
+      {/* 📸 Shared Photos External Import Modal */}
+      <SharedPhotosModal
+        isOpen={isSharedModalOpen}
+        incomingPhotos={incomingSharedPhotos || []}
+        pets={pets}
+        onClose={() => {
+          setIsSharedModalOpen(false);
+          setIncomingSharedPhotos(null);
+        }}
+        onAddNewPetWithPhotos={handleAddNewPetWithSharedPhotos}
+        onAddPhotosToExistingPet={handleAddPhotosToExistingPet}
       />
 
       <ImageViewerModal
@@ -728,7 +1057,10 @@ export default function App() {
         pet={memorialPet ? resolvedPets.find(p => p.id === memorialPet.id) || memorialPet : null}
         isOpen={!!memorialPet}
         dateFormat={dateFormat}
-        onClose={() => setMemorialPet(null)}
+        onClose={() => {
+          setMemorialPet(null);
+          popNavStack();
+        }}
         onUpdatePet={handleSavePet}
       />
 
@@ -737,16 +1069,23 @@ export default function App() {
         pet={healthPet ? resolvedPets.find(p => p.id === healthPet.id) || healthPet : null}
         isOpen={!!healthPet}
         dateFormat={dateFormat}
-        onClose={() => setHealthPet(null)}
+        onClose={() => {
+          setHealthPet(null);
+          popNavStack();
+        }}
         onUpdatePet={handleSavePet}
       />
 
       {/* 🌳 Family Tree Modal (Interactive: tap any pet node to open its detail modal!) */}
       <FamilyTreeModal
         isOpen={isFamilyOpen}
-        onClose={() => setIsFamilyOpen(false)}
+        onClose={() => {
+          setIsFamilyOpen(false);
+          popNavStack();
+        }}
         pets={resolvedPets}
         onSelectPet={(selectedPet) => {
+          navStackRef.current.push({ type: 'family' });
           setIsFamilyOpen(false);
           setDetailPet(selectedPet);
         }}
@@ -758,22 +1097,73 @@ export default function App() {
         allPets={resolvedPets}
         dateFormat={dateFormat}
         isOpen={!!detailPet}
-        onClose={() => setDetailPet(null)}
+        onClose={() => {
+          navStackRef.current = [];
+          setDetailPet(null);
+        }}
         onEdit={(p) => {
+          navStackRef.current.push({ type: 'detail', pet: p });
           setDetailPet(null);
           setEditingPet(p);
           setIsModalOpen(true);
         }}
-        onOpenMemorial={(p) => setMemorialPet(p)}
-        onOpenHealth={(p) => setHealthPet(p)}
-        onOpenFamily={() => setIsFamilyOpen(true)}
-        onSelectPet={(targetPet) => setDetailPet(targetPet)}
+        onOpenMemorial={(p) => {
+          navStackRef.current.push({ type: 'detail', pet: p });
+          setDetailPet(null);
+          setMemorialPet(p);
+        }}
+        onOpenHealth={(p) => {
+          navStackRef.current.push({ type: 'detail', pet: p });
+          setDetailPet(null);
+          setHealthPet(p);
+        }}
+        onOpenFamily={() => {
+          if (detailPet) {
+            navStackRef.current.push({ type: 'detail', pet: detailPet });
+          }
+          setDetailPet(null);
+          setIsFamilyOpen(true);
+        }}
+        onSelectPet={(targetPet) => {
+          if (detailPet && detailPet.id !== targetPet?.id) {
+            navStackRef.current.push({ type: 'detail', pet: detailPet });
+          }
+          setDetailPet(targetPet);
+        }}
         onViewImage={(p) => setViewingImagePet(p)}
       />
+
+      {/* 🔙 Double-Back to Exit Confirmation Toast */}
+      <div
+        aria-live="polite"
+        className={`fixed bottom-20 inset-x-0 z-[120] flex justify-center px-4 pointer-events-none transition-[transform,opacity] duration-200 [transition-timing-function:var(--ease-out)] ${
+          exitToastVisible
+            ? 'opacity-100 translate-y-0 scale-100'
+            : 'opacity-0 translate-y-3 scale-95'
+        }`}
+      >
+        <div className="bg-slate-900/90 text-white backdrop-blur-md px-4 py-2.5 rounded-full shadow-xl border border-white/15 text-xs font-medium flex items-center gap-2">
+          <FontAwesomeIcon icon={faPaw} className="text-paw-400 text-xs" />
+          <span>กดย้อนกลับอีกครั้งเพื่อออกจากแอป</span>
+        </div>
+      </div>
 
       {/* 🐾 Animated Splash Screen */}
       {showSplash && (
         <SplashScreen onFinish={() => setShowSplash(false)} />
+      )}
+
+      {/* 📁 Drag & Drop Window Dropzone Overlay for Local Testing */}
+      {isDragOverWindow && (
+        <div className="fixed inset-0 z-[150] bg-paw-600/90 backdrop-blur-md flex flex-col items-center justify-center text-white pointer-events-none animate-fadeIn">
+          <div className="w-20 h-20 rounded-3xl bg-white/20 flex items-center justify-center text-4xl mb-3 shadow-inner animate-bounce">
+            <FontAwesomeIcon icon={faImages} />
+          </div>
+          <h2 className="font-mitr text-2xl font-medium">ปล่อยรูปเพื่อแชร์เข้า MyPaw</h2>
+          <p className="text-sm text-white/80 mt-1 font-sans">
+            รองรับทั้งรูปเดียวและหลายรูปพร้อมกัน (Batch)
+          </p>
+        </div>
       )}
     </div>
   );

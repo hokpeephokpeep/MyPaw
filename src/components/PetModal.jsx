@@ -10,8 +10,18 @@ import { toLocalDateString } from '../utils';
 import { getPhotoSrc, getPhotoThumb, fileToDataUrl, formatBytes } from '../imageUtils';
 import DateField from './DateField';
 import ImageCropModal from './ImageCropModal';
+import { useSheetDrag } from '../useSheetDrag';
 
-export default function PetModal({ pet, allPets = [], isOpen, onClose, onSave, onDelete, dateFormat = 'th' }) {
+export default function PetModal({ pet, allPets = [], isOpen, onClose, onSave, onDelete, dateFormat = 'th', initialPhotos = [] }) {
+  const {
+    isVisible,
+    requestClose,
+    scrollRef,
+    backdropAnimationClass,
+    sheetAnimationClass,
+    handleProps,
+    sheetProps
+  } = useSheetDrag(onClose, isOpen, pet);
   const [name, setName] = useState('');
   const [gender, setGender] = useState('male');
   const [neutered, setNeutered] = useState(true);
@@ -65,8 +75,9 @@ export default function PetModal({ pet, allPets = [], isOpen, onClose, onSave, o
       setStatus('alive');
       setDeceasedDate('');
       setNote('');
-      setAvatar('');
-      setPhotos([]);
+      const initPhotos = Array.isArray(initialPhotos) && initialPhotos.length > 0 ? initialPhotos : [];
+      setPhotos(initPhotos);
+      setAvatar(getPhotoSrc(initPhotos[0]) || '');
       setRelationships([]);
     }
     setDeleteStep(0);
@@ -106,7 +117,7 @@ export default function PetModal({ pet, allPets = [], isOpen, onClose, onSave, o
     return () => clearTimeout(timer);
   }, [name, gender, neutered, birthDate, status, deceasedDate, note, avatar, photos, relationships, isOpen]);
 
-  if (!isOpen) return null;
+  if (!isVisible) return null;
 
   const handleImageChange = async (e) => {
     const files = Array.from(e.target.files || []);
@@ -137,7 +148,8 @@ export default function PetModal({ pet, allPets = [], isOpen, onClose, onSave, o
     setCroppingPhotoIdx(idx);
     setCropQueue([{
       dataUrl: src,
-      originalSize: item?.sizeBytes || 0
+      originalSize: item?.sizeBytes || 0,
+      focus: item?.focus || null
     }]);
     setCropQueueIndex(0);
     setIsCropModalOpen(true);
@@ -269,18 +281,21 @@ export default function PetModal({ pet, allPets = [], isOpen, onClose, onSave, o
 
   return (
     <div 
-      onClick={onClose}
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 sm:p-4 backdrop-blur-xs animate-fadeIn overscroll-contain"
+      onClick={requestClose}
+      className={`fixed inset-0 z-50 flex items-end justify-center bg-black/60 sm:px-4 backdrop-blur-xs overscroll-contain ${backdropAnimationClass}`}
     >
       <div 
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-md rounded-t-[32px] sm:rounded-[32px] bg-white shadow-2xl overflow-hidden flex flex-col max-h-[92vh] sm:max-h-[88vh] animate-slideUpSheet sm:animate-scaleUp pb-[env(safe-area-inset-bottom)] overscroll-contain"
+        {...sheetProps}
+        className={`w-full max-w-md rounded-t-[32px] bg-white shadow-2xl overflow-hidden flex flex-col max-h-[94dvh] sm:max-h-[90vh] ${sheetAnimationClass} pb-[var(--safe-bottom)] overscroll-contain`}
       >
-        {/* Mobile Pull Handle */}
-        <div className="w-12 h-1.5 bg-slate-300 rounded-full mx-auto mt-2.5 -mb-1 sm:hidden flex-shrink-0" />
+        {/* Pull Handle Grab Zone */}
+        <div {...handleProps} className="w-full pt-2.5 pb-1 flex justify-center cursor-grab active:cursor-grabbing flex-shrink-0 select-none bg-slate-50/60" title="ลากลงเพื่อปิด">
+          <div className="w-12 h-1.5 bg-slate-300 hover:bg-slate-400 rounded-full transition-colors" />
+        </div>
         
         {/* Header */}
-        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/60">
+        <div className="px-[5%] py-3.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/60 flex-shrink-0">
           <div className="flex items-center gap-2.5">
             <h2 className="font-mitr text-lg font-medium text-slate-800">
               {pet ? pet.name : (name.trim() || 'เพิ่มสมาชิกใหม่')}
@@ -293,7 +308,7 @@ export default function PetModal({ pet, allPets = [], isOpen, onClose, onSave, o
           </div>
 
           <button 
-            onClick={onClose}
+            onClick={requestClose}
             aria-label="Close"
             className="w-8 h-8 text-slate-400 hover:text-slate-600 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors duration-150 ease-out active:scale-95 focus-visible:ring-2 focus-visible:ring-paw-500 outline-none"
           >
@@ -302,40 +317,42 @@ export default function PetModal({ pet, allPets = [], isOpen, onClose, onSave, o
         </div>
 
         {/* Form Body */}
-        <div className="p-6 overflow-y-auto space-y-4 overscroll-contain">
+        <div ref={scrollRef} className="px-[5%] py-5 flex-1 min-h-0 overflow-y-auto space-y-4 overscroll-contain touch-pan-y">
           
           {/* Photos Management (Multiple Photos for Fade Slideshow) */}
           <div className="flex flex-col items-center">
             <div className="relative group">
-              <div className="w-24 h-24 rounded-3xl overflow-hidden bg-paw-50 border-2 border-paw-200 shadow-sm flex items-center justify-center relative">
+              <div className="w-36 h-36 sm:w-40 sm:h-40 rounded-3xl overflow-hidden bg-paw-50 border-2 border-paw-200 shadow-md flex items-center justify-center relative">
                 {photos[0] || avatar ? (
                   <>
                     <img 
-                      src={getPhotoSrc(photos[0]) || getPhotoSrc(avatar)} 
+                      src={getPhotoThumb(photos[0]) || getPhotoSrc(photos[0]) || getPhotoThumb(avatar) || getPhotoSrc(avatar)} 
                       alt="Preview" 
                       className="w-full h-full object-cover" 
                     />
-                    {/* Tap / Hover to Crop Focus Area */}
+                    {/* Tap to Crop Focus Area (Always visible pill + full area tap) */}
                     <button
                       type="button"
                       onClick={() => handleOpenCropForExisting(0)}
-                      className="absolute inset-0 bg-black/45 text-white opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center gap-1 transition-opacity duration-150 active:opacity-100"
+                      className="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-transparent text-white flex items-end justify-start p-2.5 transition-opacity duration-150 active:bg-black/30"
                       title="ปรับตำแหน่งโฟกัสการ์ด"
                     >
-                      <FontAwesomeIcon icon={faCropSimple} className="text-base text-amber-300" />
-                      <span className="text-[10px] font-bold font-sans">ปรับโฟกัส</span>
+                      <span className="inline-flex items-center gap-1 bg-black/60 backdrop-blur-xs px-2.5 py-1 rounded-full text-[11px] font-bold text-amber-300 shadow-xs">
+                        <FontAwesomeIcon icon={faCropSimple} className="text-[10px]" />
+                        <span>ปรับโฟกัส</span>
+                      </span>
                     </button>
                   </>
                 ) : (
-                  <FontAwesomeIcon icon={faPaw} className="text-3xl text-paw-300" />
+                  <FontAwesomeIcon icon={faPaw} className="text-4xl text-paw-300" />
                 )}
               </div>
               <label 
                 htmlFor="avatar-upload"
-                className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-paw-500 text-white shadow-md cursor-pointer hover:bg-paw-600 flex items-center justify-center active:scale-95 transition-transform transition-colors duration-150 ease-out z-10"
+                className="absolute -bottom-1.5 -right-1.5 w-10 h-10 rounded-full bg-paw-500 text-white shadow-lg cursor-pointer hover:bg-paw-600 flex items-center justify-center active:scale-95 transition-transform transition-colors duration-150 ease-out z-10 border-2 border-white"
                 title="เพิ่มรูปภาพ"
               >
-                <FontAwesomeIcon icon={faCamera} className="text-xs" />
+                <FontAwesomeIcon icon={faCamera} className="text-sm" />
                 <input 
                   id="avatar-upload" 
                   type="file" 
@@ -348,14 +365,14 @@ export default function PetModal({ pet, allPets = [], isOpen, onClose, onSave, o
             </div>
 
             {/* Thumbnail Gallery & Add Photo Trigger */}
-            <div className="mt-3 flex items-center gap-2 flex-wrap justify-center max-w-xs">
+            <div className="mt-3.5 flex items-center gap-2.5 flex-wrap justify-center w-full">
               {photos.map((photoItem, idx) => {
                 const src = getPhotoSrc(photoItem);
                 const thumb = getPhotoThumb(photoItem);
                 return (
                   <div 
                     key={idx} 
-                    className={`relative group/thumb w-12 h-12 flex-shrink-0 rounded-xl overflow-hidden border shadow-2xs transition-transform duration-150 ease-out active:scale-95 cursor-pointer ${
+                    className={`relative group/thumb w-16 h-16 flex-shrink-0 rounded-2xl overflow-hidden border shadow-2xs transition-transform duration-150 ease-out active:scale-95 cursor-pointer ${
                       idx === 0 ? 'border-paw-500 ring-2 ring-paw-200' : 'border-slate-200 bg-slate-100 hover:border-slate-300'
                     }`}
                     onClick={() => handleSetPrimaryPhoto(idx)}
@@ -368,7 +385,7 @@ export default function PetModal({ pet, allPets = [], isOpen, onClose, onSave, o
                     />
                     
                     {/* Action buttons overlay */}
-                    <div className="absolute top-0.5 inset-x-0.5 flex items-center justify-between pointer-events-none">
+                    <div className="absolute top-1 inset-x-1 flex items-center justify-between pointer-events-none">
                       {/* Crop / Focus button */}
                       <button
                         type="button"
@@ -377,7 +394,7 @@ export default function PetModal({ pet, allPets = [], isOpen, onClose, onSave, o
                           handleOpenCropForExisting(idx);
                         }}
                         aria-label="ปรับตำแหน่งโฟกัสการ์ด"
-                        className="pointer-events-auto w-4 h-4 rounded-full bg-black/60 hover:bg-paw-500 text-white text-[8px] flex items-center justify-center transition-colors shadow-2xs"
+                        className="pointer-events-auto w-5 h-5 rounded-full bg-black/65 hover:bg-paw-500 text-white text-[9px] flex items-center justify-center transition-colors shadow-2xs"
                         title="ปรับโฟกัส"
                       >
                         <FontAwesomeIcon icon={faCropSimple} />
@@ -391,7 +408,7 @@ export default function PetModal({ pet, allPets = [], isOpen, onClose, onSave, o
                           handleRemovePhoto(idx);
                         }}
                         aria-label="ลบรูปภาพนี้"
-                        className="pointer-events-auto w-4 h-4 rounded-full bg-black/60 hover:bg-red-500 text-white text-[8px] flex items-center justify-center transition-colors shadow-2xs"
+                        className="pointer-events-auto w-5 h-5 rounded-full bg-black/65 hover:bg-red-500 text-white text-[9px] flex items-center justify-center transition-colors shadow-2xs"
                         title="ลบรูปนี้"
                       >
                         <FontAwesomeIcon icon={faXmark} />
@@ -400,19 +417,19 @@ export default function PetModal({ pet, allPets = [], isOpen, onClose, onSave, o
 
                     {/* Badge */}
                     {idx === 0 && (
-                      <span className="absolute bottom-0 inset-x-0 bg-paw-600 text-[8px] text-white text-center font-bold">
-                        หลัก
+                      <span className="absolute bottom-0 inset-x-0 bg-paw-600/90 text-[9px] text-white text-center font-bold py-0.5">
+                        รูปหลัก
                       </span>
                     )}
                   </div>
                 );
               })}
               <label 
-                className="w-12 h-12 flex-shrink-0 rounded-xl border-2 border-dashed border-slate-300 hover:border-paw-400 bg-slate-50 hover:bg-paw-50/50 flex flex-col items-center justify-center cursor-pointer text-slate-400 hover:text-paw-600 transition-colors transition-transform duration-150 ease-out active:scale-95"
+                className="w-16 h-16 flex-shrink-0 rounded-2xl border-2 border-dashed border-slate-300 hover:border-paw-400 bg-slate-50 hover:bg-paw-50/50 flex flex-col items-center justify-center cursor-pointer text-slate-400 hover:text-paw-600 transition-colors transition-transform duration-150 ease-out active:scale-95"
                 title="เพิ่มรูปภาพเพิ่มเติม"
               >
-                <FontAwesomeIcon icon={faCamera} className="text-xs" />
-                <span className="text-[8px] font-medium mt-0.5">+รูป</span>
+                <FontAwesomeIcon icon={faCamera} className="text-sm" />
+                <span className="text-[10px] font-semibold mt-0.5">+เพิ่มรูป</span>
                 <input 
                   type="file" 
                   accept="image/*" 
@@ -578,7 +595,7 @@ export default function PetModal({ pet, allPets = [], isOpen, onClose, onSave, o
                 <select
                   value={relTargetId}
                   onChange={(e) => setRelTargetId(e.target.value)}
-                  className="flex-1 rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-xs focus:border-paw-500 focus:outline-hidden"
+                  className="flex-1 min-w-0 rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-xs focus:border-paw-500 focus:outline-hidden truncate"
                 >
                   <option value="">เลือกสมาชิก...</option>
                   {availableTargetPets.map(p => (
@@ -591,7 +608,7 @@ export default function PetModal({ pet, allPets = [], isOpen, onClose, onSave, o
                 <select
                   value={relType}
                   onChange={(e) => setRelType(e.target.value)}
-                  className="rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-xs focus:border-paw-500 focus:outline-hidden"
+                  className="flex-shrink-0 rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-xs focus:border-paw-500 focus:outline-hidden"
                 >
                   {relTypeOptions.map(opt => (
                     <option key={opt.value} value={opt.value}>{opt.label}</option>

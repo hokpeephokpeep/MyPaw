@@ -2,30 +2,45 @@ import React, { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faXmark, faDownload, faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { getPhotoSrc } from '../imageUtils';
+import { useSheetDrag } from '../useSheetDrag';
 
 export default function ImageViewerModal({ pet, onClose }) {
-  if (!pet || (!pet.avatar && (!pet.photos || pet.photos.length === 0))) return null;
+  const isOpen = Boolean(pet && (pet.avatar || (pet.photos && pet.photos.length > 0)));
+  const {
+    isVisible,
+    activeData: activePet,
+    requestClose,
+    backdropAnimationClass,
+    sheetAnimationClass,
+    sheetProps
+  } = useSheetDrag(onClose, isOpen, pet);
+
+  const currentPet = pet || activePet;
 
   const photoList = React.useMemo(() => {
+    if (!currentPet) return ['/avatars/chainoi.png'];
     const list = [];
-    const mainSrc = getPhotoSrc(pet.avatar);
+    const mainSrc = getPhotoSrc(currentPet.avatar);
     if (mainSrc) list.push(mainSrc);
-    if (Array.isArray(pet.photos)) {
-      pet.photos.forEach(p => {
+    if (Array.isArray(currentPet.photos)) {
+      currentPet.photos.forEach(p => {
         const src = getPhotoSrc(p);
         if (src && !list.includes(src)) list.push(src);
       });
     }
     return list.length > 0 ? list : ['/avatars/chainoi.png'];
-  }, [pet]);
+  }, [currentPet]);
 
   const [currentIndex, setCurrentIndex] = useState(0);
-  const currentPhoto = photoList[currentIndex] || getPhotoSrc(pet.avatar);
+
+  if (!isVisible || !currentPet) return null;
+
+  const currentPhoto = photoList[currentIndex] || getPhotoSrc(currentPet.avatar);
 
   const handleDownload = () => {
     const a = document.createElement('a');
     a.href = currentPhoto;
-    a.download = `${pet.name}-${currentIndex + 1}.png`;
+    a.download = `${currentPet.name}-${currentIndex + 1}.png`;
     a.click();
   };
 
@@ -41,14 +56,14 @@ export default function ImageViewerModal({ pet, onClose }) {
 
   return (
     <div 
-      onClick={onClose}
-      className="fixed inset-0 z-[60] flex items-center justify-center bg-black/90 p-4 backdrop-blur-md animate-fadeIn overscroll-contain"
+      onClick={requestClose}
+      className={`fixed inset-0 z-[60] flex items-center justify-center bg-black/90 p-4 backdrop-blur-md overscroll-contain ${backdropAnimationClass}`}
     >
       {/* Close button */}
       <button
-        onClick={onClose}
+        onClick={requestClose}
         aria-label="Close"
-        className="absolute top-5 right-5 w-10 h-10 text-white/70 hover:text-white bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center transition-colors duration-150 ease-out active:scale-95 focus-visible:ring-2 focus-visible:ring-white outline-none"
+        className="absolute top-5 right-5 w-10 h-10 text-white/70 hover:text-white bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center transition-colors duration-150 ease-out active:scale-95 focus-visible:ring-2 focus-visible:ring-white outline-none z-20"
       >
         <FontAwesomeIcon icon={faXmark} className="text-lg" />
       </button>
@@ -56,12 +71,13 @@ export default function ImageViewerModal({ pet, onClose }) {
       {/* Main Image Container */}
       <div 
         onClick={(e) => e.stopPropagation()}
-        className="flex flex-col items-center max-w-lg w-full animate-scaleUp relative"
+        {...sheetProps}
+        className={`flex flex-col items-center max-w-lg w-full ${sheetAnimationClass} relative`}
       >
         <div className="relative rounded-3xl overflow-hidden shadow-2xl border border-white/10 max-h-[75vh] w-full flex items-center justify-center bg-black">
           <img
             src={currentPhoto}
-            alt={pet.name}
+            alt={currentPet.name}
             className="w-full h-auto object-contain max-h-[75vh] rounded-3xl"
           />
 
@@ -91,7 +107,7 @@ export default function ImageViewerModal({ pet, onClose }) {
         {/* Footer controls & Title */}
         <div className="mt-4 flex items-center justify-between w-full px-2 text-white">
           <div className="flex items-center gap-2.5">
-            <h3 className="font-mitr text-xl font-medium">{pet.name}</h3>
+            <h3 className="font-mitr text-xl font-medium">{currentPet.name}</h3>
             {photoList.length > 1 && (
               <span className="text-xs text-white/60 bg-white/10 px-2 py-0.5 rounded-full font-mono">
                 {currentIndex + 1} / {photoList.length}
@@ -106,7 +122,7 @@ export default function ImageViewerModal({ pet, onClose }) {
                 <button
                   key={idx}
                   onClick={() => setCurrentIndex(idx)}
-                  className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                  className={`w-2 h-2 rounded-full transition-[background-color,transform] duration-200 [transition-timing-function:var(--ease-out)] active:scale-90 ${
                     idx === currentIndex
                       ? 'bg-white shadow-xs'
                       : 'bg-white/35 hover:bg-white/60'

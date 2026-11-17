@@ -6,8 +6,19 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { formatDate, toLocalDateString, parseLocalDate, getTodayLocal } from '../utils';
 import DateField from './DateField';
+import { useSheetDrag } from '../useSheetDrag';
 
 export default function HealthLogModal({ pet, isOpen, dateFormat = 'th', onClose, onUpdatePet }) {
+  const {
+    isVisible,
+    activeData: activePet,
+    requestClose,
+    scrollRef,
+    backdropAnimationClass,
+    sheetAnimationClass,
+    handleProps,
+    sheetProps
+  } = useSheetDrag(onClose, isOpen, pet);
   const [weightInput, setWeightInput] = useState('');
   const [weightDate, setWeightDate] = useState(toLocalDateString());
   const [fleaDate, setFleaDate] = useState('');
@@ -15,11 +26,13 @@ export default function HealthLogModal({ pet, isOpen, dateFormat = 'th', onClose
   const [checkupDate, setCheckupDate] = useState('');
   const isLoadedRef = useRef(false);
 
+  const currentPet = pet || activePet;
+
   useEffect(() => {
-    if (pet) {
-      setFleaDate(pet.fleaDate || '');
-      setVaccineDate(pet.vaccineDate || '');
-      setCheckupDate(pet.checkupDate || '');
+    if (currentPet) {
+      setFleaDate(currentPet.fleaDate || '');
+      setVaccineDate(currentPet.vaccineDate || '');
+      setCheckupDate(currentPet.checkupDate || '');
       setWeightDate(toLocalDateString());
     }
     const t = setTimeout(() => {
@@ -29,14 +42,14 @@ export default function HealthLogModal({ pet, isOpen, dateFormat = 'th', onClose
       clearTimeout(t);
       isLoadedRef.current = false;
     };
-  }, [pet, isOpen]);
+  }, [currentPet?.id, isOpen]);
 
   // Auto-save care dates whenever fleaDate, vaccineDate, or checkupDate changes
   useEffect(() => {
-    if (!isOpen || !pet || !isLoadedRef.current) return;
+    if (!isOpen || !currentPet || !isLoadedRef.current) return;
     const t = setTimeout(() => {
       onUpdatePet({
-        ...pet,
+        ...currentPet,
         fleaDate,
         vaccineDate,
         checkupDate
@@ -45,10 +58,10 @@ export default function HealthLogModal({ pet, isOpen, dateFormat = 'th', onClose
     return () => clearTimeout(t);
   }, [fleaDate, vaccineDate, checkupDate, isOpen]);
 
-  if (!isOpen || !pet) return null;
+  if (!isVisible || !currentPet) return null;
 
   // Weight history array
-  const weightHistory = pet.weightHistory || (pet.latestWeight ? [{ id: '1', date: toLocalDateString(), weight: pet.latestWeight }] : []);
+  const weightHistory = currentPet.weightHistory || (currentPet.latestWeight ? [{ id: '1', date: toLocalDateString(), weight: currentPet.latestWeight }] : []);
 
   // Add weight
   const handleAddWeight = (e) => {
@@ -64,7 +77,7 @@ export default function HealthLogModal({ pet, isOpen, dateFormat = 'th', onClose
 
     const updatedHistory = [newEntry, ...weightHistory];
     onUpdatePet({
-      ...pet,
+      ...currentPet,
       latestWeight: w,
       weightHistory: updatedHistory
     });
@@ -85,25 +98,28 @@ export default function HealthLogModal({ pet, isOpen, dateFormat = 'th', onClose
 
   return (
     <div 
-      onClick={onClose}
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 sm:p-4 backdrop-blur-xs animate-fadeIn overscroll-contain"
+      onClick={requestClose}
+      className={`fixed inset-0 z-50 flex items-end justify-center bg-black/60 sm:px-4 backdrop-blur-xs overscroll-contain ${backdropAnimationClass}`}
     >
       <div 
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-md rounded-t-[32px] sm:rounded-[32px] bg-white text-slate-800 shadow-2xl overflow-hidden flex flex-col max-h-[92vh] sm:max-h-[88vh] animate-slideUpSheet sm:animate-scaleUp pb-[env(safe-area-inset-bottom)] overscroll-contain"
+        {...sheetProps}
+        className={`w-full max-w-md rounded-t-[32px] bg-white text-slate-800 shadow-2xl overflow-hidden flex flex-col max-h-[94dvh] sm:max-h-[90vh] ${sheetAnimationClass} pb-[var(--safe-bottom)] overscroll-contain`}
       >
-        {/* Mobile Pull Handle */}
-        <div className="w-12 h-1.5 bg-slate-300 rounded-full mx-auto mt-2.5 -mb-1 sm:hidden flex-shrink-0" />
+        {/* Pull Handle Grab Zone */}
+        <div {...handleProps} className="w-full pt-2.5 pb-1 flex justify-center cursor-grab active:cursor-grabbing flex-shrink-0 select-none bg-slate-50/50" title="ลากลงเพื่อปิด">
+          <div className="w-12 h-1.5 bg-slate-300 hover:bg-slate-400 rounded-full transition-colors" />
+        </div>
         
         {/* Header */}
-        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+        <div className="px-[5%] py-3.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 flex-shrink-0">
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-2xl bg-paw-100 text-paw-600 flex items-center justify-center">
               <FontAwesomeIcon icon={faShieldHalved} className="text-sm" />
             </div>
             <div className="flex items-center gap-2">
               <h2 className="font-mitr text-lg font-medium text-slate-800">
-                {pet.name}
+                {currentPet.name}
               </h2>
               <span className="w-5 h-5 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center">
                 <FontAwesomeIcon icon={faCheck} className="text-[10px]" />
@@ -111,7 +127,7 @@ export default function HealthLogModal({ pet, isOpen, dateFormat = 'th', onClose
             </div>
           </div>
           <button
-            onClick={onClose}
+            onClick={requestClose}
             aria-label="Close"
             className="w-8 h-8 text-slate-400 hover:text-slate-600 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors duration-150 ease-out active:scale-95 focus-visible:ring-2 focus-visible:ring-paw-500 outline-none"
           >
@@ -120,7 +136,7 @@ export default function HealthLogModal({ pet, isOpen, dateFormat = 'th', onClose
         </div>
 
         {/* Content Body */}
-        <div className="p-6 overflow-y-auto space-y-5 overscroll-contain">
+        <div ref={scrollRef} className="px-[5%] py-5 flex-1 min-h-0 overflow-y-auto space-y-5 overscroll-contain touch-pan-y">
           
           {/* ⚖️ Section 1: Weight Tracker */}
           <div className="space-y-3">
@@ -129,15 +145,15 @@ export default function HealthLogModal({ pet, isOpen, dateFormat = 'th', onClose
                 <FontAwesomeIcon icon={faWeightScale} className="text-paw-500 text-xs" />
                 <span>น้ำหนัก (กก.)</span>
               </div>
-              {pet.latestWeight && (
+              {currentPet.latestWeight && (
                 <span className="text-xs font-bold bg-paw-50 text-paw-700 border border-paw-200 px-2.5 py-0.5 rounded-full tabular-nums">
-                  {pet.latestWeight} กก.
+                  {currentPet.latestWeight} กก.
                 </span>
               )}
             </div>
 
-            {/* Input Form */}
-            <form onSubmit={handleAddWeight} className="flex gap-2 items-center">
+            {/* Input Form (Percentage widths) */}
+            <form onSubmit={handleAddWeight} className="flex gap-2 items-center w-full">
               <input
                 type="number"
                 step="0.05"
@@ -148,7 +164,7 @@ export default function HealthLogModal({ pet, isOpen, dateFormat = 'th', onClose
                 value={weightInput}
                 onChange={(e) => setWeightInput(e.target.value)}
                 placeholder="0.00"
-                className="w-24 rounded-2xl border border-slate-200 px-3 py-2 text-xs font-bold tabular-nums focus:ring-2 focus:ring-paw-200 focus:outline-hidden"
+                className="w-[26%] min-w-0 rounded-2xl border border-slate-200 px-2.5 py-2 text-xs font-bold tabular-nums focus:ring-2 focus:ring-paw-200 focus:outline-hidden"
               />
               <div className="flex-1 min-w-0">
                 <DateField

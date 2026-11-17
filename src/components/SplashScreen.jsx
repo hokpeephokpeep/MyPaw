@@ -203,7 +203,7 @@ export default function SplashScreen({ onFinish }) {
 
         {/* Pure App Title in Mitr */}
         <div 
-          className="mt-5 text-center transition-all duration-400 ease-out"
+          className="mt-5 text-center transition-[transform,opacity] duration-350 [transition-timing-function:var(--ease-out)]"
           style={{
             transform: isMasking ? 'translateY(35px) scale(0.85)' : 'translateY(0) scale(1)',
             opacity: isMasking ? 0 : 1
@@ -216,7 +216,7 @@ export default function SplashScreen({ onFinish }) {
 
         {/* Minimal Loading Dots */}
         <div 
-          className="mt-6 flex items-center gap-2 transition-all duration-300 ease-out"
+          className="mt-6 flex items-center gap-2 transition-[transform,opacity] duration-250 [transition-timing-function:var(--ease-out)]"
           style={{
             opacity: isMasking ? 0 : 1,
             transform: isMasking ? 'translateY(20px)' : 'translateY(0)'
