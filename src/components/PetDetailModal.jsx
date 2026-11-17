@@ -242,18 +242,18 @@ export default function PetDetailModal({ pet, allPets = [], dateFormat = 'en', i
                 <FontAwesomeIcon icon={isDeceased ? faRainbow : getHumanAgeIcon(humanAge)} className="text-sm" />
               </div>
               <div className="min-w-0">
-                <div className="text-base font-prompt font-bold text-slate-800 truncate inline-flex items-baseline leading-none">
+                <div className="text-base font-sans font-bold text-slate-800 truncate inline-flex items-baseline leading-none">
                   {age.years > 0 && (
-                    <span className="text-paw-600 font-prompt font-bold inline-flex items-baseline mr-1.5">
+                    <span className="text-paw-600 font-sans font-bold inline-flex items-baseline mr-1.5">
                       {age.years}<span className="text-[10px] font-sans font-normal text-paw-400 lowercase ml-0.5">y</span>
                     </span>
                   )}
                   {age.months > 0 && (
-                    <span className="text-slate-800 font-prompt font-bold inline-flex items-baseline mr-1.5">
+                    <span className="text-slate-800 font-sans font-bold inline-flex items-baseline mr-1.5">
                       {age.months}<span className="text-[10px] font-sans font-normal text-slate-400 lowercase ml-0.5">m</span>
                     </span>
                   )}
-                  <span className="text-slate-800 font-prompt font-bold inline-flex items-baseline">
+                  <span className="text-slate-800 font-sans font-bold inline-flex items-baseline">
                     {age.days}<span className="text-[10px] font-sans font-normal text-slate-400 lowercase ml-0.5">d</span>
                   </span>
                 </div>

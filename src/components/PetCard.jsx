@@ -429,10 +429,10 @@ export default function PetCard({ pet, allPets = [], dateFormat = 'en', compact 
           />
 
           <div className="flex items-center justify-between gap-1.5 relative z-10">
-            {/* Typographic Age Design: Bold Prompt numbers with subtle Google Sans unit indicators */}
+            {/* Typographic Age Design: Bold Google Sans numbers with subtle unit indicators */}
             <div className="flex items-baseline gap-0.5 sm:gap-1 select-none flex-shrink-0">
               {age.years > 0 && (
-                <span className={`${compact ? 'text-lg' : 'text-2xl'} font-prompt font-bold tracking-tight tabular-nums inline-flex items-baseline leading-none ${
+                <span className={`${compact ? 'text-lg' : 'text-2xl'} font-sans font-bold tracking-tight tabular-nums inline-flex items-baseline leading-none ${
                   isDeceased ? 'text-sky-800' : 'text-paw-600'
                 }`}>
                   {age.years}
@@ -442,12 +442,12 @@ export default function PetCard({ pet, allPets = [], dateFormat = 'en', compact 
                 </span>
               )}
               {age.months > 0 && (
-                <span className={`${compact ? 'text-base' : 'text-xl'} font-prompt font-bold tracking-tight text-slate-800 tabular-nums inline-flex items-baseline leading-none`}>
+                <span className={`${compact ? 'text-base' : 'text-xl'} font-sans font-bold tracking-tight text-slate-800 tabular-nums inline-flex items-baseline leading-none`}>
                   {age.months}
                   <span className={`${compact ? 'text-[9px]' : 'text-[11px]'} font-sans font-normal text-slate-400 lowercase ml-0.5 mr-1 select-none`}>m</span>
                 </span>
               )}
-              <span className={`${compact ? 'text-base' : 'text-xl'} font-prompt font-bold tracking-tight text-slate-800 tabular-nums inline-flex items-baseline leading-none`}>
+              <span className={`${compact ? 'text-base' : 'text-xl'} font-sans font-bold tracking-tight text-slate-800 tabular-nums inline-flex items-baseline leading-none`}>
                 {age.days}
                 <span className={`${compact ? 'text-[9px]' : 'text-[11px]'} font-sans font-normal text-slate-400 lowercase ml-0.5 select-none`}>d</span>
               </span>
