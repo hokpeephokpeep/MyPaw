@@ -328,7 +328,7 @@ export function parseVetDocumentText(rawText = '') {
   // ----------------------------------------------------
   for (const line of lines.slice(0, 5)) {
     if (/โรงพยาบาลสัตว์|คลินิก|สัตวแพทย์|animal hospital|vet clinic|vet hospital/i.test(line)) {
-      result.clinicName = line.replace(/[:\-#]/g, '').trim();
+      result.clinicName = line.replace(/^(?:บัตรนัด|ใบเสร็จ|ใบเสร็จรับเงิน|receipt)\s*/i, '').replace(/[:\-#]/g, '').trim();
       result.detectedItems.push({
         type: 'clinic',
         label: 'สถานพยาบาล',
@@ -339,7 +339,26 @@ export function parseVetDocumentText(rawText = '') {
   }
 
   // ----------------------------------------------------
-  // 6. 📝 Treatment / Diagnosis / Follow-up Notes
+  // 6. 🐾 Pet Name (ชื่อสัตว์เลี้ยง)
+  // ----------------------------------------------------
+  for (const line of lines) {
+    const petMatch = line.match(/(?:ชื่อสัตว์|Animal Name|ชื่อคนไข้|อสัตว[์่]|ลูกศ่า|คนไข้)\s*[:：]?\s*(?:[A-Za-z0-9\s\.\(\)]*?[Ff]\.|\([Ff]\.)?\s*([ก-๙a-zA-Z0-9]+)/);
+    if (petMatch && petMatch[1]) {
+      const candidate = petMatch[1].trim();
+      if (candidate.length >= 2 && !['คุณ', 'นาย', 'นาง', 'โรงพยาบาล', 'สัตว์'].includes(candidate)) {
+        result.petName = candidate;
+        result.detectedItems.push({
+          type: 'pet',
+          label: 'ชื่อสัตว์เลี้ยง',
+          value: candidate
+        });
+        break;
+      }
+    }
+  }
+
+  // ----------------------------------------------------
+  // 7. 📝 Treatment / Diagnosis / Follow-up Notes
   // ----------------------------------------------------
   const treatmentKeywords = ['การรักษา', 'อาการ', 'วินิจฉัย', 'follow up', 'diagnosis', 'rx', 'treatment'];
   for (const line of lines) {
@@ -357,6 +376,7 @@ export function parseVetDocumentText(rawText = '') {
   if (result.vaccineDate || result.vaccineName) score += 25;
   if (result.fleaProduct || result.fleaDate) score += 20;
   if (result.clinicName) score += 10;
+  if (result.petName) score += 15;
   result.confidenceScore = Math.min(100, score);
 
   return result;

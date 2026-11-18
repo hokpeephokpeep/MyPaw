@@ -1,33 +1,49 @@
 import React from 'react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faPlus, faPaw } from '@fortawesome/free-solid-svg-icons';
 
 /**
  * 💀 Modern Shimmer Skeleton for Pet Cards
  * Prevents Layout Shift (CLS = 0) with identical dimensions
  */
 
-export function PetCardSkeleton({ compact = false }) {
+export function PetCardSkeleton({ compact = false, isPlaceholder = false, onClick }) {
   if (compact) {
     // 2-Column Grid Card Skeleton
     return (
-      <div className="relative overflow-hidden rounded-2xl bg-white border border-slate-200/70 shadow-2xs p-0 flex flex-col animate-pulse">
+      <div 
+        onClick={onClick}
+        className={`relative overflow-hidden rounded-2xl bg-white border border-slate-200/80 shadow-2xs p-0 flex flex-col select-none ${
+          isPlaceholder 
+            ? 'cursor-pointer hover:border-paw-300 active:scale-[0.98] transition-all duration-150 group/skeleton' 
+            : 'animate-pulse'
+        }`}
+      >
         {/* Aspect-square Hero Image placeholder */}
-        <div className="w-full aspect-square bg-gradient-to-tr from-slate-200 via-slate-100 to-slate-200 rounded-t-[14px]" />
+        <div className="w-full aspect-square bg-gradient-to-tr from-slate-200/70 via-slate-100 to-slate-200/60 rounded-t-2xl relative overflow-hidden flex flex-col justify-between p-3">
+          {isPlaceholder ? (
+            <div className="absolute inset-0 flex flex-col items-center justify-center p-3 text-slate-300 group-hover/skeleton:text-paw-400 transition-colors">
+              <div className="w-10 h-10 rounded-full bg-white/90 shadow-2xs flex items-center justify-center text-slate-400 group-hover/skeleton:bg-paw-50 group-hover/skeleton:text-paw-500 transition-all mb-1 active:scale-95">
+                <FontAwesomeIcon icon={faPlus} className="text-sm" />
+              </div>
+              <span className="font-mitr text-xs text-slate-400 font-normal group-hover/skeleton:text-paw-600 transition-colors">เพิ่มน้องเหมียว</span>
+            </div>
+          ) : (
+            <div className="w-full h-full animate-pulse" />
+          )}
+
+          {/* Bottom text overlays (name & date placeholders) */}
+          <div className="relative z-10 space-y-1.5 mt-auto">
+            <div className="h-3.5 bg-slate-300/50 rounded-md w-2/3 animate-pulse" />
+            <div className="h-2.5 bg-slate-300/30 rounded-md w-1/2 animate-pulse" />
+          </div>
+        </div>
         
         {/* Info footer */}
-        <div className="p-3 space-y-2">
-          {/* Pet name & gender placeholder */}
-          <div className="flex items-center justify-between">
-            <div className="h-4 bg-slate-200 rounded-md w-3/5" />
-            <div className="w-4 h-4 bg-slate-200 rounded-full" />
-          </div>
-
-          {/* Birthday placeholder */}
-          <div className="h-3 bg-slate-100 rounded-md w-4/5" />
-
-          {/* Age tags placeholder */}
-          <div className="flex items-center justify-between pt-1">
-            <div className="h-5 bg-slate-200/80 rounded-full w-20" />
-            <div className="h-5 bg-slate-100 rounded-full w-12" />
+        <div className="px-[6%] py-2.5 flex items-center justify-between bg-white border-t border-slate-100">
+          <div className="h-4 bg-slate-200/80 rounded-md w-16 animate-pulse" />
+          <div className="h-5 bg-amber-50/80 border border-amber-100/70 rounded-xl px-1.5 py-0.5 flex items-center justify-center">
+            <div className="h-2.5 bg-amber-200/80 rounded-full w-6 animate-pulse" />
           </div>
         </div>
       </div>

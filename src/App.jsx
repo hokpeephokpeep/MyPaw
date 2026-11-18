@@ -999,6 +999,19 @@ export default function App() {
                         />
                       </div>
                     ))}
+                    {/* ตรงที่ว่าง ใส่ skeleton จองไว้ */}
+                    {filteredPets.length % 2 === 1 && (
+                      <div className="min-w-0 w-full">
+                        <PetCardSkeleton
+                          compact={true}
+                          isPlaceholder={true}
+                          onClick={() => {
+                            setEditingPet(null);
+                            setIsModalOpen(true);
+                          }}
+                        />
+                      </div>
+                    )}
                   </div>
                 ) : (
                   /* 1. One Column Full Hero Card */

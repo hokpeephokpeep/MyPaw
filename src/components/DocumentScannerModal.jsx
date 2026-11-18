@@ -48,6 +48,7 @@ export default function DocumentScannerModal({
   const [detectedClinic, setDetectedClinic] = useState('');
   const [detectedDiagnosis, setDetectedDiagnosis] = useState('');
   const [isSuccessSaved, setIsSuccessSaved] = useState(false);
+  const [ocrEngineUsed, setOcrEngineUsed] = useState('');
 
   useEffect(() => {
     if (selectedPetId) {
@@ -114,26 +115,76 @@ export default function DocumentScannerModal({
 
     setIsProcessing(true);
     setProcessStep('กำลังเตรียมไฟล์รูปภาพ...');
+    setOcrEngineUsed('');
 
     try {
       const processedFile = await convertHeicIfNeeded(file);
       const previewUrl = URL.createObjectURL(processedFile);
       setImagePreview(previewUrl);
-      setProcessStep('กำลังอ่านตัวอักษรและวิเคราะห์ข้อมูล (OCR)...');
+      setProcessStep('กำลังอ่านตัวอักษรด้วย OpenThai 2.0 OCR...');
 
-      // Dynamic import of Tesseract.js
-      const { createWorker } = await import('tesseract.js');
-      const worker = await createWorker('tha+eng');
-      
-      const ret = await worker.recognize(processedFile);
-      await worker.terminate();
+      let extractedText = '';
+      let usedEngine = '';
 
-      const extractedText = ret.data.text;
+      // 1. Primary: High-accuracy OpenThai 2.0 / 2.1 OCR
+      try {
+        const formData = new FormData();
+        formData.append('file', processedFile);
+
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 12000);
+
+        const res = await fetch('http://localhost:8000/api/ocr', {
+          method: 'POST',
+          body: formData,
+          signal: controller.signal
+        });
+        clearTimeout(timer);
+
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.text) {
+            extractedText = data.text;
+            usedEngine = 'OpenThai 2.0 OCR';
+          }
+        }
+      } catch (openThaiErr) {
+        console.warn('OpenThai OCR endpoint unavailable, fallback to offline engine:', openThaiErr);
+      }
+
+      // 2. Secondary Fallback: Tesseract.js (Offline in browser)
+      if (!extractedText) {
+        setProcessStep('กำลังอ่านตัวอักษรสำรอง (Tesseract)...');
+        try {
+          const { createWorker } = await import('tesseract.js');
+          const worker = await createWorker('tha+eng');
+          const ret = await worker.recognize(processedFile);
+          await worker.terminate();
+          extractedText = ret.data.text;
+          usedEngine = 'Tesseract';
+        } catch (tessErr) {
+          console.warn('Tesseract fallback error:', tessErr);
+          extractedText = file.name;
+        }
+      }
+
+      setOcrEngineUsed(usedEngine);
       const parsed = parseVetDocumentText(extractedText);
       applyParsedResults(parsed);
+
+      // Auto-match pet if name was detected in document
+      if (parsed.petName && Array.isArray(pets) && pets.length > 0) {
+        const pNameLower = parsed.petName.toLowerCase();
+        const matched = pets.find(p => 
+          p.name.toLowerCase().includes(pNameLower) || 
+          pNameLower.includes(p.name.toLowerCase())
+        );
+        if (matched) {
+          setTargetPetId(matched.id);
+        }
+      }
     } catch (err) {
-      console.warn('OCR error or offline, fallback to smart parser:', err);
-      // Fallback: quick parse on available text
+      console.warn('OCR error, fallback to smart parser:', err);
       const parsed = parseVetDocumentText(file.name);
       applyParsedResults(parsed);
     } finally {
@@ -235,7 +286,13 @@ export default function DocumentScannerModal({
             <div>
               <h3 className="font-semibold text-slate-800 text-base flex items-center gap-1.5">
                 <span>สแกนเอกสารคลินิก</span>
-                <span className="text-[10px] bg-paw-100 text-paw-700 px-2 py-0.5 rounded-full font-medium">OCR</span>
+                <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
+                  ocrEngineUsed === 'OpenThai 2.0 OCR' 
+                    ? 'bg-emerald-100 text-emerald-700' 
+                    : 'bg-paw-100 text-paw-700'
+                }`}>
+                  {ocrEngineUsed || 'OpenThai 2.0'}
+                </span>
               </h3>
               <p className="text-[11px] text-slate-400">แปลงใบนัด สมุดวัคซีน และใบเสร็จ อัตโนมัติ</p>
             </div>
