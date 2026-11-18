@@ -3,35 +3,40 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPaw } from '@fortawesome/free-solid-svg-icons';
 
 export default function SplashScreen({ onFinish }) {
-  // isMasking: triggers the decisive paw-portal mask opening & cloud parting
-  const [isMasking, setIsMasking] = useState(false);
+  const [isParting, setIsParting] = useState(false);
   const [isSquashing, setIsSquashing] = useState(false);
 
   useEffect(() => {
-    // 1. Pre-burst anticipation squash at 950ms
+    // 1. Subtle anticipation squash on logo at 950ms
     const tSquash = setTimeout(() => {
       setIsSquashing(true);
     }, 950);
 
-    // 2. The Decisive Paw Mask Burst & Cloud Parting at 1150ms (NO FADE IN)
-    const tMask = setTimeout(() => {
-      setIsMasking(true);
+    // 2. Trigger Cloud Parting Transition at 1100ms
+    const tPart = setTimeout(() => {
+      setIsParting(true);
       if (window.navigator?.vibrate) {
-        try { window.navigator.vibrate([15, 30, 20]); } catch (e) {}
+        try { window.navigator.vibrate([15, 25]); } catch (e) {}
       }
-    }, 1150);
+    }, 1100);
 
-    // 3. Complete unmount after mask has fully engulfed the screen at 1820ms
+    // 3. Complete unmount after clouds have fully cleared the screen at 1850ms
     const tFinish = setTimeout(() => {
       onFinish();
-    }, 1820);
+    }, 1850);
 
     return () => {
       clearTimeout(tSquash);
-      clearTimeout(tMask);
+      clearTimeout(tPart);
       clearTimeout(tFinish);
     };
   }, [onFinish]);
+
+  // Shared CSS transition timing for cloud parting (Compositor GPU only: transform & opacity)
+  const cloudTransitionStyle = {
+    transition: 'transform 0.75s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.65s ease-out',
+    willChange: 'transform, opacity',
+  };
 
   return (
     <div 
@@ -39,156 +44,175 @@ export default function SplashScreen({ onFinish }) {
       aria-hidden="true"
     >
       {/* ========================================================
-          🐾 1. THE HERO PAW MASK SVG BACKDROP (Pure Mask Transition)
-          - White in mask preserves the solid splash backdrop.
-          - Black paw & center core punches an expanding transparent hole
-            through which the actual app content underneath is revealed!
+          🌅 1. SOFT HEAVENLY SKY BACKDROP (Smoothly fades out during parting)
           ======================================================== */}
-      <svg 
-        className="fixed inset-0 w-full h-full pointer-events-none z-0" 
-        viewBox="0 0 512 512" 
-        preserveAspectRatio="xMidYMid slice"
-      >
-        <defs>
-          {/* Splash background linear gradient */}
-          <linearGradient id="splashMaskBg" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#fffbeb" />   {/* amber-50 */}
-            <stop offset="40%" stopColor="#ffffff" />
-            <stop offset="70%" stopColor="#ffffff" />
-            <stop offset="100%" stopColor="#fff7ed" />  {/* orange-50 */}
-          </linearGradient>
+      <div 
+        className="absolute inset-0 bg-gradient-to-b from-amber-50 via-white to-orange-50/90 pointer-events-none"
+        style={{
+          opacity: isParting ? 0 : 1,
+          transition: 'opacity 0.6s cubic-bezier(0.22, 1, 0.36, 1)',
+          willChange: 'opacity'
+        }}
+      />
 
-          {/* SVG MASK: Cuts an expanding Paw Silhouette hole straight through the screen */}
-          <mask id="pawPortalMask" maskUnits="userSpaceOnUse" x="-3000" y="-3000" width="6512" height="6512">
-            {/* White base = Solid backdrop initially visible */}
-            <rect x="-3000" y="-3000" width="6512" height="6512" fill="white" />
-            
-            {/* Black Expanding Paw Silhouette = Transparent hole cutting through! */}
-            <g 
-              style={{
-                transformOrigin: '256px 215px',
-                transform: isMasking ? 'scale(38)' : 'scale(0)',
-                transition: 'transform 0.65s cubic-bezier(0.75, 0, 0.15, 1)'
-              }}
-            >
-              {/* Center circular expansion core */}
-              <circle cx="256" cy="215" r="130" fill="black" />
-              {/* Detailed FontAwesome Paw silhouette path (4 toes + palm) */}
-              <path d={faPaw.icon[4]} fill="black" />
-            </g>
-          </mask>
-        </defs>
-
-        {/* Full-screen backdrop rendered through the expanding Paw Mask */}
-        <rect 
-          x="-3000" 
-          y="-3000" 
-          width="6512" 
-          height="6512" 
-          fill="url(#splashMaskBg)" 
-          mask="url(#pawPortalMask)" 
-        />
-
-        {/* ⚡ Golden Energy Shockwave Rim (Traces the expanding paw opening) */}
-        <g 
+      {/* ========================================================
+          ☁️ 2. LUSH CLOUD CURTAIN COVERAGE (Full Screen Blanket & Parting)
+          Multiple overlapping SVG clouds that cover the screen and sweep
+          outwards to the edges without any SVG mask overhead (60fps GPU)
+          ======================================================== */}
+      <div className="absolute inset-0 w-full h-full pointer-events-none overflow-hidden">
+        
+        {/* Cloud 1: Top Center Horizon */}
+        <div 
+          className="absolute -top-16 sm:-top-24 left-1/2 w-[28rem] sm:w-[36rem] pointer-events-none"
           style={{
-            transformOrigin: '256px 215px',
-            transform: isMasking ? 'scale(38)' : 'scale(0)',
-            opacity: isMasking ? 0 : 0.9,
-            transition: 'transform 0.65s cubic-bezier(0.75, 0, 0.15, 1), opacity 0.55s ease-out'
+            ...cloudTransitionStyle,
+            transform: isParting 
+              ? 'translate3d(-50%, -150%, 0) scale(1.15)' 
+              : 'translate3d(-50%, 0, 0) scale(1)',
+            opacity: isParting ? 0 : 0.95
           }}
         >
-          <circle cx="256" cy="215" r="130" fill="none" stroke="#f59e0b" strokeWidth="5" />
-          <path 
-            d={faPaw.icon[4]} 
-            fill="none" 
-            stroke="#fb923c" 
-            strokeWidth="8" 
-            style={{ filter: 'drop-shadow(0 0 16px rgba(249, 115, 22, 0.8))' }}
-          />
-        </g>
-      </svg>
+          <img src="/clouds/C1.svg" alt="" className="w-full h-auto drop-shadow-sm" />
+        </div>
+
+        {/* Cloud 2: Top-Left Corner */}
+        <div 
+          className="absolute -top-12 sm:-top-16 -left-16 sm:-left-24 w-80 sm:w-[28rem] pointer-events-none"
+          style={{
+            ...cloudTransitionStyle,
+            transform: isParting 
+              ? 'translate3d(-140%, -130%, 0) rotate(-14deg) scale(1.1)' 
+              : 'translate3d(0, 0, 0) rotate(0deg) scale(1)',
+            opacity: isParting ? 0 : 0.98
+          }}
+        >
+          <img src="/clouds/C3.svg" alt="" className="w-full h-auto drop-shadow-md" />
+        </div>
+
+        {/* Cloud 3: Top-Right Corner */}
+        <div 
+          className="absolute -top-12 sm:-top-16 -right-16 sm:-right-24 w-84 sm:w-[30rem] pointer-events-none"
+          style={{
+            ...cloudTransitionStyle,
+            transform: isParting 
+              ? 'translate3d(140%, -130%, 0) rotate(14deg) scale(1.1)' 
+              : 'translate3d(0, 0, 0) rotate(0deg) scale(1)',
+            opacity: isParting ? 0 : 0.98
+          }}
+        >
+          <img src="/clouds/C2.svg" alt="" className="w-full h-auto drop-shadow-md" />
+        </div>
+
+        {/* Cloud 4: Center Atmosphere Cloud (Behind Logo) */}
+        <div 
+          className="absolute top-[28%] left-1/2 w-[32rem] sm:w-[42rem] pointer-events-none"
+          style={{
+            ...cloudTransitionStyle,
+            transform: isParting 
+              ? 'translate3d(-50%, -15%, 0) scale(1.4)' 
+              : 'translate3d(-50%, -15%, 0) scale(1)',
+            opacity: isParting ? 0 : 0.85
+          }}
+        >
+          <img src="/clouds/C2.svg" alt="" className="w-full h-auto" />
+        </div>
+
+        {/* Cloud 5: Middle-Left Flank */}
+        <div 
+          className="absolute top-[28%] sm:top-[30%] -left-20 sm:-left-28 w-84 sm:w-[30rem] pointer-events-none"
+          style={{
+            ...cloudTransitionStyle,
+            transform: isParting 
+              ? 'translate3d(-150%, -20%, 0) rotate(-10deg) scale(1.2)' 
+              : 'translate3d(0, 0, 0) rotate(0deg) scale(1)',
+            opacity: isParting ? 0 : 0.98
+          }}
+        >
+          <img src="/clouds/C1.svg" alt="" className="w-full h-auto drop-shadow-lg" />
+        </div>
+
+        {/* Cloud 6: Middle-Right Flank */}
+        <div 
+          className="absolute top-[30%] sm:top-[32%] -right-20 sm:-right-28 w-88 sm:w-[32rem] pointer-events-none"
+          style={{
+            ...cloudTransitionStyle,
+            transform: isParting 
+              ? 'translate3d(150%, -20%, 0) rotate(10deg) scale(1.2)' 
+              : 'translate3d(0, 0, 0) rotate(0deg) scale(1)',
+            opacity: isParting ? 0 : 0.98
+          }}
+        >
+          <img src="/clouds/C3.svg" alt="" className="w-full h-auto drop-shadow-lg" />
+        </div>
+
+        {/* Cloud 7: Bottom-Left Base */}
+        <div 
+          className="absolute -bottom-14 sm:-bottom-20 -left-16 sm:-left-24 w-88 sm:w-[32rem] pointer-events-none z-10"
+          style={{
+            ...cloudTransitionStyle,
+            transform: isParting 
+              ? 'translate3d(-140%, 130%, 0) rotate(12deg) scale(1.15)' 
+              : 'translate3d(0, 0, 0) rotate(0deg) scale(1)',
+            opacity: isParting ? 0 : 0.98
+          }}
+        >
+          <img src="/clouds/C2.svg" alt="" className="w-full h-auto drop-shadow-xl" />
+        </div>
+
+        {/* Cloud 8: Bottom-Right Base */}
+        <div 
+          className="absolute -bottom-14 sm:-bottom-20 -right-16 sm:-right-24 w-92 sm:w-[34rem] pointer-events-none z-10"
+          style={{
+            ...cloudTransitionStyle,
+            transform: isParting 
+              ? 'translate3d(140%, 130%, 0) rotate(-12deg) scale(1.15)' 
+              : 'translate3d(0, 0, 0) rotate(0deg) scale(1)',
+            opacity: isParting ? 0 : 0.98
+          }}
+        >
+          <img src="/clouds/C1.svg" alt="" className="w-full h-auto drop-shadow-xl" />
+        </div>
+
+        {/* Cloud 9: Bottom-Center Cushion */}
+        <div 
+          className="absolute -bottom-16 sm:-bottom-24 left-1/2 w-[30rem] sm:w-[40rem] pointer-events-none z-20"
+          style={{
+            ...cloudTransitionStyle,
+            transform: isParting 
+              ? 'translate3d(-50%, 150%, 0) scale(1.2)' 
+              : 'translate3d(-50%, 0, 0) scale(1)',
+            opacity: isParting ? 0 : 1
+          }}
+        >
+          <img src="/clouds/C3.svg" alt="" className="w-full h-auto drop-shadow-2xl" />
+        </div>
+
+      </div>
 
       {/* ========================================================
-          ☁️ 2. CINEMATIC CLOUD CURTAINS (Parting to sides like heaven's gates)
+          🌟 3. FOREGROUND LOGO & TITLES
           ======================================================== */}
-      {/* Top Cloud Puff */}
-      <div 
-        className="absolute -top-12 left-1/2 -translate-x-1/2 w-80 pointer-events-none transition-transform duration-700 ease-in-out"
-        style={{
-          transform: isMasking ? 'translate(-50%, -160%)' : 'translate(-50%, 0)'
-        }}
-      >
-        <img src="/clouds/C1.svg" alt="" className="w-full h-auto opacity-75 select-none" />
-      </div>
-
-      {/* Left Cloud Curtain: Sweeps left with a dramatic curve */}
-      <div 
-        className="absolute top-[28%] -left-16 sm:-left-24 w-72 sm:w-88 pointer-events-none transition-transform duration-700 ease-in-out"
-        style={{
-          transform: isMasking ? 'translateX(-160%) rotate(-14deg)' : 'translateX(0) rotate(0deg)'
-        }}
-      >
-        <img 
-          src="/clouds/C3.svg" 
-          alt="" 
-          className="w-full h-auto select-none" 
-          style={{ filter: 'drop-shadow(0 14px 20px rgba(12, 74, 110, 0.25))' }}
-        />
-      </div>
-
-      {/* Right Cloud Curtain: Sweeps right with a dramatic curve */}
-      <div 
-        className="absolute top-[26%] -right-16 sm:-right-24 w-80 sm:w-96 pointer-events-none transition-transform duration-700 ease-in-out"
-        style={{
-          transform: isMasking ? 'translateX(160%) rotate(14deg)' : 'translateX(0) rotate(0deg)'
-        }}
-      >
-        <img 
-          src="/clouds/C2.svg" 
-          alt="" 
-          className="w-full h-auto select-none" 
-          style={{ filter: 'drop-shadow(0 14px 20px rgba(79, 70, 229, 0.2))' }}
-        />
-      </div>
-
-      {/* Bottom Floating Cloud */}
-      <div 
-        className="absolute -bottom-16 left-1/2 -translate-x-1/2 w-96 pointer-events-none transition-transform duration-700 ease-in-out"
-        style={{
-          transform: isMasking ? 'translate(-50%, 160%)' : 'translate(-50%, 0)'
-        }}
-      >
-        <img 
-          src="/clouds/C1.svg" 
-          alt="" 
-          className="w-full h-auto select-none"
-          style={{ filter: 'drop-shadow(0 -10px 18px rgba(15, 23, 42, 0.15))' }}
-        />
-      </div>
-
-      {/* ========================================================
-          🌟 3. FOREGROUND LOGO & TITLES (Anticipation Squash & Camera Zoom Through)
-          ======================================================== */}
-      <div className="relative z-10 w-full h-full flex flex-col items-center justify-center">
+      <div className="relative z-30 w-full h-full flex flex-col items-center justify-center">
         {/* Main Animated Icon Container */}
         <div 
           className="relative w-28 h-28 flex items-center justify-center"
           style={{
-            transform: isMasking 
-              ? 'scale(7) rotate(-8deg)' 
+            transform: isParting 
+              ? 'scale(0.85) translate3d(0, -20px, 0)' 
               : isSquashing 
-                ? 'scale(0.92)' 
+                ? 'scale(0.93)' 
                 : 'scale(1)',
-            opacity: isMasking ? 0 : 1,
-            transition: isMasking 
-              ? 'transform 0.65s cubic-bezier(0.75, 0, 0.15, 1), opacity 0.4s ease-out' 
-              : 'transform 0.2s ease-out'
+            opacity: isParting ? 0 : 1,
+            transition: isParting 
+              ? 'transform 0.45s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.35s ease-out' 
+              : 'transform 0.2s ease-out',
+            willChange: 'transform, opacity'
           }}
         >
           {/* Ambient Glow Aura */}
           <div 
-            className="absolute inset-0 rounded-3xl bg-gradient-to-tr from-paw-400 to-amber-400 opacity-25 animate-ping" 
+            className="absolute inset-0 rounded-3xl bg-gradient-to-tr from-paw-400 to-amber-400 opacity-30 animate-ping" 
             style={{ animationDuration: '2s' }} 
           />
           
@@ -201,12 +225,16 @@ export default function SplashScreen({ onFinish }) {
           </div>
         </div>
 
-        {/* Pure App Title in Mitr */}
+        {/* App Title in Mitr */}
         <div 
-          className="mt-5 text-center transition-[transform,opacity] duration-350 [transition-timing-function:var(--ease-out)]"
+          className="mt-5 text-center"
           style={{
-            transform: isMasking ? 'translateY(35px) scale(0.85)' : 'translateY(0) scale(1)',
-            opacity: isMasking ? 0 : 1
+            transform: isParting ? 'translate3d(0, 15px, 0) scale(0.9)' : 'translate3d(0, 0, 0) scale(1)',
+            opacity: isParting ? 0 : 1,
+            transition: isParting 
+              ? 'transform 0.4s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.3s ease-out' 
+              : 'none',
+            willChange: 'transform, opacity'
           }}
         >
           <h1 className="font-mitr text-4xl font-semibold tracking-wide bg-gradient-to-r from-paw-600 via-amber-600 to-orange-600 bg-clip-text text-transparent drop-shadow-2xs">
@@ -216,10 +244,12 @@ export default function SplashScreen({ onFinish }) {
 
         {/* Minimal Loading Dots */}
         <div 
-          className="mt-6 flex items-center gap-2 transition-[transform,opacity] duration-250 [transition-timing-function:var(--ease-out)]"
+          className="mt-6 flex items-center gap-2"
           style={{
-            opacity: isMasking ? 0 : 1,
-            transform: isMasking ? 'translateY(20px)' : 'translateY(0)'
+            opacity: isParting ? 0 : 1,
+            transform: isParting ? 'translate3d(0, 10px, 0)' : 'translate3d(0, 0, 0)',
+            transition: 'opacity 0.25s ease-out, transform 0.25s ease-out',
+            willChange: 'opacity, transform'
           }}
         >
           <span className="w-2.5 h-2.5 rounded-full bg-paw-400 animate-bounce" style={{ animationDelay: '0ms' }} />
