@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
-  faXmark, faPlus, faDatabase, 
+  faPlus, faDatabase, 
   faArrowDownWideShort, faFilter, faHeart, faPaw, faSitemap, faGlobe,
   faSeedling, faRainbow, faImages, faBell, faCamera,
   faSquare, faTableCellsLarge, faList
@@ -118,41 +118,31 @@ export default function HamburgerDrawer({
       >
         <div>
           {/* Header */}
-          <div className="p-6 bg-gradient-to-br from-paw-500 to-amber-500 text-white">
-            <div className="flex items-center justify-between">
-              <div className="w-11 h-11 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-xl shadow-inner">
-                <FontAwesomeIcon icon={faPaw} />
-              </div>
-              <button 
-                onClick={() => requestClose()}
-                aria-label="Close menu"
-                className="w-8 h-8 rounded-full bg-white/15 hover:bg-white/25 text-white flex items-center justify-center transition-colors duration-150 ease-out active:scale-95 focus-visible:ring-2 focus-visible:ring-white outline-none"
-              >
-                <FontAwesomeIcon icon={faXmark} className="text-sm" />
-              </button>
-            </div>
-            <h2 className="mt-3 font-mitr text-2xl font-semibold tracking-normal flex items-center">
-              <span>MyP</span>
-              <FontAwesomeIcon icon={faPaw} className="text-white text-[0.70em] ml-[1px] mr-0 -translate-y-[0.5px]" />
-              <span>w</span>
-            </h2>
+          <div className="px-5 pt-4 pb-3.5 bg-gradient-to-br from-paw-500 to-amber-500 text-white">
+            <div className="flex items-center justify-between gap-2">
+              <h2 className="font-mitr text-2xl font-semibold tracking-normal flex items-center leading-none">
+                <span>MyP</span>
+                <FontAwesomeIcon icon={faPaw} className="text-white text-[0.70em] ml-[1px] mr-0 -translate-y-[0.5px]" />
+                <span>w</span>
+              </h2>
 
-            {/* Quick Stats Pill (FontAwesome Unified) */}
-            <div className="mt-3 flex items-center gap-2 pt-2.5 border-t border-white/20 text-xs">
-              <span className="bg-white/20 px-2.5 py-0.5 rounded-full font-semibold inline-flex items-center gap-1.5">
-                <FontAwesomeIcon icon={faPaw} className="text-[10px]" />
-                <span>{totalPets}</span>
-              </span>
-              <span className="bg-emerald-400/30 px-2.5 py-0.5 rounded-full font-semibold inline-flex items-center gap-1.5">
-                <FontAwesomeIcon icon={faSeedling} className="text-[10px] text-emerald-100" />
-                <span>{aliveCount}</span>
-              </span>
-              {deceasedCount > 0 && (
-                <span className="bg-sky-400/30 px-2.5 py-0.5 rounded-full font-semibold inline-flex items-center gap-1.5">
-                  <FontAwesomeIcon icon={faRainbow} className="text-[10px] text-amber-200" />
-                  <span>{deceasedCount}</span>
+              {/* Quick Stats Pill */}
+              <div className="flex items-center gap-1.5 text-xs">
+                <span className="bg-white/20 px-2 py-0.5 rounded-full font-semibold inline-flex items-center gap-1">
+                  <FontAwesomeIcon icon={faPaw} className="text-[10px]" />
+                  <span>{totalPets}</span>
                 </span>
-              )}
+                <span className="bg-emerald-400/30 px-2 py-0.5 rounded-full font-semibold inline-flex items-center gap-1">
+                  <FontAwesomeIcon icon={faSeedling} className="text-[10px] text-emerald-100" />
+                  <span>{aliveCount}</span>
+                </span>
+                {deceasedCount > 0 && (
+                  <span className="bg-sky-400/30 px-2 py-0.5 rounded-full font-semibold inline-flex items-center gap-1">
+                    <FontAwesomeIcon icon={faRainbow} className="text-[10px] text-amber-200" />
+                    <span>{deceasedCount}</span>
+                  </span>
+                )}
+              </div>
             </div>
           </div>
 

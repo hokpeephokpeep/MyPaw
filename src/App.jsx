@@ -880,7 +880,7 @@ export default function App() {
           <div className="flex items-center gap-2.5">
             <button
               onClick={() => setIsDrawerOpen(true)}
-              className="w-10 h-10 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center active:scale-95 transition-transform transition-colors duration-150 ease-out shadow-2xs -ml-0.5 focus-visible:ring-2 focus-visible:ring-paw-500 outline-none"
+              className="w-10 h-10 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center active:scale-95 transition-transform transition-colors duration-150 ease-out shadow-2xs -ml-0.5 focus-visible:ring-2 focus-visible:ring-paw-500 outline-none"
               title="Menu"
               aria-label="Menu"
             >
@@ -913,7 +913,7 @@ export default function App() {
             <div className="relative">
               <button
                 onClick={() => setIsNotiDropdownOpen(!isNotiDropdownOpen)}
-                className={`relative w-10 h-10 rounded-2xl flex items-center justify-center active:scale-95 transition-transform transition-colors duration-150 ease-out shadow-2xs border focus-visible:ring-2 focus-visible:ring-paw-500 outline-none ${
+                className={`relative w-10 h-10 rounded-full flex items-center justify-center active:scale-95 transition-transform transition-colors duration-150 ease-out shadow-2xs border focus-visible:ring-2 focus-visible:ring-paw-500 outline-none ${
                   isNotiDropdownOpen
                     ? 'bg-paw-100 text-paw-700 border-paw-300 ring-2 ring-paw-200'
                     : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200/60'
