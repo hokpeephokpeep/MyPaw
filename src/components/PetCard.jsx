@@ -7,6 +7,7 @@ import {
   faRainbow, faCakeCandles, faPaw, faInfinity 
 } from '@fortawesome/free-solid-svg-icons';
 import { motion } from 'motion/react';
+import { BorderBeam } from './ui/border-beam';
 
 export default function PetCard({ pet, allPets = [], dateFormat = 'en', compact = false, onOpenMore, onToggleBottomNav }) {
   const isDeceased = pet.status === 'deceased';
@@ -283,6 +284,10 @@ export default function PetCard({ pet, allPets = [], dateFormat = 'en', compact 
             : 'bg-white border border-slate-200/70 hover:border-paw-300'
         }`}
       >
+        {/* ✨ Birthday Border Beam Celebration (Magic UI) */}
+        {!isDeceased && daysUntilBday === 0 && (
+          <BorderBeam size={compact ? 120 : 180} duration={6} colorFrom="#f97316" colorTo="#fbbf24" borderWidth={2} />
+        )}
         
         {/* 🌈 Heavenly Sky Background (ONLY FOR DECEASED PETS: Feel good คิดถึง ปนเหงา) */}
         {isDeceased && (
