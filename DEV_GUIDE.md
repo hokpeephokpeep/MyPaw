@@ -115,6 +115,17 @@ src/
    - รองรับ Android Native Share Intent (`ACTION_SEND` & `ACTION_SEND_MULTIPLE`) จาก Gallery ส่งตรงเข้าแอป
    - รองรับ Local Drag & Drop และปุ่มนำเข้ารูปภาพผ่านเมนู Drawer
    - มีหน้าต่างเลือกปลายทางอัจฉริยะ: เลือกระหว่าง **"สร้างน้องแมวใหม่ (New Pet)"** หรือ **"เพิ่มให้น้องแมวที่มีอยู่แล้ว (Existing Pet)"** พร้อมอัปเดตและแสดงพลุฉลองทันที
+6. **ระบบป้องกัน Notification Bar ของระบบ (Status Bar Protection & Bridge):**
+   - แก้ไขปัญหา Android 15/17 (API 35+) Edge-to-Edge ที่พื้นหลังสีขาวของแอปถมทับ Notification Bar ทำให้ไอคอนระบบสีขาว (นาฬิกา, แบตเตอรี่, ไวไฟ) มองไม่เห็น
+   - ใช้แถบ Status Bar Protection สี **เทาเข้มอมน้ำเงิน (`bg-slate-800` / `#1E293B`)** ด้านบนสุด เพื่อสร้างความนุ่มนวล สบายตา ไม่เกิดคอนทราสต์จัดจ้านตัดกับ Header สีขาว และรักษาความคมชัดของไอคอนระบบสีขาว 100%
+   - เชื่อมต่อ Native WindowInsets จาก Android (`MainActivity.java`) เข้าสู่ Web ผ่าน `SafeAreaBridge` (`window.AndroidSafeArea`) และ Dynamic JS Injection อัปเดต CSS Variable `--safe-area-inset-top` และ `--safe-area-inset-bottom` ในหน่วย dp ทันที
+   - กำหนด `WindowInsetsControllerCompat.setAppearanceLightStatusBars(false)` ให้ไอคอนระบบเป็นสีขาวเสมอ
+7. **ระบบก้อนเมฆดาวแมวลอยเหนือการ์ดข้างเคียง (Memorial Cloud Stacking Context):**
+   - การ์ดของน้องที่ไปดาวแมวมีก้อนเมฆลอยยื่นพาดขอบการ์ดออกไปด้านข้าง
+   - ยก Stacking Context ใน Grid ด้วย `relative z-20` และ `overflow-visible` ทำให้ก้อนเมฆลอยอยู่ **เหนือ** การ์ดข้างเคียงเสมอ ไม่ถูกการ์ดที่เรนเดอร์ถัดไปใน DOM Order ตัดขอบขาด
+8. **อัตลักษณ์และภาษาคลีนระดับพรีเมียม (Brand Identity & Clean Localization):**
+   - โลโก้ Header และ Splash Screen ใช้อัตลักษณ์เดียวกับไอคอนแอปอย่างเป็นทางการ (`MyP🐾w`)
+   - ปรับเมนูการตั้งค่าและภาษาให้กระชับ มินิมอล: สลับภาษาใช้ `ไทย` / `English`, ปีปฏิทินใช้ `สากล` / `ไทย`, และรวมวันสำคัญไว้ในคำว่า `วันสำคัญ` / `Special Days` ตัดคำอธิบายและวงเล็บซ้ำซ้อนออกทั้งหมดตาม [DESIGN_GUIDELINES.md](file:///d:/Project/MyPaw/DESIGN_GUIDELINES.md)
 
 ---
 
