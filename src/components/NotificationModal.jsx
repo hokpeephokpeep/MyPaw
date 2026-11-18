@@ -17,6 +17,7 @@ import {
 } from '../notificationEngine.js';
 import { getPhotoSrc } from '../imageUtils';
 import confetti from 'canvas-confetti';
+import { useLanguage } from '../i18n.jsx';
 
 function formatNotificationTitle(item) {
   let title = (item.title || '').replace(/[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '').trim();
@@ -36,6 +37,7 @@ export default function NotificationModal({
   onOpenMemorial, 
   onOpenHealth 
 }) {
+  const { language, t } = useLanguage();
   const { 
     isVisible, 
     requestClose, 
@@ -278,10 +280,10 @@ export default function NotificationModal({
         <div className="px-5 py-2.5 bg-slate-50/70 border-b border-slate-100 flex items-center justify-between gap-2 overflow-x-auto no-scrollbar flex-shrink-0">
           <div className="flex items-center gap-1.5 flex-nowrap">
             {[
-              { id: 'all', label: 'ทั้งหมด' },
-              { id: 'overdue', label: 'ตกค้าง' },
-              { id: 'appointment', label: 'นัดหมาย' },
-              { id: 'anniversary', label: 'วันครบรอบ' }
+              { id: 'all', label: t('notif_tab_all') },
+              { id: 'overdue', label: t('notif_tab_overdue') },
+              { id: 'appointment', label: t('notif_tab_appointment') },
+              { id: 'anniversary', label: t('notif_tab_anniversary') }
             ].map(tab => (
               <button
                 key={tab.id}

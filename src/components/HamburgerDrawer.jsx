@@ -168,7 +168,7 @@ export default function HamburgerDrawer({
                 <button
                   type="button"
                   onClick={() => requestClose(onOpenFamily)}
-                  className="flex items-center gap-2 p-2.5 rounded-2xl bg-slate-50 hover:bg-slate-100 text-slate-700 font-semibold text-xs border border-slate-200/70 transition-all active:scale-95 focus-visible:ring-2 focus-visible:ring-paw-500 outline-none"
+                  className="flex items-center gap-1.5 p-2 sm:p-2.5 rounded-2xl bg-slate-50 hover:bg-slate-100 text-slate-700 font-semibold text-[11.5px] sm:text-xs tracking-tight border border-slate-200/70 transition-all active:scale-95 focus-visible:ring-2 focus-visible:ring-paw-500 outline-none"
                 >
                   <div className="w-7 h-7 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center flex-shrink-0">
                     <FontAwesomeIcon icon={faSitemap} className="text-xs" />
@@ -179,7 +179,7 @@ export default function HamburgerDrawer({
                 <button
                   type="button"
                   onClick={() => requestClose(onOpenScanner)}
-                  className="flex items-center gap-2 p-2.5 rounded-2xl bg-slate-50 hover:bg-slate-100 text-slate-700 font-semibold text-xs border border-slate-200/70 transition-all active:scale-95 focus-visible:ring-2 focus-visible:ring-paw-500 outline-none"
+                  className="flex items-center gap-1.5 p-2 sm:p-2.5 rounded-2xl bg-slate-50 hover:bg-slate-100 text-slate-700 font-semibold text-[11.5px] sm:text-xs tracking-tight border border-slate-200/70 transition-all active:scale-95 focus-visible:ring-2 focus-visible:ring-paw-500 outline-none"
                 >
                   <div className="w-7 h-7 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center flex-shrink-0">
                     <FontAwesomeIcon icon={faCamera} className="text-xs" />
@@ -190,7 +190,7 @@ export default function HamburgerDrawer({
                 <button
                   type="button"
                   onClick={() => requestClose(onOpenSharedImport)}
-                  className="flex items-center gap-2 p-2.5 rounded-2xl bg-slate-50 hover:bg-slate-100 text-slate-700 font-semibold text-xs border border-slate-200/70 transition-all active:scale-95 focus-visible:ring-2 focus-visible:ring-paw-500 outline-none"
+                  className="flex items-center gap-1.5 p-2 sm:p-2.5 rounded-2xl bg-slate-50 hover:bg-slate-100 text-slate-700 font-semibold text-[11.5px] sm:text-xs tracking-tight border border-slate-200/70 transition-all active:scale-95 focus-visible:ring-2 focus-visible:ring-paw-500 outline-none"
                 >
                   <div className="w-7 h-7 rounded-xl bg-paw-500/10 text-paw-600 flex items-center justify-center flex-shrink-0">
                     <FontAwesomeIcon icon={faImages} className="text-xs" />
@@ -201,9 +201,9 @@ export default function HamburgerDrawer({
                 <button
                   type="button"
                   onClick={() => requestClose(onOpenNotifications)}
-                  className="flex items-center justify-between gap-1.5 p-2.5 rounded-2xl bg-slate-50 hover:bg-slate-100 text-slate-700 font-semibold text-xs border border-slate-200/70 transition-all active:scale-95 focus-visible:ring-2 focus-visible:ring-paw-500 outline-none"
+                  className="flex items-center justify-between gap-1 p-2 sm:p-2.5 rounded-2xl bg-slate-50 hover:bg-slate-100 text-slate-700 font-semibold text-[11.5px] sm:text-xs tracking-tight border border-slate-200/70 transition-all active:scale-95 focus-visible:ring-2 focus-visible:ring-paw-500 outline-none"
                 >
-                  <div className="flex items-center gap-2 min-w-0">
+                  <div className="flex items-center gap-1.5 min-w-0">
                     <div className="w-7 h-7 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center flex-shrink-0">
                       <FontAwesomeIcon icon={faBell} className="text-xs" />
                     </div>
