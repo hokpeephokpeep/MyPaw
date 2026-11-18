@@ -1016,62 +1016,6 @@ export default function App() {
                 }}
               />
             </div>
-
-            <div className="relative inline-grid grid-cols-3 items-center bg-slate-100/95 p-1 rounded-full border border-slate-200/70 shadow-2xs">
-              {/* Sliding Active Circle Indicator */}
-              <span
-                aria-hidden="true"
-                style={{
-                  transform:
-                    viewMode === '1col'
-                      ? 'translateX(0%)'
-                      : viewMode === '2col'
-                        ? 'translateX(100%)'
-                        : 'translateX(200%)',
-                  transition: 'transform 220ms var(--ease-out)'
-                }}
-                className="pointer-events-none absolute top-1 bottom-1 left-1 w-[34px] rounded-full bg-white shadow-xs"
-              />
-
-              <button
-                onClick={() => handleSetViewMode('1col')}
-                className={`relative z-10 w-[34px] h-[34px] rounded-full flex items-center justify-center transition-[color,transform] duration-150 [transition-timing-function:var(--ease-out)] active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-paw-500 outline-none ${
-                  viewMode === '1col'
-                    ? 'text-paw-600'
-                    : 'text-slate-400 hover:text-slate-600'
-                }`}
-                title="1 Column (Large Hero)"
-                aria-label="1 Column"
-              >
-                <FontAwesomeIcon icon={faSquare} className="text-[13px]" />
-              </button>
-
-              <button
-                onClick={() => handleSetViewMode('2col')}
-                className={`relative z-10 w-[34px] h-[34px] rounded-full flex items-center justify-center transition-[color,transform] duration-150 [transition-timing-function:var(--ease-out)] active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-paw-500 outline-none ${
-                  viewMode === '2col'
-                    ? 'text-paw-600'
-                    : 'text-slate-400 hover:text-slate-600'
-                }`}
-                title="2 Columns (Grid)"
-                aria-label="2 Columns"
-              >
-                <FontAwesomeIcon icon={faTableCellsLarge} className="text-[13px]" />
-              </button>
-
-              <button
-                onClick={() => handleSetViewMode('list')}
-                className={`relative z-10 w-[34px] h-[34px] rounded-full flex items-center justify-center transition-[color,transform] duration-150 [transition-timing-function:var(--ease-out)] active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-paw-500 outline-none ${
-                  viewMode === 'list'
-                    ? 'text-paw-600'
-                    : 'text-slate-400 hover:text-slate-600'
-                }`}
-                title="Card List View"
-                aria-label="Card List View"
-              >
-                <FontAwesomeIcon icon={faList} className="text-[13px]" />
-              </button>
-            </div>
           </div>
         </header>
 
@@ -1313,6 +1257,8 @@ export default function App() {
         deceasedCount={deceasedCount}
         dateFormat={dateFormat}
         onSetDateFormat={handleSetDateFormat}
+        viewMode={viewMode}
+        onSetViewMode={handleSetViewMode}
       />
 
       {/* Hidden File Picker for Batch/Single Shared Image Import */}

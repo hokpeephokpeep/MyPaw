@@ -3,7 +3,8 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
   faXmark, faPlus, faDatabase, 
   faArrowDownWideShort, faFilter, faHeart, faPaw, faSitemap, faGlobe,
-  faSeedling, faRainbow, faImages, faBell, faCamera
+  faSeedling, faRainbow, faImages, faBell, faCamera,
+  faSquare, faTableCellsLarge, faList
 } from '@fortawesome/free-solid-svg-icons';
 
 export default function HamburgerDrawer({ 
@@ -24,7 +25,9 @@ export default function HamburgerDrawer({
   aliveCount,
   deceasedCount,
   dateFormat = 'en',
-  onSetDateFormat
+  onSetDateFormat,
+  viewMode = '1col',
+  onSetViewMode
 }) {
   const [shouldRender, setShouldRender] = useState(Boolean(isOpen));
   const [isClosing, setIsClosing] = useState(false);
@@ -274,6 +277,54 @@ export default function HamburgerDrawer({
                 <option value="age_asc">Youngest First</option>
                 <option value="bday_near">Upcoming Birthday</option>
               </select>
+            </div>
+
+            {/* 4.5 View Mode Switcher (1 Column Hero | 2 Columns Grid | Card List) */}
+            <div className="space-y-1.5">
+              <div className="text-[11px] font-bold text-slate-400 px-1 uppercase tracking-wider">
+                รูปแบบการแสดงผล (View Mode)
+              </div>
+              <div className="grid grid-cols-3 gap-1 bg-slate-100 p-1 rounded-2xl">
+                <button
+                  type="button"
+                  onClick={() => onSetViewMode?.('1col')}
+                  className={`py-2 px-1 rounded-xl text-xs font-bold transition-all duration-150 ease-out flex items-center justify-center gap-1.5 active:scale-95 outline-none ${
+                    viewMode === '1col'
+                      ? 'bg-white text-paw-600 shadow-xs'
+                      : 'text-slate-500 hover:text-slate-800'
+                  }`}
+                  title="1 Column (Large Hero)"
+                >
+                  <FontAwesomeIcon icon={faSquare} className="text-xs" />
+                  <span>เดี่ยว</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onSetViewMode?.('2col')}
+                  className={`py-2 px-1 rounded-xl text-xs font-bold transition-all duration-150 ease-out flex items-center justify-center gap-1.5 active:scale-95 outline-none ${
+                    viewMode === '2col'
+                      ? 'bg-white text-paw-600 shadow-xs'
+                      : 'text-slate-500 hover:text-slate-800'
+                  }`}
+                  title="2 Columns (Grid)"
+                >
+                  <FontAwesomeIcon icon={faTableCellsLarge} className="text-xs" />
+                  <span>ตาราง</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onSetViewMode?.('list')}
+                  className={`py-2 px-1 rounded-xl text-xs font-bold transition-all duration-150 ease-out flex items-center justify-center gap-1.5 active:scale-95 outline-none ${
+                    viewMode === 'list'
+                      ? 'bg-white text-paw-600 shadow-xs'
+                      : 'text-slate-500 hover:text-slate-800'
+                  }`}
+                  title="Card List View"
+                >
+                  <FontAwesomeIcon icon={faList} className="text-xs" />
+                  <span>รายการ</span>
+                </button>
+              </div>
             </div>
 
             {/* 5. Date Format System (Default or Thai Format) */}
