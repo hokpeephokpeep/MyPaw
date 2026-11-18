@@ -875,7 +875,7 @@ export default function App() {
       <div className="w-full max-w-lg md:max-w-3xl h-[100dvh] max-h-[100dvh] overflow-hidden bg-slate-50 shadow-2xl flex flex-col relative pb-0">
         
         {/* Clean Sticky App Bar (Glance Zone) */}
-        <header className="sticky top-0 z-30 flex-shrink-0 bg-white/95 backdrop-blur-md px-4 sm:px-5 py-3 border-b border-slate-200/60 flex items-center justify-between pt-[max(0.75rem,calc(var(--safe-top,0px)+0.5rem))]">
+        <header className="sticky top-0 z-30 flex-shrink-0 bg-white/95 backdrop-blur-md px-4 sm:px-5 py-3 border-b border-slate-200/60 flex items-center justify-between">
           {/* Left: Hamburger Button (slides in from left) + Brand Title */}
           <div className="flex items-center gap-2.5">
             <button
