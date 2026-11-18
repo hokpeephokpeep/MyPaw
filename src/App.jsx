@@ -1,24 +1,14 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo, lazy, Suspense } from 'react';
 import { initialPets } from './defaultPets';
 import PetCard from './components/PetCard';
 import PetListItem from './components/PetListItem';
-import PetModal from './components/PetModal';
-import ImageViewerModal from './components/ImageViewerModal';
-import BackupModal from './components/BackupModal';
 import HamburgerDrawer from './components/HamburgerDrawer';
-import MemorialModal from './components/MemorialModal';
-import HealthLogModal from './components/HealthLogModal';
-import FamilyTreeModal from './components/FamilyTreeModal';
-import PetDetailModal from './components/PetDetailModal';
-import SharedPhotosModal from './components/SharedPhotosModal';
-import NotificationModal from './components/NotificationModal';
 import NotificationScreen from './components/NotificationScreen';
 import QuickNotificationDropdown from './components/QuickNotificationDropdown';
-import DocumentScannerModal from './components/DocumentScannerModal';
 import SplashScreen from './components/SplashScreen';
-import { resolveAllKinships } from './kinshipEngine';
+import { PetCardSkeleton, PetListItemSkeleton } from './components/PetCardSkeleton';
+import { warmupAndPrecache, getCachedKinships, getCachedNotifications, invalidateAndRecache } from './cacheEngine';
 import { parseLocalDate, getTodayLocal } from './utils';
-import { generatePetNotifications } from './notificationEngine.js';
 import { fileToDataUrl, processImageWithFocus, getPhotoSrc, getPhotoThumb } from './imageUtils';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
@@ -27,6 +17,18 @@ import {
   faHouse, faCamera
 } from '@fortawesome/free-solid-svg-icons';
 import confetti from 'canvas-confetti';
+
+// 🚀 Code-Split Heavy Modals via React.lazy for instant launch & 60fps swipes
+const PetModal = lazy(() => import('./components/PetModal'));
+const ImageViewerModal = lazy(() => import('./components/ImageViewerModal'));
+const BackupModal = lazy(() => import('./components/BackupModal'));
+const MemorialModal = lazy(() => import('./components/MemorialModal'));
+const HealthLogModal = lazy(() => import('./components/HealthLogModal'));
+const FamilyTreeModal = lazy(() => import('./components/FamilyTreeModal'));
+const PetDetailModal = lazy(() => import('./components/PetDetailModal'));
+const SharedPhotosModal = lazy(() => import('./components/SharedPhotosModal'));
+const NotificationModal = lazy(() => import('./components/NotificationModal'));
+const DocumentScannerModal = lazy(() => import('./components/DocumentScannerModal'));
 
 const STORAGE_KEY = 'mypetsage_modern_pets_v2';
 
@@ -687,13 +689,20 @@ export default function App() {
     }
   };
 
-  // Save to localStorage
+  // ⚡ Multi-Tier Cache Warm-up & GPU Image Pre-decoding during SplashScreen
+  useEffect(() => {
+    warmupAndPrecache(pets);
+  }, []);
+
+  // Save to localStorage & Automatically Re-cache in background idle time
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(pets));
     } catch (e) {
       console.error('Failed to save to localStorage', e);
     }
+    // Invalidate stale caches & trigger background re-caching
+    invalidateAndRecache(pets);
   }, [pets]);
 
   // Check for today's birthday (Local Timezone Safe)
@@ -814,46 +823,48 @@ export default function App() {
     );
   };
 
-  // 🌳 Infer all generations and kinships (ปู่ ย่า ตา ยาย หลาน เหลน ทวด แฟน ลุง ป้า น้า อา)
-  const resolvedPets = resolveAllKinships(pets);
+  // 🌳 Infer all generations and kinships (Multi-tier Cache & Memoized)
+  const resolvedPets = useMemo(() => getCachedKinships(pets), [pets]);
 
-  // Filter & Sort
-  const filteredPets = resolvedPets
-    .filter(p => {
-      if (activeTab === 'alive') return p.status !== 'deceased';
-      if (activeTab === 'deceased') return p.status === 'deceased';
-      return true;
-    })
-    .sort((a, b) => {
-      if (sortBy === 'age_desc') {
-        return (parseLocalDate(a.birthDate) || 0) - (parseLocalDate(b.birthDate) || 0);
-      }
-      if (sortBy === 'age_asc') {
-        return (parseLocalDate(b.birthDate) || 0) - (parseLocalDate(a.birthDate) || 0);
-      }
-      if (sortBy === 'bday_near') {
-        const getBdayScore = (p) => {
-          if (p.status === 'deceased') return 999999999999;
-          const today = getTodayLocal();
-          const birth = parseLocalDate(p.birthDate);
-          if (!birth) return 999999999999;
-          let next = new Date(today.getFullYear(), birth.getMonth(), birth.getDate());
-          if (next < today) next = new Date(today.getFullYear() + 1, birth.getMonth(), birth.getDate());
-          return next - today;
-        };
-        return getBdayScore(a) - getBdayScore(b);
-      }
-      return 0;
-    });
-
-  const aliveCount = pets.filter(p => p.status !== 'deceased').length;
-  const deceasedCount = pets.filter(p => p.status === 'deceased').length;
-  const isFiltered = activeTab !== 'all';
-
-  // 🔔 Generate notifications & unread badge counters
-  const petNotifications = generatePetNotifications(pets);
+  // 🔔 Generate notifications & unread badge counters (Cached)
+  const petNotifications = useMemo(() => getCachedNotifications(resolvedPets), [resolvedPets]);
   const unreadNotificationsCount = petNotifications.filter(n => !n.isRead).length;
   const urgentNotificationsCount = petNotifications.filter(n => n.urgency === 'urgent_today').length;
+
+  // Filter & Sort (Memoized for 0ms re-render during drag & scroll)
+  const filteredPets = useMemo(() => {
+    return resolvedPets
+      .filter(p => {
+        if (activeTab === 'alive') return p.status !== 'deceased';
+        if (activeTab === 'deceased') return p.status === 'deceased';
+        return true;
+      })
+      .sort((a, b) => {
+        if (sortBy === 'age_desc') {
+          return (parseLocalDate(a.birthDate) || 0) - (parseLocalDate(b.birthDate) || 0);
+        }
+        if (sortBy === 'age_asc') {
+          return (parseLocalDate(b.birthDate) || 0) - (parseLocalDate(a.birthDate) || 0);
+        }
+        if (sortBy === 'bday_near') {
+          const getBdayScore = (p) => {
+            if (p.status === 'deceased') return 999999999999;
+            const today = getTodayLocal();
+            const birth = parseLocalDate(p.birthDate);
+            if (!birth) return 999999999999;
+            let next = new Date(today.getFullYear(), birth.getMonth(), birth.getDate());
+            if (next < today) next = new Date(today.getFullYear() + 1, birth.getMonth(), birth.getDate());
+            return next - today;
+          };
+          return getBdayScore(a) - getBdayScore(b);
+        }
+        return 0;
+      });
+  }, [resolvedPets, activeTab, sortBy]);
+
+  const aliveCount = useMemo(() => pets.filter(p => p.status !== 'deceased').length, [pets]);
+  const deceasedCount = useMemo(() => pets.filter(p => p.status === 'deceased').length, [pets]);
+  const isFiltered = activeTab !== 'all';
 
   return (
     <div 
@@ -1206,165 +1217,168 @@ export default function App() {
       />
 
       {/* Modals */}
-      <PetModal
-        pet={editingPet ? pets.find(p => p.id === editingPet.id) || editingPet : null}
-        allPets={pets}
-        isOpen={isModalOpen}
-        dateFormat={dateFormat}
-        initialPhotos={initialSharedPhotosForNew}
-        onClose={() => {
-          setIsModalOpen(false);
-          setEditingPet(null);
-          setInitialSharedPhotosForNew([]);
-        }}
-        onSave={handleSavePet}
-        onDelete={(id) => {
-          navStackRef.current = [];
-          if (detailPet?.id === id) setDetailPet(null);
-          handleDeletePet(id);
-        }}
-      />
+      {/* 🚀 Code-Split Secondary Modals wrapped in Suspense */}
+      <Suspense fallback={null}>
+        <PetModal
+          pet={editingPet ? pets.find(p => p.id === editingPet.id) || editingPet : null}
+          allPets={pets}
+          isOpen={isModalOpen}
+          dateFormat={dateFormat}
+          initialPhotos={initialSharedPhotosForNew}
+          onClose={() => {
+            setIsModalOpen(false);
+            setEditingPet(null);
+            setInitialSharedPhotosForNew([]);
+          }}
+          onSave={handleSavePet}
+          onDelete={(id) => {
+            navStackRef.current = [];
+            if (detailPet?.id === id) setDetailPet(null);
+            handleDeletePet(id);
+          }}
+        />
 
-      {/* 📸 Shared Photos External Import Modal */}
-      <SharedPhotosModal
-        isOpen={isSharedModalOpen}
-        incomingPhotos={incomingSharedPhotos || []}
-        pets={pets}
-        onClose={() => {
-          setIsSharedModalOpen(false);
-          setIncomingSharedPhotos(null);
-        }}
-        onAddNewPetWithPhotos={handleAddNewPetWithSharedPhotos}
-        onAddPhotosToExistingPet={handleAddPhotosToExistingPet}
-      />
+        {/* 📸 Shared Photos External Import Modal */}
+        <SharedPhotosModal
+          isOpen={isSharedModalOpen}
+          incomingPhotos={incomingSharedPhotos || []}
+          pets={pets}
+          onClose={() => {
+            setIsSharedModalOpen(false);
+            setIncomingSharedPhotos(null);
+          }}
+          onAddNewPetWithPhotos={handleAddNewPetWithSharedPhotos}
+          onAddPhotosToExistingPet={handleAddPhotosToExistingPet}
+        />
 
-      <ImageViewerModal
-        pet={viewingImagePet}
-        onClose={() => setViewingImagePet(null)}
-      />
+        <ImageViewerModal
+          pet={viewingImagePet}
+          onClose={() => setViewingImagePet(null)}
+        />
 
-      <BackupModal
-        isOpen={isBackupOpen}
-        onClose={() => setIsBackupOpen(false)}
-        pets={pets}
-        onRestore={(restoredPets) => setPets(restoredPets)}
-      />
+        <BackupModal
+          isOpen={isBackupOpen}
+          onClose={() => setIsBackupOpen(false)}
+          pets={pets}
+          onRestore={(restoredPets) => setPets(restoredPets)}
+        />
 
-      {/* 🌈 Memorial Modal */}
-      <MemorialModal
-        pet={memorialPet ? resolvedPets.find(p => p.id === memorialPet.id) || memorialPet : null}
-        isOpen={!!memorialPet}
-        dateFormat={dateFormat}
-        onClose={() => {
-          setMemorialPet(null);
-        }}
-        onUpdatePet={handleSavePet}
-      />
+        {/* 🌈 Memorial Modal */}
+        <MemorialModal
+          pet={memorialPet ? resolvedPets.find(p => p.id === memorialPet.id) || memorialPet : null}
+          isOpen={!!memorialPet}
+          dateFormat={dateFormat}
+          onClose={() => {
+            setMemorialPet(null);
+          }}
+          onUpdatePet={handleSavePet}
+        />
 
-      {/* 🩺 Health & Weight Log Modal */}
-      <HealthLogModal
-        pet={healthPet ? resolvedPets.find(p => p.id === healthPet.id) || healthPet : null}
-        isOpen={!!healthPet}
-        dateFormat={dateFormat}
-        onClose={() => {
-          setHealthPet(null);
-        }}
-        onUpdatePet={handleSavePet}
-        onOpenScanner={(petId) => {
-          setScannerPetId(petId || null);
-          cameraInputRef.current?.click();
-        }}
-      />
+        {/* 🩺 Health & Weight Log Modal */}
+        <HealthLogModal
+          pet={healthPet ? resolvedPets.find(p => p.id === healthPet.id) || healthPet : null}
+          isOpen={!!healthPet}
+          dateFormat={dateFormat}
+          onClose={() => {
+            setHealthPet(null);
+          }}
+          onUpdatePet={handleSavePet}
+          onOpenScanner={(petId) => {
+            setScannerPetId(petId || null);
+            cameraInputRef.current?.click();
+          }}
+        />
 
-      {/* 📷 Vet Document & Clinic OCR Scanner Modal */}
-      <DocumentScannerModal
-        isOpen={isScannerOpen}
-        initialFile={scannerInitialFile}
-        onClose={() => {
-          setIsScannerOpen(false);
-          setScannerInitialFile(null);
-          setScannerPetId(null);
-          popNavStack();
-        }}
-        pets={resolvedPets}
-        selectedPetId={scannerPetId}
-        onUpdatePet={handleSavePet}
-      />
+        {/* 📷 Vet Document & Clinic OCR Scanner Modal */}
+        <DocumentScannerModal
+          isOpen={isScannerOpen}
+          initialFile={scannerInitialFile}
+          onClose={() => {
+            setIsScannerOpen(false);
+            setScannerInitialFile(null);
+            setScannerPetId(null);
+            popNavStack();
+          }}
+          pets={resolvedPets}
+          selectedPetId={scannerPetId}
+          onUpdatePet={handleSavePet}
+        />
 
-      {/* 🔔 In-App Notification Center Modal */}
-      <NotificationModal
-        isOpen={isNotificationOpen}
-        onClose={() => {
-          setIsNotificationOpen(false);
-          popNavStack();
-        }}
-        pets={resolvedPets}
-        onUpdatePet={handleSavePet}
-        onOpenPetDetail={(p) => {
-          setIsNotificationOpen(false);
-          setDetailPet(p);
-        }}
-        onOpenMemorial={(p) => {
-          setIsNotificationOpen(false);
-          setMemorialPet(p);
-        }}
-        onOpenHealth={(p) => {
-          setIsNotificationOpen(false);
-          setHealthPet(p);
-        }}
-      />
+        {/* 🔔 In-App Notification Center Modal */}
+        <NotificationModal
+          isOpen={isNotificationOpen}
+          onClose={() => {
+            setIsNotificationOpen(false);
+            popNavStack();
+          }}
+          pets={resolvedPets}
+          onUpdatePet={handleSavePet}
+          onOpenPetDetail={(p) => {
+            setIsNotificationOpen(false);
+            setDetailPet(p);
+          }}
+          onOpenMemorial={(p) => {
+            setIsNotificationOpen(false);
+            setMemorialPet(p);
+          }}
+          onOpenHealth={(p) => {
+            setIsNotificationOpen(false);
+            setHealthPet(p);
+          }}
+        />
 
-      {/* 🌳 Family Tree Modal (Interactive: tap any pet node to open its detail modal!) */}
-      <FamilyTreeModal
-        isOpen={isFamilyOpen}
-        onClose={() => {
-          setIsFamilyOpen(false);
-          popNavStack();
-        }}
-        pets={resolvedPets}
-        onSelectPet={(selectedPet) => {
-          navStackRef.current.push({ type: 'family' });
-          setIsFamilyOpen(false);
-          setDetailPet(selectedPet);
-        }}
-      />
+        {/* 🌳 Family Tree Modal (Interactive: tap any pet node to open its detail modal!) */}
+        <FamilyTreeModal
+          isOpen={isFamilyOpen}
+          onClose={() => {
+            setIsFamilyOpen(false);
+            popNavStack();
+          }}
+          pets={resolvedPets}
+          onSelectPet={(selectedPet) => {
+            navStackRef.current.push({ type: 'family' });
+            setIsFamilyOpen(false);
+            setDetailPet(selectedPet);
+          }}
+        />
 
-      {/* 🔍 Pet Detail Modal (Interactive: tap any relative to jump to their detail modal!) */}
-      <PetDetailModal
-        pet={detailPet ? resolvedPets.find(p => p.id === detailPet.id) || detailPet : null}
-        allPets={resolvedPets}
-        dateFormat={dateFormat}
-        isOpen={!!detailPet}
-        onClose={() => {
-          if (!popNavStack()) {
+        {/* 🔍 Pet Detail Modal (Interactive: tap any relative to jump to their detail modal!) */}
+        <PetDetailModal
+          pet={detailPet ? resolvedPets.find(p => p.id === detailPet.id) || detailPet : null}
+          allPets={resolvedPets}
+          dateFormat={dateFormat}
+          isOpen={!!detailPet}
+          onClose={() => {
+            if (!popNavStack()) {
+              setDetailPet(null);
+            }
+          }}
+          onEdit={(p) => {
+            setEditingPet(p);
+            setIsModalOpen(true);
+          }}
+          onOpenMemorial={(p) => {
+            setMemorialPet(p);
+          }}
+          onOpenHealth={(p) => {
+            setHealthPet(p);
+          }}
+          onOpenFamily={() => {
+            if (detailPet) {
+              navStackRef.current.push({ type: 'detail', pet: detailPet });
+            }
             setDetailPet(null);
-          }
-        }}
-        onEdit={(p) => {
-          setEditingPet(p);
-          setIsModalOpen(true);
-        }}
-        onOpenMemorial={(p) => {
-          setMemorialPet(p);
-        }}
-        onOpenHealth={(p) => {
-          setHealthPet(p);
-        }}
-        onOpenFamily={() => {
-          if (detailPet) {
-            navStackRef.current.push({ type: 'detail', pet: detailPet });
-          }
-          setDetailPet(null);
-          setIsFamilyOpen(true);
-        }}
-        onSelectPet={(targetPet) => {
-          if (detailPet && detailPet.id !== targetPet?.id) {
-            navStackRef.current.push({ type: 'detail', pet: detailPet });
-          }
-          setDetailPet(targetPet);
-        }}
-        onViewImage={(p) => setViewingImagePet(p)}
-      />
+            setIsFamilyOpen(true);
+          }}
+          onSelectPet={(targetPet) => {
+            if (detailPet && detailPet.id !== targetPet?.id) {
+              navStackRef.current.push({ type: 'detail', pet: detailPet });
+            }
+            setDetailPet(targetPet);
+          }}
+          onViewImage={(p) => setViewingImagePet(p)}
+        />
+      </Suspense>
 
       {/* 🔙 Double-Back to Exit Confirmation Toast */}
       <div

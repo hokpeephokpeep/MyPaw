@@ -308,6 +308,8 @@ export default function PetCard({ pet, allPets = [], dateFormat = 'en', compact 
                   key={`${src}-${idx}`}
                   src={src}
                   alt={pet.name}
+                  loading={idx === 0 ? "eager" : "lazy"}
+                  decoding="async"
                   className={`pet-photo-slide ${
                     isCurrent ? 'is-active' : ''
                   } ${

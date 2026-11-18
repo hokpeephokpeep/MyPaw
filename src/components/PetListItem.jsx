@@ -92,6 +92,8 @@ export default function PetListItem({ pet, dateFormat = 'en', onOpenMore, onTogg
             <img 
               src={getPhotoThumb(pet.avatarThumb || pet.avatar)} 
               alt={pet.name} 
+              loading="lazy"
+              decoding="async"
               className={`w-full h-full object-cover transition-transform ${
                 isDeceased
                   ? 'duration-700 ease-out group-hover:scale-103 brightness-[1.02]'

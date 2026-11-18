@@ -14,6 +14,8 @@ import {
   applyQuickAction,
   requestWebNotificationPermission
 } from '../notificationEngine.js';
+import { getCachedNotifications } from '../cacheEngine.js';
+import { NotificationItemSkeleton } from './PetCardSkeleton.jsx';
 import { getPhotoSrc } from '../imageUtils';
 import confetti from 'canvas-confetti';
 
@@ -30,16 +32,16 @@ export default function NotificationScreen({
   const [prefs, setPrefs] = useState(getNotificationPrefs);
   const [filter, setFilter] = useState('all'); // 'all', 'urgent', 'upcoming', 'memorial'
   const [showSettings, setShowSettings] = useState(false);
-  const [notifications, setNotifications] = useState([]);
+  const [notifications, setNotifications] = useState(() => getCachedNotifications(pets, { prefs: getNotificationPrefs() }));
   const [webPermission, setWebPermission] = useState(() => 
     typeof window !== 'undefined' && 'Notification' in window ? Notification.permission : 'unsupported'
   );
 
-  // Refresh notifications whenever pets change (decoupled from isActive to prevent swipe stutter)
+  // Refresh notifications whenever pets change (utilizing cache)
   useEffect(() => {
     const currentPrefs = getNotificationPrefs();
     setPrefs(currentPrefs);
-    const list = generatePetNotifications(pets, { prefs: currentPrefs });
+    const list = getCachedNotifications(pets, { prefs: currentPrefs });
     setNotifications(list);
   }, [pets]);
 
