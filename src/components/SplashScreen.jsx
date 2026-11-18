@@ -229,7 +229,7 @@ export default function SplashScreen({ onFinish }) {
             <span>w</span>
           </h1>
           <p className="mt-2.5 text-xs sm:text-sm font-sans font-medium text-slate-500 tracking-wide">
-            อายุและบันทึกความทรงจำเจ้าเหมียว
+            บันทึกความทรงจำเจ้าเหมียว
           </p>
         </div>
 
