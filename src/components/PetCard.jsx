@@ -240,6 +240,7 @@ export default function PetCard({ pet, allPets = [], dateFormat = 'en', compact 
         e.preventDefault();
         onOpenMore(pet);
       }}
+      data-multi-photo={hasMultiplePhotos ? "true" : undefined}
       className={`relative ${isDeceased ? 'overflow-visible' : 'overflow-hidden'} ${
         compact ? 'rounded-2xl' : 'rounded-[32px]'
       } select-none touch-manipulation cursor-pointer group/card focus-visible:ring-2 focus-visible:ring-paw-500 outline-none ${

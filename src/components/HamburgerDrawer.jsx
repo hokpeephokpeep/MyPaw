@@ -76,6 +76,21 @@ export default function HamburgerDrawer({
   const isVisible = Boolean(isOpen || shouldRender);
   const isExiting = Boolean(isClosing || (!isOpen && shouldRender));
 
+  const drawerTouchStartXRef = useRef(0);
+  const handleDrawerTouchStart = (e) => {
+    if (e.touches && e.touches[0]) {
+      drawerTouchStartXRef.current = e.touches[0].clientX;
+    }
+  };
+  const handleDrawerTouchEnd = (e) => {
+    if (e.changedTouches && e.changedTouches[0]) {
+      const deltaX = e.changedTouches[0].clientX - drawerTouchStartXRef.current;
+      if (deltaX < -45) {
+        requestClose();
+      }
+    }
+  };
+
   if (!isVisible) return null;
 
   return (
@@ -90,6 +105,8 @@ export default function HamburgerDrawer({
 
       {/* Drawer Panel (Slides in from left -> Slides back out to left on close) */}
       <div
+        onTouchStart={handleDrawerTouchStart}
+        onTouchEnd={handleDrawerTouchEnd}
         style={
           isExiting
             ? { transform: 'translateX(-100%)', transition: 'transform 220ms cubic-bezier(0.32, 0, 0.67, 0)' }
@@ -279,47 +296,66 @@ export default function HamburgerDrawer({
               </select>
             </div>
 
-            {/* 4.5 Clean Minimalist View Mode Switcher (Icon Only) */}
-            <div className="grid grid-cols-3 gap-1 bg-slate-100 p-1 rounded-2xl">
-              <button
-                type="button"
-                onClick={() => onSetViewMode?.('1col')}
-                className={`py-2.5 rounded-xl transition-all duration-150 ease-out flex items-center justify-center active:scale-95 outline-none ${
-                  viewMode === '1col'
-                    ? 'bg-white text-paw-600 shadow-xs'
-                    : 'text-slate-400 hover:text-slate-600'
-                }`}
-                title="1 Column (Large Hero)"
-                aria-label="1 Column"
-              >
-                <FontAwesomeIcon icon={faSquare} className="text-sm" />
-              </button>
-              <button
-                type="button"
-                onClick={() => onSetViewMode?.('2col')}
-                className={`py-2.5 rounded-xl transition-all duration-150 ease-out flex items-center justify-center active:scale-95 outline-none ${
-                  viewMode === '2col'
-                    ? 'bg-white text-paw-600 shadow-xs'
-                    : 'text-slate-400 hover:text-slate-600'
-                }`}
-                title="2 Columns (Grid)"
-                aria-label="2 Columns"
-              >
-                <FontAwesomeIcon icon={faTableCellsLarge} className="text-sm" />
-              </button>
-              <button
-                type="button"
-                onClick={() => onSetViewMode?.('list')}
-                className={`py-2.5 rounded-xl transition-all duration-150 ease-out flex items-center justify-center active:scale-95 outline-none ${
-                  viewMode === 'list'
-                    ? 'bg-white text-paw-600 shadow-xs'
-                    : 'text-slate-400 hover:text-slate-600'
-                }`}
-                title="Card List View"
-                aria-label="Card List View"
-              >
-                <FontAwesomeIcon icon={faList} className="text-sm" />
-              </button>
+            {/* 4.5 Clean Minimalist View Mode Switcher Capsule (Exact Pill Design) */}
+            <div className="flex justify-center pt-0.5 pb-0.5">
+              <div className="relative inline-grid grid-cols-3 items-center bg-slate-100/95 p-1 rounded-full border border-slate-200/70 shadow-2xs">
+                {/* Sliding Active Circle Indicator */}
+                <span
+                  aria-hidden="true"
+                  style={{
+                    transform:
+                      viewMode === '1col'
+                        ? 'translateX(0%)'
+                        : viewMode === '2col'
+                          ? 'translateX(100%)'
+                          : 'translateX(200%)',
+                    transition: 'transform 220ms cubic-bezier(0.16, 1, 0.3, 1)'
+                  }}
+                  className="pointer-events-none absolute top-1 bottom-1 left-1 w-[36px] rounded-full bg-white shadow-xs"
+                />
+
+                <button
+                  type="button"
+                  onClick={() => onSetViewMode?.('1col')}
+                  className={`relative z-10 w-[36px] h-[36px] rounded-full flex items-center justify-center transition-colors duration-150 active:scale-95 outline-none ${
+                    viewMode === '1col'
+                      ? 'text-paw-600'
+                      : 'text-slate-400 hover:text-slate-600'
+                  }`}
+                  title="1 Column (Large Hero)"
+                  aria-label="1 Column"
+                >
+                  <FontAwesomeIcon icon={faSquare} className="text-sm" />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => onSetViewMode?.('2col')}
+                  className={`relative z-10 w-[36px] h-[36px] rounded-full flex items-center justify-center transition-colors duration-150 active:scale-95 outline-none ${
+                    viewMode === '2col'
+                      ? 'text-paw-600'
+                      : 'text-slate-400 hover:text-slate-600'
+                  }`}
+                  title="2 Columns (Grid)"
+                  aria-label="2 Columns"
+                >
+                  <FontAwesomeIcon icon={faTableCellsLarge} className="text-sm" />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => onSetViewMode?.('list')}
+                  className={`relative z-10 w-[36px] h-[36px] rounded-full flex items-center justify-center transition-colors duration-150 active:scale-95 outline-none ${
+                    viewMode === 'list'
+                      ? 'text-paw-600'
+                      : 'text-slate-400 hover:text-slate-600'
+                  }`}
+                  title="Card List View"
+                  aria-label="Card List View"
+                >
+                  <FontAwesomeIcon icon={faList} className="text-sm" />
+                </button>
+              </div>
             </div>
 
             {/* 5. Date Format System (Default or Thai Format) */}

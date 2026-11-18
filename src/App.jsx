@@ -735,6 +735,23 @@ export default function App() {
     const isHorizontalSwipe = Math.abs(deltaX) > Math.abs(deltaY) * 0.8;
     const currentScrollLeft = container.scrollLeft;
 
+    // 🍔 When on Home screen at left edge, swiping rightward (towards left screen) opens Hamburger Drawer!
+    const isSwipingTowardsLeftScreen = deltaX < -35 && isHorizontalSwipe;
+    const isAtHomeLeftBoundary = activeScreen === 'home' && currentScrollLeft <= 8;
+    const isMultiPhotoSwipe = Boolean(e.target?.closest?.('[data-multi-photo="true"]'));
+    const isEdgeSwipe = viewPagerStartXRef.current < 65;
+
+    if (isAtHomeLeftBoundary && isSwipingTowardsLeftScreen && (!isMultiPhotoSwipe || isEdgeSwipe)) {
+      if (
+        !isModalOpen && !isDrawerOpen && !detailPet && !memorialPet && 
+        !healthPet && !isFamilyOpen && !isBackupOpen && !viewingImagePet && !isScannerOpen
+      ) {
+        setIsDrawerOpen(true);
+        isUserTouchingRef.current = false;
+        return;
+      }
+    }
+
     let targetIndex;
     if (isHorizontalSwipe && elapsedTime < 320 && Math.abs(deltaX) > 35) {
       // Quick flick detection
