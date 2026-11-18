@@ -34,22 +34,130 @@ export function formatBytes(bytes, decimals = 1) {
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
 }
 
-export function fileToDataUrl(file) {
+export async function isHeic(fileOrBlob) {
+  if (!fileOrBlob) return false;
+
+  // Check magic bytes first to avoid unnecessary conversion or mislabeled files
+  if (fileOrBlob.size && fileOrBlob.size > 12 && typeof fileOrBlob.slice === 'function') {
+    try {
+      const headerSlice = fileOrBlob.slice(0, 12);
+      const buf = await headerSlice.arrayBuffer();
+      const bytes = new Uint8Array(buf);
+
+      // Already browser-readable standard image formats
+      // JPEG: FF D8 FF
+      if (bytes[0] === 0xFF && bytes[1] === 0xD8 && bytes[2] === 0xFF) {
+        return false;
+      }
+      // PNG: 89 50 4E 47
+      if (bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4E && bytes[3] === 0x47) {
+        return false;
+      }
+      // GIF: GIF8
+      if (bytes[0] === 0x47 && bytes[1] === 0x49 && bytes[2] === 0x46) {
+        return false;
+      }
+      // WebP: RIFF
+      if (bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x46) {
+        return false;
+      }
+
+      // Check for HEIC/HEIF ftyp box at offset 4
+      const ftypStr = String.fromCharCode(...bytes.slice(4, 12));
+      if (ftypStr.startsWith('ftyp')) {
+        const brand = ftypStr.slice(4).toLowerCase();
+        if (['heic', 'heix', 'hevc', 'heim', 'heis', 'mif1', 'msf1', 'avif'].includes(brand)) {
+          return true;
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  const name = (fileOrBlob.name || '').toLowerCase();
+  const type = (fileOrBlob.type || '').toLowerCase();
+  return (
+    type === 'image/heic' ||
+    type === 'image/heif' ||
+    type === 'image/heic-sequence' ||
+    type === 'image/heif-sequence' ||
+    name.endsWith('.heic') ||
+    name.endsWith('.heif')
+  );
+}
+
+export async function convertHeicIfNeeded(fileOrBlob) {
+  if (!fileOrBlob) return fileOrBlob;
+  const needsConvert = await isHeic(fileOrBlob);
+  if (!needsConvert) return fileOrBlob;
+
+  try {
+    const heic2anyModule = await import('heic2any');
+    const heic2any = heic2anyModule.default || heic2anyModule;
+    const result = await heic2any({
+      blob: fileOrBlob,
+      toType: 'image/jpeg',
+      quality: 0.92
+    });
+    const blob = Array.isArray(result) ? result[0] : result;
+    const originalName = fileOrBlob.name || 'image.heic';
+    const newName = originalName.replace(/\.(heic|heif)$/i, '') + '.jpg';
+    if (typeof File !== 'undefined') {
+      return new File([blob], newName, {
+        type: 'image/jpeg',
+        lastModified: fileOrBlob.lastModified || Date.now()
+      });
+    }
+    return blob;
+  } catch (err) {
+    const msg = err?.message || String(err);
+    if (msg.includes('already browser readable') || msg.includes('ERR_USER')) {
+      return fileOrBlob;
+    }
+    console.warn('heic2any conversion error:', err);
+    return fileOrBlob;
+  }
+}
+
+export async function convertDataUrlHeicIfNeeded(src) {
+  if (typeof src === 'string' && (src.startsWith('data:image/heic') || src.startsWith('data:image/heif'))) {
+    try {
+      const res = await fetch(src);
+      const blob = await res.blob();
+      const convertedBlob = await convertHeicIfNeeded(blob);
+      return await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(e.target.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(convertedBlob);
+      });
+    } catch (e) {
+      console.warn('convertDataUrlHeicIfNeeded error:', e);
+      return src;
+    }
+  }
+  return src;
+}
+
+export async function fileToDataUrl(file) {
+  const converted = await convertHeicIfNeeded(file);
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = (e) => resolve(e.target.result);
     reader.onerror = (e) => reject(e);
-    reader.readAsDataURL(file);
+    reader.readAsDataURL(converted);
   });
 }
 
-export function loadImage(src) {
+export async function loadImage(src) {
+  const safeSrc = await convertDataUrlHeicIfNeeded(src);
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.crossOrigin = 'anonymous';
     img.onload = () => resolve(img);
     img.onerror = (e) => reject(e);
-    img.src = src;
+    img.src = safeSrc;
   });
 }
 

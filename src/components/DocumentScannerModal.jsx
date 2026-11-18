@@ -7,7 +7,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { useSheetDrag } from '../useSheetDrag';
 import { parseVetDocumentText, SAMPLE_VET_DOCUMENTS } from '../vetDocumentParser';
-import { getPhotoSrc } from '../imageUtils';
+import { getPhotoSrc, convertHeicIfNeeded } from '../imageUtils';
 import confetti from 'canvas-confetti';
 
 export default function DocumentScannerModal({ 
@@ -112,17 +112,20 @@ export default function DocumentScannerModal({
   const handleProcessFile = async (file) => {
     if (!file) return;
 
-    const previewUrl = URL.createObjectURL(file);
-    setImagePreview(previewUrl);
     setIsProcessing(true);
-    setProcessStep('กำลังอ่านตัวอักษรและวิเคราะห์ข้อมูล (OCR)...');
+    setProcessStep('กำลังเตรียมไฟล์รูปภาพ...');
 
     try {
+      const processedFile = await convertHeicIfNeeded(file);
+      const previewUrl = URL.createObjectURL(processedFile);
+      setImagePreview(previewUrl);
+      setProcessStep('กำลังอ่านตัวอักษรและวิเคราะห์ข้อมูล (OCR)...');
+
       // Dynamic import of Tesseract.js
       const { createWorker } = await import('tesseract.js');
       const worker = await createWorker('tha+eng');
       
-      const ret = await worker.recognize(file);
+      const ret = await worker.recognize(processedFile);
       await worker.terminate();
 
       const extractedText = ret.data.text;
@@ -251,7 +254,7 @@ export default function DocumentScannerModal({
         <input 
           ref={cameraInputRef}
           type="file" 
-          accept="image/*" 
+          accept="image/*,.heic,.heif" 
           capture="environment" 
           className="hidden" 
           onChange={(e) => handleProcessFile(e.target.files?.[0])}
@@ -259,7 +262,7 @@ export default function DocumentScannerModal({
         <input 
           ref={fileInputRef}
           type="file" 
-          accept="image/*" 
+          accept="image/*,.heic,.heif" 
           className="hidden" 
           onChange={(e) => handleProcessFile(e.target.files?.[0])}
         />

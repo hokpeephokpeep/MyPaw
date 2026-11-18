@@ -356,7 +356,7 @@ export default function PetModal({ pet, allPets = [], isOpen, onClose, onSave, o
                 <input 
                   id="avatar-upload" 
                   type="file" 
-                  accept="image/*" 
+                  accept="image/*,.heic,.heif" 
                   multiple
                   onChange={handleImageChange}
                   className="hidden" 
@@ -432,7 +432,7 @@ export default function PetModal({ pet, allPets = [], isOpen, onClose, onSave, o
                 <span className="text-[10px] font-semibold mt-0.5">+เพิ่มรูป</span>
                 <input 
                   type="file" 
-                  accept="image/*" 
+                  accept="image/*,.heic,.heif" 
                   multiple
                   onChange={handleImageChange}
                   className="hidden" 

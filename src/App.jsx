@@ -1188,7 +1188,7 @@ export default function App() {
         ref={sharedFileInputRef}
         type="file"
         multiple
-        accept="image/*"
+        accept="image/*,.heic,.heif"
         className="hidden"
         onChange={(e) => {
           const files = Array.from(e.target.files || []);
@@ -1203,7 +1203,7 @@ export default function App() {
       <input
         ref={cameraInputRef}
         type="file"
-        accept="image/*"
+        accept="image/*,.heic,.heif"
         capture="environment"
         className="hidden"
         onChange={(e) => {
