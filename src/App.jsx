@@ -633,159 +633,40 @@ export default function App() {
     toggleBottomNav();
   };
 
-  // 📱 Horizontal swipe/drag gesture between Home and Notifications (Touch + Pointer/Mouse)
-  const isPointerDraggingRef = useRef(false);
-  const [screenDragOffset, setScreenDragOffset] = useState(0);
-  const [isScreenDragging, setIsScreenDragging] = useState(false);
-  const isHorizontalGestureRef = useRef(false);
+  // 📱 Screen ViewPager Scroll Synchronization (Home <-> Notifications)
+  const screenScrollRef = useRef(null);
+  const isProgrammaticScrollRef = useRef(false);
 
-  const handleScreenPointerDown = (e) => {
-    if (
-      isModalOpen || isDrawerOpen || detailPet || memorialPet || healthPet || 
-      isFamilyOpen || isBackupOpen || viewingImagePet || isScannerOpen || isSharedModalOpen
-    ) {
-      return;
+  useEffect(() => {
+    if (!screenScrollRef.current) return;
+    const width = screenScrollRef.current.clientWidth;
+    if (width <= 0) return;
+    const targetLeft = activeScreen === 'home' ? 0 : width;
+    if (Math.abs(screenScrollRef.current.scrollLeft - targetLeft) > 10) {
+      isProgrammaticScrollRef.current = true;
+      screenScrollRef.current.scrollTo({
+        left: targetLeft,
+        behavior: 'smooth'
+      });
+      setTimeout(() => {
+        isProgrammaticScrollRef.current = false;
+      }, 350);
     }
-    if (e.button !== undefined && e.button !== 0) return;
-    screenSwipeStartRef.current = { x: e.clientX, y: e.clientY, time: Date.now() };
-    isPointerDraggingRef.current = true;
-    isHorizontalGestureRef.current = false;
-    setIsScreenDragging(false);
-    setScreenDragOffset(0);
-  };
+  }, [activeScreen]);
 
-  const handleScreenPointerMove = (e) => {
-    if (!isPointerDraggingRef.current || !screenSwipeStartRef.current.time) return;
-    const diffX = e.clientX - screenSwipeStartRef.current.x;
-    const diffY = e.clientY - screenSwipeStartRef.current.y;
-
-    if (!isHorizontalGestureRef.current) {
-      if (Math.abs(diffX) > 10 && Math.abs(diffX) > Math.abs(diffY) * 1.15) {
-        isHorizontalGestureRef.current = true;
-        setIsScreenDragging(true);
-      } else if (Math.abs(diffY) > 10) {
-        isPointerDraggingRef.current = false;
-        screenSwipeStartRef.current.time = 0;
-        return;
+  const handleScreenScroll = (e) => {
+    if (isProgrammaticScrollRef.current) return;
+    const scrollLeft = e.target.scrollLeft;
+    const width = e.target.clientWidth;
+    if (width > 0) {
+      const pageIndex = Math.round(scrollLeft / width);
+      const targetScreen = pageIndex === 0 ? 'home' : 'notifications';
+      if (targetScreen !== activeScreen) {
+        setActiveScreen(targetScreen);
+        setIsBottomNavVisible(true);
+        resetIdleTimer(3200);
       }
     }
-
-    if (isHorizontalGestureRef.current) {
-      let effectiveDiffX = diffX;
-      if ((activeScreen === 'home' && diffX > 0) || (activeScreen === 'notifications' && diffX < 0)) {
-        effectiveDiffX = diffX * 0.28;
-      }
-      setScreenDragOffset(effectiveDiffX);
-    }
-  };
-
-  const handleScreenPointerUp = (e) => {
-    if (!isPointerDraggingRef.current || !screenSwipeStartRef.current.time) {
-      isPointerDraggingRef.current = false;
-      setIsScreenDragging(false);
-      setScreenDragOffset(0);
-      isHorizontalGestureRef.current = false;
-      return;
-    }
-    isPointerDraggingRef.current = false;
-    const elapsed = Date.now() - screenSwipeStartRef.current.time;
-    screenSwipeStartRef.current = { x: 0, y: 0, time: 0 };
-
-    if (isHorizontalGestureRef.current) {
-      isSwipedRef.current = true;
-      const threshold = Math.min(window.innerWidth * 0.2, 80);
-      const isFlick = elapsed < 300 && Math.abs(screenDragOffset) > 25;
-
-      if (activeScreen === 'home') {
-        if (screenDragOffset < -threshold || (isFlick && screenDragOffset < 0)) {
-          setActiveScreen('notifications');
-        }
-      } else if (activeScreen === 'notifications') {
-        if (screenDragOffset > threshold || (isFlick && screenDragOffset > 0)) {
-          setActiveScreen('home');
-        }
-      }
-      setIsBottomNavVisible(true);
-      resetIdleTimer(3200);
-    }
-
-    setIsScreenDragging(false);
-    setScreenDragOffset(0);
-    isHorizontalGestureRef.current = false;
-  };
-
-  const handleScreenTouchStart = (e) => {
-    if (
-      isModalOpen || isDrawerOpen || detailPet || memorialPet || healthPet || 
-      isFamilyOpen || isBackupOpen || viewingImagePet || isScannerOpen || isSharedModalOpen
-    ) {
-      return;
-    }
-    if (e.touches.length !== 1) return;
-    const touch = e.touches[0];
-    screenSwipeStartRef.current = { x: touch.clientX, y: touch.clientY, time: Date.now() };
-    isHorizontalGestureRef.current = false;
-    setIsScreenDragging(false);
-    setScreenDragOffset(0);
-  };
-
-  const handleScreenTouchMove = (e) => {
-    if (!screenSwipeStartRef.current.time) return;
-    const touch = e.touches[0];
-    const diffX = touch.clientX - screenSwipeStartRef.current.x;
-    const diffY = touch.clientY - screenSwipeStartRef.current.y;
-
-    if (!isHorizontalGestureRef.current) {
-      if (Math.abs(diffX) > 10 && Math.abs(diffX) > Math.abs(diffY) * 1.15) {
-        isHorizontalGestureRef.current = true;
-        setIsScreenDragging(true);
-      } else if (Math.abs(diffY) > 10) {
-        screenSwipeStartRef.current.time = 0;
-        return;
-      }
-    }
-
-    if (isHorizontalGestureRef.current) {
-      if (e.cancelable) e.preventDefault();
-      let effectiveDiffX = diffX;
-      if ((activeScreen === 'home' && diffX > 0) || (activeScreen === 'notifications' && diffX < 0)) {
-        effectiveDiffX = diffX * 0.28;
-      }
-      setScreenDragOffset(effectiveDiffX);
-    }
-  };
-
-  const handleScreenTouchEnd = (e) => {
-    if (!screenSwipeStartRef.current.time) {
-      setIsScreenDragging(false);
-      setScreenDragOffset(0);
-      isHorizontalGestureRef.current = false;
-      return;
-    }
-    const elapsed = Date.now() - screenSwipeStartRef.current.time;
-    screenSwipeStartRef.current = { x: 0, y: 0, time: 0 };
-
-    if (isHorizontalGestureRef.current) {
-      isSwipedRef.current = true;
-      const threshold = Math.min(window.innerWidth * 0.2, 80);
-      const isFlick = elapsed < 300 && Math.abs(screenDragOffset) > 25;
-
-      if (activeScreen === 'home') {
-        if (screenDragOffset < -threshold || (isFlick && screenDragOffset < 0)) {
-          setActiveScreen('notifications');
-        }
-      } else if (activeScreen === 'notifications') {
-        if (screenDragOffset > threshold || (isFlick && screenDragOffset > 0)) {
-          setActiveScreen('home');
-        }
-      }
-      setIsBottomNavVisible(true);
-      resetIdleTimer(3200);
-    }
-
-    setIsScreenDragging(false);
-    setScreenDragOffset(0);
-    isHorizontalGestureRef.current = false;
   };
 
   // Save to localStorage
@@ -959,14 +840,10 @@ export default function App() {
   return (
     <div 
       onClick={handleScreenClick}
-      className={`w-full max-w-[100vw] overflow-x-clip bg-slate-100 text-slate-800 flex flex-col items-center select-none ${
-        activeScreen === 'notifications' ? 'h-[100dvh] overflow-hidden' : 'min-h-screen'
-      }`}
+      className="w-full max-w-[100vw] h-[100dvh] max-h-[100dvh] overflow-hidden bg-slate-100 text-slate-800 flex flex-col items-center select-none"
     >
       {/* App Container */}
-      <div className={`w-full max-w-lg md:max-w-3xl overflow-x-clip bg-slate-50 shadow-2xl flex flex-col relative ${
-        activeScreen === 'notifications' ? 'h-[100dvh] max-h-[100dvh] overflow-hidden pb-0' : 'min-h-screen pb-6'
-      }`}>
+      <div className="w-full max-w-lg md:max-w-3xl h-[100dvh] max-h-[100dvh] overflow-hidden bg-slate-50 shadow-2xl flex flex-col relative pb-0">
         
         {/* Clean Sticky App Bar (Glance Zone) */}
         <header className="sticky top-0 z-30 flex-shrink-0 bg-white/95 backdrop-blur-md px-4 sm:px-5 py-3 border-b border-slate-200/60 flex items-center justify-between pt-[max(0.75rem,calc(var(--safe-top,0px)+0.5rem))]">
@@ -1082,130 +959,124 @@ export default function App() {
 
         {/* 📱 Horizontal Swipeable Surface (Home <-> Notifications) */}
         <div 
-          onTouchStart={handleScreenTouchStart}
-          onTouchMove={handleScreenTouchMove}
-          onTouchEnd={handleScreenTouchEnd}
-          onTouchCancel={handleScreenTouchEnd}
-          onPointerDown={handleScreenPointerDown}
-          onPointerMove={handleScreenPointerMove}
-          onPointerUp={handleScreenPointerUp}
-          onPointerCancel={handleScreenPointerUp}
-          className="flex-1 min-h-0 w-full overflow-hidden flex flex-col relative touch-pan-y"
+          ref={screenScrollRef}
+          onScroll={handleScreenScroll}
+          className={`flex-1 min-h-0 w-full flex overflow-x-auto overflow-y-hidden snap-x snap-mandatory scroll-smooth ${
+            isModalOpen || isDrawerOpen || detailPet || memorialPet || healthPet || 
+            isFamilyOpen || isBackupOpen || viewingImagePet || isScannerOpen || isSharedModalOpen
+              ? 'pointer-events-none'
+              : ''
+          }`}
+          style={{
+            scrollSnapType: 'x mandatory',
+            WebkitOverflowScrolling: 'touch',
+            overscrollBehaviorX: 'contain',
+            scrollbarWidth: 'none',
+            msOverflowStyle: 'none'
+          }}
         >
+          {/* Screen 1: Home (Main Pet Cards Feed) */}
           <div 
-            className={`flex w-[200%] will-change-transform ${
-              isScreenDragging
-                ? 'transition-none'
-                : 'transition-transform duration-350 [transition-timing-function:cubic-bezier(0.22,1,0.36,1)]'
-            } ${
-              activeScreen === 'notifications' ? 'h-full flex-1' : 'flex-1'
-            }`}
-            style={{
-              transform: `translate3d(calc(${activeScreen === 'home' ? '0%' : '-50%'} + ${screenDragOffset}px), 0, 0)`
-            }}
+            id="home-scroll-container"
+            className="w-full min-w-full flex-shrink-0 snap-center snap-always h-full flex flex-col overflow-y-auto overscroll-y-contain"
           >
-            {/* Screen 1: Home (Main Pet Cards Feed) */}
-            <div className={`w-1/2 min-w-[50%] flex flex-col ${
-              activeScreen === 'notifications' ? 'h-full overflow-hidden' : 'overflow-y-auto'
-            }`}>
-              {/* Pure Pet Cards Feed */}
-              <main className="px-4 sm:px-5 py-3 flex-1 w-full pb-28" style={{ overflowAnchor: 'none' }}>
-                {filteredPets.length > 0 ? (
-                  viewMode === 'list' ? (
-                    /* 3. Card List View */
-                    <div className="flex flex-col gap-2.5 w-full max-w-lg mx-auto animate-fadeIn">
-                      {filteredPets.map(pet => (
-                        <PetListItem
-                          key={pet.id}
+            {/* Pure Pet Cards Feed */}
+            <main className="px-4 sm:px-5 py-3 flex-1 w-full pb-28" style={{ overflowAnchor: 'none' }}>
+              {filteredPets.length > 0 ? (
+                viewMode === 'list' ? (
+                  /* 3. Card List View */
+                  <div className="flex flex-col gap-2.5 w-full max-w-lg mx-auto animate-fadeIn">
+                    {filteredPets.map(pet => (
+                      <PetListItem
+                        key={pet.id}
+                        pet={pet}
+                        dateFormat={dateFormat}
+                        onOpenMore={(p) => setDetailPet(p)}
+                        onToggleBottomNav={toggleBottomNav}
+                      />
+                    ))}
+                  </div>
+                ) : viewMode === '2col' ? (
+                  /* 2. Two Columns Grid */
+                  <div className="grid grid-cols-2 gap-3 w-full max-w-3xl mx-auto animate-fadeIn">
+                    {filteredPets.map(pet => (
+                      <div key={pet.id} className="min-w-0 w-full">
+                        <PetCard
                           pet={pet}
+                          compact={true}
+                          allPets={pets}
                           dateFormat={dateFormat}
                           onOpenMore={(p) => setDetailPet(p)}
                           onToggleBottomNav={toggleBottomNav}
                         />
-                      ))}
-                    </div>
-                  ) : viewMode === '2col' ? (
-                    /* 2. Two Columns Grid */
-                    <div className="grid grid-cols-2 gap-3 w-full max-w-3xl mx-auto animate-fadeIn">
-                      {filteredPets.map(pet => (
-                        <div key={pet.id} className="min-w-0 w-full">
-                          <PetCard
-                            pet={pet}
-                            compact={true}
-                            allPets={pets}
-                            dateFormat={dateFormat}
-                            onOpenMore={(p) => setDetailPet(p)}
-                            onToggleBottomNav={toggleBottomNav}
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    /* 1. One Column Full Hero Card */
-                    <div className="grid grid-cols-1 gap-4 w-full max-w-lg mx-auto animate-fadeIn">
-                      {filteredPets.map(pet => (
-                        <div key={pet.id} className="min-w-0 w-full">
-                          <PetCard
-                            pet={pet}
-                            compact={false}
-                            allPets={pets}
-                            dateFormat={dateFormat}
-                            onOpenMore={(p) => setDetailPet(p)}
-                            onToggleBottomNav={toggleBottomNav}
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  )
-                ) : pets.length === 0 ? (
-                  /* Empty State: เริ่มต้นที่ 0 ตัวสำหรับผู้ใช้ใหม่ */
-                  <div className="py-24 px-6 text-center max-w-sm mx-auto">
-                    <div className="w-20 h-20 mx-auto rounded-3xl bg-gradient-to-br from-paw-100 to-amber-100 text-paw-500 flex items-center justify-center text-3xl shadow-inner mb-4">
-                      <FontAwesomeIcon icon={faPaw} />
-                    </div>
-                    <h2 className="font-mitr text-xl font-medium text-slate-800 mb-1.5">
-                      ยังไม่มีข้อมูลน้องเหมียว
-                    </h2>
-                    <p className="text-xs text-slate-500 mb-6 leading-relaxed">
-                      เริ่มต้นบันทึกวันเกิด ความทรงจำ และช่วงเวลาดีๆ ของเจ้าตัวโปรดกันเถอะ
-                    </p>
-                    <button
-                      onClick={() => {
-                        setEditingPet(null);
-                        setIsModalOpen(true);
-                      }}
-                      className="px-6 py-3.5 rounded-2xl bg-paw-500 hover:bg-paw-600 text-white font-bold text-sm shadow-lg shadow-paw-500/25 transition-transform transition-colors duration-150 ease-out inline-flex items-center gap-2 active:scale-95 focus-visible:ring-2 focus-visible:ring-paw-500 outline-none"
-                    >
-                      <FontAwesomeIcon icon={faPlus} />
-                      <span>เพิ่มน้องแมวตัวแรก</span>
-                    </button>
+                      </div>
+                    ))}
                   </div>
                 ) : (
-                  <div className="py-20 text-center text-slate-400">
-                    <FontAwesomeIcon icon={faMagnifyingGlass} className="text-3xl text-slate-300 block mx-auto mb-3" />
-                    <button
-                      onClick={() => setActiveTab('all')}
-                      className="px-4 py-2 rounded-xl bg-slate-200 text-slate-700 text-xs font-semibold hover:bg-slate-300 transition-colors duration-150 ease-out active:scale-95 focus-visible:ring-2 focus-visible:ring-slate-400 outline-none"
-                    >
-                      Show All
-                    </button>
+                  /* 1. One Column Full Hero Card */
+                  <div className="grid grid-cols-1 gap-4 w-full max-w-lg mx-auto animate-fadeIn">
+                    {filteredPets.map(pet => (
+                      <div key={pet.id} className="min-w-0 w-full">
+                        <PetCard
+                          pet={pet}
+                          compact={false}
+                          allPets={pets}
+                          dateFormat={dateFormat}
+                          onOpenMore={(p) => setDetailPet(p)}
+                          onToggleBottomNav={toggleBottomNav}
+                        />
+                      </div>
+                    ))}
                   </div>
-                )}
-              </main>
-            </div>
+                )
+              ) : pets.length === 0 ? (
+                /* Empty State: เริ่มต้นที่ 0 ตัวสำหรับผู้ใช้ใหม่ */
+                <div className="py-24 px-6 text-center max-w-sm mx-auto">
+                  <div className="w-20 h-20 mx-auto rounded-3xl bg-gradient-to-br from-paw-100 to-amber-100 text-paw-500 flex items-center justify-center text-3xl shadow-inner mb-4">
+                    <FontAwesomeIcon icon={faPaw} />
+                  </div>
+                  <h2 className="font-mitr text-xl font-medium text-slate-800 mb-1.5">
+                    ยังไม่มีข้อมูลน้องเหมียว
+                  </h2>
+                  <p className="text-xs text-slate-500 mb-6 leading-relaxed">
+                    เริ่มต้นบันทึกวันเกิด ความทรงจำ และช่วงเวลาดีๆ ของเจ้าตัวโปรดกันเถอะ
+                  </p>
+                  <button
+                    onClick={() => {
+                      setEditingPet(null);
+                      setIsModalOpen(true);
+                    }}
+                    className="px-6 py-3.5 rounded-2xl bg-paw-500 hover:bg-paw-600 text-white font-bold text-sm shadow-lg shadow-paw-500/25 transition-transform transition-colors duration-150 ease-out inline-flex items-center gap-2 active:scale-95 focus-visible:ring-2 focus-visible:ring-paw-500 outline-none"
+                  >
+                    <FontAwesomeIcon icon={faPlus} />
+                    <span>เพิ่มน้องแมวตัวแรก</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="py-20 text-center text-slate-400">
+                  <FontAwesomeIcon icon={faMagnifyingGlass} className="text-3xl text-slate-300 block mx-auto mb-3" />
+                  <button
+                    onClick={() => setActiveTab('all')}
+                    className="px-4 py-2 rounded-xl bg-slate-200 text-slate-700 text-xs font-semibold hover:bg-slate-300 transition-colors duration-150 ease-out active:scale-95 focus-visible:ring-2 focus-visible:ring-slate-400 outline-none"
+                  >
+                    Show All
+                  </button>
+                </div>
+              )}
+            </main>
+          </div>
 
-            {/* Screen 2: Notifications Screen (Full Screen View) */}
-            <div className="w-1/2 min-w-[50%] h-full min-h-0 flex flex-col overflow-hidden">
-              <NotificationScreen
-                pets={resolvedPets}
-                onUpdatePet={handleSavePet}
-                onOpenPetDetail={(p) => setDetailPet(p)}
-                onOpenMemorial={(p) => setMemorialPet(p)}
-                onOpenHealth={(p) => setHealthPet(p)}
-                isActive={activeScreen === 'notifications'}
-                onScroll={handleNotificationScroll}
-              />
-            </div>
+          {/* Screen 2: Notifications Screen (Full Screen View) */}
+          <div className="w-full min-w-full flex-shrink-0 snap-center snap-always h-full min-h-0 flex flex-col overflow-y-auto overscroll-y-contain">
+            <NotificationScreen
+              pets={resolvedPets}
+              onUpdatePet={handleSavePet}
+              onOpenPetDetail={(p) => setDetailPet(p)}
+              onOpenMemorial={(p) => setMemorialPet(p)}
+              onOpenHealth={(p) => setHealthPet(p)}
+              isActive={activeScreen === 'notifications'}
+              onScroll={handleNotificationScroll}
+            />
           </div>
         </div>
 
