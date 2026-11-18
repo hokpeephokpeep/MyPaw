@@ -3,7 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
   faXmark, faPlus, faDatabase, 
   faArrowDownWideShort, faFilter, faHeart, faPaw, faSitemap, faGlobe,
-  faSeedling, faRainbow, faImages
+  faSeedling, faRainbow, faImages, faBell, faCamera
 } from '@fortawesome/free-solid-svg-icons';
 
 export default function HamburgerDrawer({ 
@@ -13,6 +13,9 @@ export default function HamburgerDrawer({
   onOpenBackup,
   onOpenFamily,
   onOpenSharedImport,
+  onOpenNotifications,
+  onOpenScanner,
+  unreadNotificationsCount = 0,
   activeTab,
   setActiveTab,
   sortBy,
@@ -155,6 +158,32 @@ export default function HamburgerDrawer({
               </button>
             </div>
 
+            {/* Quick Action: Notification Center */}
+            <button
+              type="button"
+              onClick={() => requestClose(onOpenNotifications)}
+              className="w-full flex items-center justify-between p-3 rounded-2xl bg-amber-50/70 hover:bg-amber-100/70 text-slate-800 font-bold text-xs transition-colors transition-transform duration-150 [transition-timing-function:var(--ease-out)] border border-amber-200/80 active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-amber-500 outline-none shadow-2xs"
+            >
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-amber-500 text-white flex items-center justify-center shadow-xs">
+                  <FontAwesomeIcon icon={faBell} className="text-xs" />
+                </div>
+                <div className="text-left">
+                  <div>ศูนย์แจ้งเตือน</div>
+                  <div className="text-[10px] text-slate-500 font-normal">วันเกิด รอบยา และวันนัด</div>
+                </div>
+              </div>
+              {unreadNotificationsCount > 0 ? (
+                <span className="text-[10px] bg-amber-500 px-2 py-0.5 rounded-full text-white font-semibold shadow-2xs">
+                  {unreadNotificationsCount} รายการ
+                </span>
+              ) : (
+                <span className="text-[10px] bg-white px-2 py-0.5 rounded-full border border-amber-200 text-amber-700 font-semibold shadow-2xs">
+                  เรียบร้อย
+                </span>
+              )}
+            </button>
+
             {/* Quick Share / Import Photos Button */}
             <button
               type="button"
@@ -172,6 +201,26 @@ export default function HamburgerDrawer({
               </div>
               <span className="text-[10px] bg-white px-2 py-0.5 rounded-full border border-paw-200 text-paw-700 font-semibold shadow-2xs">
                 จากภายนอก
+              </span>
+            </button>
+
+            {/* Quick Action: Document Scanner (OCR) */}
+            <button
+              type="button"
+              onClick={() => requestClose(onOpenScanner)}
+              className="w-full flex items-center justify-between p-3 rounded-2xl bg-gradient-to-r from-emerald-50 to-teal-50 hover:from-emerald-100/70 hover:to-teal-100/70 text-slate-800 font-bold text-xs transition-colors transition-transform duration-150 [transition-timing-function:var(--ease-out)] border border-emerald-200/80 active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-emerald-500 outline-none shadow-2xs"
+            >
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-emerald-500 text-white flex items-center justify-center shadow-xs">
+                  <FontAwesomeIcon icon={faCamera} className="text-xs" />
+                </div>
+                <div className="text-left">
+                  <div>สแกนเอกสารคลินิก</div>
+                  <div className="text-[10px] text-slate-500 font-normal">ใบนัด สมุดวัคซีน ด้วย OCR</div>
+                </div>
+              </div>
+              <span className="text-[10px] bg-white px-2 py-0.5 rounded-full border border-emerald-200 text-emerald-700 font-semibold shadow-2xs">
+                อัจฉริยะ
               </span>
             </button>
 

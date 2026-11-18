@@ -48,7 +48,7 @@ export default function BackupModal({ isOpen, onClose, pets, onRestore }) {
       <div 
         onClick={(e) => e.stopPropagation()}
         {...sheetProps}
-        className={`w-full max-w-sm rounded-t-[32px] bg-white shadow-2xl overflow-hidden flex flex-col ${sheetAnimationClass} pb-[var(--safe-bottom)] overscroll-contain`}
+        className={`w-full max-w-md rounded-t-[32px] bg-white shadow-2xl overflow-hidden flex flex-col max-h-[92dvh] sm:max-h-[88vh] ${sheetAnimationClass} pb-[var(--safe-bottom)] overscroll-contain`}
       >
         {/* Pull Handle Grab Zone */}
         <div {...handleProps} className="w-full pt-2.5 pb-1 flex justify-center cursor-grab active:cursor-grabbing flex-shrink-0 select-none bg-slate-50/50" title="ลากลงเพื่อปิด">

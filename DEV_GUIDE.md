@@ -74,6 +74,8 @@ src/
 ├── kinshipEngine.js            # อัลกอริทึมวิเคราะห์เครือญาติ 4 รุ่น (ปู่ย่าตายาย -> พ่อแม่ -> ลูกหลานเหลน)
 ├── utils.js                    # ฟังก์ชันคำนวณอายุ, เทียบปีคน, ระยะเวลาหลังเสียชีวิต, วันเกิด, สเตตัส
 ├── imageUtils.js               # ระบบประมวลผลภาพ: ย่อ Long Edge ไม่เกิน 2048px, สร้าง High-DPI Square 960px
+├── notificationEngine.js       # ระบบประมวลผลการแจ้งเตือน วันเกิด, วัคซีน 365 วัน, เห็บหมัด 30 วัน, นัดหมอ, ดาวแมว
+├── vetDocumentParser.js        # เอนจินวิเคราะห์ข้อมูลใบนัด สมุดวัคซีน และใบเสร็จคลินิกสัตว์แพทย์ (OCR / NLP)
 ├── useSheetDrag.js             # ระบบจัดการ Gesture ลากปิด Bottom Sheet และ Directional Exit Animation
 ├── index.css                   # Custom Animations, Keyframes, Font-face, และ Photo Cross-Fade Rules
 └── components/
@@ -82,9 +84,11 @@ src/
     ├── PetDetailModal.jsx      # หน้าต่างแสดงรายละเอียดโปรไฟล์, ประวัติ, คลังรูป, ผังครอบครัว
     ├── FamilyTreeModal.jsx     # แสดงแผนผังสาแหรกครอบครัวแบบ Interactive Hierarchy
     ├── ImageCropModal.jsx      # โมดัลเลือกจุดโฟกัส 1:1 (Center Focus) แบบมินิมอล ไม่ตัดทอนรูปจริง
-    ├── ImageViewerModal.jsx    # ตัวดูรูปขยายเต็มหน้าจอ
+    ├── ImageViewerModal.jsx    # ตัวดูรูปขยายเต็มหน้าจอแบบเลื่อนแนวตั้ง (Vertical Swipe 1:1)
     ├── MemorialModal.jsx       # หน้าระลึกถึงดาวแมว (จุดเทียน, จดหมายความทรงจำ)
-    └── WeightChartModal.jsx    # กราฟบันทึกประวัติน้ำหนัก
+    ├── NotificationModal.jsx   # ศูนย์แจ้งเตือนในแอป (In-App Notification Center) พร้อม Quick Actions
+    ├── DocumentScannerModal.jsx# ระบบสแกนเอกสารคลินิกสัตว์แพทย์ด้วย OCR และบันทึกอัตโนมัติ
+    └── SharedPhotosModal.jsx   # ระบบแชร์และนำเข้ารูปภาพจากภายนอกทั้งเดี่ยวและเป็นกลุ่ม (Batch)
 ```
 
 ---

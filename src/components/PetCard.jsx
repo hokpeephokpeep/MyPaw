@@ -233,7 +233,7 @@ export default function PetCard({ pet, allPets = [], dateFormat = 'en', compact 
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
-          onOpenDetail(pet);
+          onOpenMore?.(pet);
         }
       }}
       onContextMenu={(e) => {
@@ -431,8 +431,12 @@ export default function PetCard({ pet, allPets = [], dateFormat = 'en', compact 
           </div>
         </div>
 
-        {/* 📊 SELF-EXPLANATORY STATS BAR */}
+        {/* 📊 SELF-EXPLANATORY STATS BAR (Tapping opens pet detail modal) */}
         <div 
+          onClick={(e) => {
+            e.stopPropagation();
+            onOpenMore?.(pet);
+          }}
           className={`${compact ? 'px-[6%] py-2 rounded-b-2xl' : 'px-[5%] py-3.5'} relative ${
             isDeceased 
               ? 'bg-gradient-to-r from-sky-50/95 via-white/95 to-indigo-50/90 backdrop-blur-md border-t border-sky-200/60' 

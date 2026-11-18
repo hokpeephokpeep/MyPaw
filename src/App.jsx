@@ -11,14 +11,19 @@ import HealthLogModal from './components/HealthLogModal';
 import FamilyTreeModal from './components/FamilyTreeModal';
 import PetDetailModal from './components/PetDetailModal';
 import SharedPhotosModal from './components/SharedPhotosModal';
+import NotificationModal from './components/NotificationModal';
+import NotificationScreen from './components/NotificationScreen';
+import DocumentScannerModal from './components/DocumentScannerModal';
 import SplashScreen from './components/SplashScreen';
 import { resolveAllKinships } from './kinshipEngine';
 import { parseLocalDate, getTodayLocal } from './utils';
+import { generatePetNotifications } from './notificationEngine.js';
 import { fileToDataUrl, processImageWithFocus, getPhotoSrc, getPhotoThumb } from './imageUtils';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
   faBars, faPlus, faXmark, faPaw, faMagnifyingGlass, 
-  faSeedling, faRainbow, faSquare, faTableCellsLarge, faList, faImages 
+  faSeedling, faRainbow, faSquare, faTableCellsLarge, faList, faImages, faBell,
+  faHouse, faCamera
 } from '@fortawesome/free-solid-svg-icons';
 import confetti from 'canvas-confetti';
 
@@ -94,6 +99,20 @@ export default function App() {
           }
           return updated;
         });
+
+        // Demo scenario migration: 1 overdue by 1 day (ไข่ต้ม), 1 upcoming in 2 days (ตังค์ทอน)
+        if (!localStorage.getItem('mypaw_demo_dates_v5')) {
+          reconciled.forEach(p => {
+            if (defaultMap[p.id]?.fleaDate) {
+              p.fleaDate = defaultMap[p.id].fleaDate;
+            }
+          });
+          try {
+            localStorage.setItem('mypaw_demo_dates_v5', 'true');
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(reconciled));
+          } catch (e) {}
+        }
+
         return reconciled;
       }
       return initialPets;
@@ -103,7 +122,11 @@ export default function App() {
   });
 
   const [activeTab, setActiveTab] = useState('all'); // 'all', 'alive', 'deceased'
+  const [activeScreen, setActiveScreen] = useState('home'); // 'home' | 'notifications'
   const [sortBy, setSortBy] = useState('age_desc'); // 'age_desc', 'age_asc', 'bday_near'
+  
+  // 👆 Horizontal Swipe Gesture Tracking between Home & Notifications
+  const screenSwipeStartRef = useRef({ x: 0, y: 0, time: 0 });
   
   // Modals & Drawer
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -115,6 +138,11 @@ export default function App() {
   const [healthPet, setHealthPet] = useState(null);
   const [isFamilyOpen, setIsFamilyOpen] = useState(false);
   const [detailPet, setDetailPet] = useState(null);
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
+  const [scannerPetId, setScannerPetId] = useState(null);
+  const [scannerInitialFile, setScannerInitialFile] = useState(null);
+  const cameraInputRef = useRef(null);
   const [showSplash, setShowSplash] = useState(true);
 
   // 📸 External Shared Photos State (from Gallery / Share Target / Drag & Drop)
@@ -171,15 +199,28 @@ export default function App() {
       return 'handled';
     }
 
+    // 2.2 Notification Center Modal
+    if (isNotificationOpen) {
+      setIsNotificationOpen(false);
+      popNavStack();
+      return 'handled';
+    }
+
+    // 2.3 Document Scanner Modal
+    if (isScannerOpen) {
+      setIsScannerOpen(false);
+      setScannerPetId(null);
+      popNavStack();
+      return 'handled';
+    }
+
     // 3. Secondary Modals (Memorial, Health Log, Backup, Add/Edit Pet)
     if (memorialPet) {
       setMemorialPet(null);
-      popNavStack();
       return 'handled';
     }
     if (healthPet) {
       setHealthPet(null);
-      popNavStack();
       return 'handled';
     }
     if (isBackupOpen) {
@@ -189,7 +230,6 @@ export default function App() {
     if (isModalOpen) {
       setIsModalOpen(false);
       setEditingPet(null);
-      popNavStack();
       return 'handled';
     }
 
@@ -211,6 +251,12 @@ export default function App() {
     // 6. Hamburger Drawer
     if (isDrawerOpen) {
       setIsDrawerOpen(false);
+      return 'handled';
+    }
+
+    // 6.5 Full-screen Notification Center -> Return to Home
+    if (activeScreen === 'notifications') {
+      setActiveScreen('home');
       return 'handled';
     }
 
@@ -411,11 +457,13 @@ export default function App() {
     scrollToTopInstant();
   };
 
-  // 📱 Interactive Bottom Navigation Bar Visibility with Directional Scroll & Timeout
+  // 📱 Interactive Bottom Navigation Bar Visibility with Directional Scroll & Timeout (Original UX)
   const [isBottomNavVisible, setIsBottomNavVisible] = useState(true);
   const idleTimerRef = useRef(null);
   const lastScrollYRef = useRef(0);
   const touchStartYRef = useRef(0);
+  const isSwipedRef = useRef(false);
+  const lastNotifScrollYRef = useRef(0);
 
   const resetIdleTimer = (duration = 3200) => {
     if (idleTimerRef.current) {
@@ -425,6 +473,46 @@ export default function App() {
       setIsBottomNavVisible(false);
     }, duration);
   };
+
+  const handleNotificationScroll = (e) => {
+    const currentScrollY = e.currentTarget.scrollTop;
+    const diff = currentScrollY - lastNotifScrollYRef.current;
+
+    // When near top, keep bottom nav visible with timeout
+    if (currentScrollY <= 20) {
+      setIsBottomNavVisible(true);
+      resetIdleTimer(3200);
+      lastNotifScrollYRef.current = currentScrollY;
+      return;
+    }
+
+    // Ignore tiny jitter
+    if (Math.abs(diff) < 6) return;
+
+    if (diff > 0) {
+      // User scrolling DOWN -> hide bottom nav immediately so full card feed is visible!
+      if (idleTimerRef.current) {
+        clearTimeout(idleTimerRef.current);
+        idleTimerRef.current = null;
+      }
+      setIsBottomNavVisible(false);
+    } else {
+      // User scrolling UP -> reveal bottom nav + start idle timer
+      setIsBottomNavVisible(true);
+      resetIdleTimer(3200);
+    }
+
+    lastNotifScrollYRef.current = currentScrollY;
+  };
+
+  // When switching to notifications, ensure window is at top so header aligns perfectly
+  useEffect(() => {
+    if (activeScreen === 'notifications') {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+      setIsBottomNavVisible(true);
+      resetIdleTimer(3200);
+    }
+  }, [activeScreen]);
 
   // 🔝 Auto Scroll to Top when viewMode, activeTab, or sortBy changes
   const isFirstMountRef = useRef(true);
@@ -526,10 +614,15 @@ export default function App() {
   };
 
   const handleScreenClick = (e) => {
+    // If just finished a swipe/drag, do not toggle
+    if (isSwipedRef.current) {
+      isSwipedRef.current = false;
+      return;
+    }
     // If any modal or drawer is open, don't toggle
     if (
       isModalOpen || isDrawerOpen || detailPet || memorialPet || healthPet || 
-      isFamilyOpen || isBackupOpen || viewingImagePet
+      isFamilyOpen || isBackupOpen || viewingImagePet || isScannerOpen || isSharedModalOpen
     ) {
       return;
     }
@@ -538,6 +631,88 @@ export default function App() {
       return;
     }
     toggleBottomNav();
+  };
+
+  // 📱 Horizontal swipe/drag gesture between Home and Notifications (Touch + Pointer/Mouse)
+  const isPointerDraggingRef = useRef(false);
+
+  const handleScreenPointerDown = (e) => {
+    if (
+      isModalOpen || isDrawerOpen || detailPet || memorialPet || healthPet || 
+      isFamilyOpen || isBackupOpen || viewingImagePet || isScannerOpen || isSharedModalOpen
+    ) {
+      return;
+    }
+    if (e.button !== undefined && e.button !== 0) return;
+    screenSwipeStartRef.current = { x: e.clientX, y: e.clientY, time: Date.now() };
+    isPointerDraggingRef.current = true;
+  };
+
+  const handleScreenPointerUp = (e) => {
+    if (!isPointerDraggingRef.current || !screenSwipeStartRef.current.time) return;
+    isPointerDraggingRef.current = false;
+    const diffX = e.clientX - screenSwipeStartRef.current.x;
+    const diffY = e.clientY - screenSwipeStartRef.current.y;
+    const elapsed = Date.now() - screenSwipeStartRef.current.time;
+
+    screenSwipeStartRef.current = { x: 0, y: 0, time: 0 };
+
+    const isHorizontal = Math.abs(diffX) > Math.abs(diffY) * 1.15;
+    const isFastFlick = elapsed < 450 && Math.abs(diffX) > 30;
+    const isLongDrag = Math.abs(diffX) > 60;
+
+    if (isHorizontal && (isFastFlick || isLongDrag)) {
+      isSwipedRef.current = true;
+      setIsBottomNavVisible(true);
+      resetIdleTimer(3200);
+      if (diffX < 0 && activeScreen === 'home') {
+        // Dragged Left on Home -> Switch to Notifications
+        setActiveScreen('notifications');
+      } else if (diffX > 0 && activeScreen === 'notifications') {
+        // Dragged Right on Notifications -> Switch to Home
+        setActiveScreen('home');
+      }
+    }
+  };
+
+  const handleScreenTouchStart = (e) => {
+    if (
+      isModalOpen || isDrawerOpen || detailPet || memorialPet || healthPet || 
+      isFamilyOpen || isBackupOpen || viewingImagePet || isScannerOpen || isSharedModalOpen
+    ) {
+      return;
+    }
+    if (e.touches.length !== 1) return;
+    const touch = e.touches[0];
+    screenSwipeStartRef.current = { x: touch.clientX, y: touch.clientY, time: Date.now() };
+  };
+
+  const handleScreenTouchEnd = (e) => {
+    if (!screenSwipeStartRef.current.time) return;
+    const touch = e.changedTouches[0];
+    const diffX = touch.clientX - screenSwipeStartRef.current.x;
+    const diffY = touch.clientY - screenSwipeStartRef.current.y;
+    const elapsed = Date.now() - screenSwipeStartRef.current.time;
+
+    screenSwipeStartRef.current = { x: 0, y: 0, time: 0 };
+
+    // Determine if primarily horizontal swipe
+    const isHorizontal = Math.abs(diffX) > Math.abs(diffY) * 1.15;
+    const isFastFlick = elapsed < 450 && Math.abs(diffX) > 30;
+    const isLongDrag = Math.abs(diffX) > 60;
+
+    if (isHorizontal && (isFastFlick || isLongDrag)) {
+      isSwipedRef.current = true;
+      setIsBottomNavVisible(true);
+      resetIdleTimer(3200);
+      if (diffX < 0 && activeScreen === 'home') {
+        // Swiped Left on Home -> Switch to Notifications
+        setActiveScreen('notifications');
+      } else if (diffX > 0 && activeScreen === 'notifications') {
+        // Swiped Right on Notifications -> Switch to Home
+        setActiveScreen('home');
+      }
+    }
   };
 
   // Save to localStorage
@@ -703,16 +878,25 @@ export default function App() {
   const deceasedCount = pets.filter(p => p.status === 'deceased').length;
   const isFiltered = activeTab !== 'all';
 
+  // 🔔 Generate notifications & unread badge counters
+  const petNotifications = generatePetNotifications(pets);
+  const unreadNotificationsCount = petNotifications.filter(n => !n.isRead).length;
+  const urgentNotificationsCount = petNotifications.filter(n => n.urgency === 'urgent_today').length;
+
   return (
     <div 
       onClick={handleScreenClick}
-      className="min-h-screen w-full max-w-[100vw] overflow-x-clip bg-slate-100 text-slate-800 flex flex-col items-center select-none"
+      className={`w-full max-w-[100vw] overflow-x-clip bg-slate-100 text-slate-800 flex flex-col items-center select-none ${
+        activeScreen === 'notifications' ? 'h-[100dvh] overflow-hidden' : 'min-h-screen'
+      }`}
     >
       {/* App Container */}
-      <div className="w-full max-w-lg md:max-w-3xl min-h-screen overflow-x-clip bg-slate-50 shadow-2xl flex flex-col relative pb-6">
+      <div className={`w-full max-w-lg md:max-w-3xl overflow-x-clip bg-slate-50 shadow-2xl flex flex-col relative ${
+        activeScreen === 'notifications' ? 'h-[100dvh] max-h-[100dvh] overflow-hidden pb-0' : 'min-h-screen pb-6'
+      }`}>
         
         {/* Clean Sticky App Bar (Glance Zone) */}
-        <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md px-4 sm:px-5 py-3 border-b border-slate-200/60 flex items-center justify-between pt-[max(0.75rem,var(--safe-top))]">
+        <header className="sticky top-0 z-30 flex-shrink-0 bg-white/95 backdrop-blur-md px-4 sm:px-5 py-3 border-b border-slate-200/60 flex items-center justify-between pt-[max(0.75rem,calc(var(--safe-top,0px)+0.5rem))]">
           {/* Left: Hamburger Button (slides in from left) + Brand Title */}
           <div className="flex items-center gap-2.5">
             <button
@@ -726,7 +910,12 @@ export default function App() {
 
             <h1 
               onClick={() => {
-                window.scrollTo({ top: 0, behavior: 'smooth' });
+                if (activeScreen === 'notifications') {
+                  const notifContainer = document.getElementById('notif-scroll-container');
+                  if (notifContainer) notifContainer.scrollTo({ top: 0, behavior: 'smooth' });
+                } else {
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
                 setIsBottomNavVisible(true);
                 resetIdleTimer(3200);
               }}
@@ -738,8 +927,28 @@ export default function App() {
             </h1>
           </div>
 
-          {/* Right: View Mode Switcher (Capsule with sliding indicator per animate/SKILL.md) */}
+          {/* Right: Notification Bell + View Mode Switcher (Capsule with sliding indicator per animate/SKILL.md) */}
           <div className="flex items-center gap-2">
+            <button
+              onClick={() => setActiveScreen(activeScreen === 'home' ? 'notifications' : 'home')}
+              className={`relative w-10 h-10 rounded-2xl flex items-center justify-center active:scale-95 transition-transform transition-colors duration-150 ease-out shadow-2xs border focus-visible:ring-2 focus-visible:ring-paw-500 outline-none ${
+                activeScreen === 'notifications'
+                  ? 'bg-paw-100 text-paw-700 border-paw-300'
+                  : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200/60'
+              }`}
+              title={activeScreen === 'notifications' ? 'กลับหน้าหลัก' : 'ศูนย์แจ้งเตือน'}
+              aria-label="Notifications"
+            >
+              <FontAwesomeIcon icon={faBell} className="text-sm" />
+              {unreadNotificationsCount > 0 && (
+                <span className={`absolute -top-1 -right-1 min-w-[20px] h-[20px] px-1 rounded-full text-[10px] font-bold text-white flex items-center justify-center shadow-xs border-2 border-white ${
+                  urgentNotificationsCount > 0 ? 'bg-amber-500 animate-pulse' : 'bg-paw-500'
+                }`}>
+                  {unreadNotificationsCount > 9 ? '9+' : unreadNotificationsCount}
+                </span>
+              )}
+            </button>
+
             <div className="relative inline-grid grid-cols-3 items-center bg-slate-100/95 p-1 rounded-full border border-slate-200/70 shadow-2xs">
               {/* Sliding Active Circle Indicator */}
               <span
@@ -798,91 +1007,128 @@ export default function App() {
           </div>
         </header>
 
-        {/* Pure Pet Cards Feed (Responsive according to viewMode) */}
-        <main className="px-4 sm:px-5 py-4 flex-1 w-full" style={{ overflowAnchor: 'none' }}>
-          {filteredPets.length > 0 ? (
-            viewMode === 'list' ? (
-              /* 3. Card List View */
-              <div className="flex flex-col gap-2.5 w-full max-w-lg mx-auto animate-fadeIn">
-                {filteredPets.map(pet => (
-                  <PetListItem
-                    key={pet.id}
-                    pet={pet}
-                    dateFormat={dateFormat}
-                    onOpenMore={(p) => setDetailPet(p)}
-                    onToggleBottomNav={toggleBottomNav}
-                  />
-                ))}
-              </div>
-            ) : viewMode === '2col' ? (
-              /* 2. Two Columns Grid */
-              <div className="grid grid-cols-2 gap-3 w-full max-w-3xl mx-auto animate-fadeIn">
-                {filteredPets.map(pet => (
-                  <div key={pet.id} className="min-w-0 w-full">
-                    <PetCard
-                      pet={pet}
-                      compact={true}
-                      allPets={pets}
-                      dateFormat={dateFormat}
-                      onOpenMore={(p) => setDetailPet(p)}
-                      onToggleBottomNav={toggleBottomNav}
-                    />
+        {/* 📱 Horizontal Swipeable Surface (Home <-> Notifications) */}
+        <div 
+          onTouchStart={handleScreenTouchStart}
+          onTouchEnd={handleScreenTouchEnd}
+          onPointerDown={handleScreenPointerDown}
+          onPointerUp={handleScreenPointerUp}
+          className="flex-1 min-h-0 w-full overflow-hidden flex flex-col relative"
+        >
+          <div 
+            className={`flex w-[200%] transition-transform duration-300 [transition-timing-function:cubic-bezier(0.25,1,0.5,1)] ${
+              activeScreen === 'notifications' ? 'h-full flex-1' : 'flex-1'
+            }`}
+            style={{
+              transform: activeScreen === 'home' ? 'translateX(0%)' : 'translateX(-50%)'
+            }}
+          >
+            {/* Screen 1: Home (Main Pet Cards Feed) */}
+            <div className={`w-1/2 min-w-[50%] flex flex-col ${
+              activeScreen === 'notifications' ? 'h-full overflow-hidden' : 'overflow-y-auto'
+            }`}>
+              {/* Pure Pet Cards Feed */}
+              <main className="px-4 sm:px-5 py-3 flex-1 w-full pb-28" style={{ overflowAnchor: 'none' }}>
+                {filteredPets.length > 0 ? (
+                  viewMode === 'list' ? (
+                    /* 3. Card List View */
+                    <div className="flex flex-col gap-2.5 w-full max-w-lg mx-auto animate-fadeIn">
+                      {filteredPets.map(pet => (
+                        <PetListItem
+                          key={pet.id}
+                          pet={pet}
+                          dateFormat={dateFormat}
+                          onOpenMore={(p) => setDetailPet(p)}
+                          onToggleBottomNav={toggleBottomNav}
+                        />
+                      ))}
+                    </div>
+                  ) : viewMode === '2col' ? (
+                    /* 2. Two Columns Grid */
+                    <div className="grid grid-cols-2 gap-3 w-full max-w-3xl mx-auto animate-fadeIn">
+                      {filteredPets.map(pet => (
+                        <div key={pet.id} className="min-w-0 w-full">
+                          <PetCard
+                            pet={pet}
+                            compact={true}
+                            allPets={pets}
+                            dateFormat={dateFormat}
+                            onOpenMore={(p) => setDetailPet(p)}
+                            onToggleBottomNav={toggleBottomNav}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    /* 1. One Column Full Hero Card */
+                    <div className="grid grid-cols-1 gap-4 w-full max-w-lg mx-auto animate-fadeIn">
+                      {filteredPets.map(pet => (
+                        <div key={pet.id} className="min-w-0 w-full">
+                          <PetCard
+                            pet={pet}
+                            compact={false}
+                            allPets={pets}
+                            dateFormat={dateFormat}
+                            onOpenMore={(p) => setDetailPet(p)}
+                            onToggleBottomNav={toggleBottomNav}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  )
+                ) : pets.length === 0 ? (
+                  /* Empty State: เริ่มต้นที่ 0 ตัวสำหรับผู้ใช้ใหม่ */
+                  <div className="py-24 px-6 text-center max-w-sm mx-auto">
+                    <div className="w-20 h-20 mx-auto rounded-3xl bg-gradient-to-br from-paw-100 to-amber-100 text-paw-500 flex items-center justify-center text-3xl shadow-inner mb-4">
+                      <FontAwesomeIcon icon={faPaw} />
+                    </div>
+                    <h2 className="font-mitr text-xl font-medium text-slate-800 mb-1.5">
+                      ยังไม่มีข้อมูลน้องเหมียว
+                    </h2>
+                    <p className="text-xs text-slate-500 mb-6 leading-relaxed">
+                      เริ่มต้นบันทึกวันเกิด ความทรงจำ และช่วงเวลาดีๆ ของเจ้าตัวโปรดกันเถอะ
+                    </p>
+                    <button
+                      onClick={() => {
+                        setEditingPet(null);
+                        setIsModalOpen(true);
+                      }}
+                      className="px-6 py-3.5 rounded-2xl bg-paw-500 hover:bg-paw-600 text-white font-bold text-sm shadow-lg shadow-paw-500/25 transition-transform transition-colors duration-150 ease-out inline-flex items-center gap-2 active:scale-95 focus-visible:ring-2 focus-visible:ring-paw-500 outline-none"
+                    >
+                      <FontAwesomeIcon icon={faPlus} />
+                      <span>เพิ่มน้องแมวตัวแรก</span>
+                    </button>
                   </div>
-                ))}
-              </div>
-            ) : (
-              /* 1. One Column Full Hero Card */
-              <div className="grid grid-cols-1 gap-4 w-full max-w-lg mx-auto animate-fadeIn">
-                {filteredPets.map(pet => (
-                  <div key={pet.id} className="min-w-0 w-full">
-                    <PetCard
-                      pet={pet}
-                      compact={false}
-                      allPets={pets}
-                      dateFormat={dateFormat}
-                      onOpenMore={(p) => setDetailPet(p)}
-                      onToggleBottomNav={toggleBottomNav}
-                    />
+                ) : (
+                  <div className="py-20 text-center text-slate-400">
+                    <FontAwesomeIcon icon={faMagnifyingGlass} className="text-3xl text-slate-300 block mx-auto mb-3" />
+                    <button
+                      onClick={() => setActiveTab('all')}
+                      className="px-4 py-2 rounded-xl bg-slate-200 text-slate-700 text-xs font-semibold hover:bg-slate-300 transition-colors duration-150 ease-out active:scale-95 focus-visible:ring-2 focus-visible:ring-slate-400 outline-none"
+                    >
+                      Show All
+                    </button>
                   </div>
-                ))}
-              </div>
-            )
-          ) : pets.length === 0 ? (
-            /* Empty State: เริ่มต้นที่ 0 ตัวสำหรับผู้ใช้ใหม่ */
-            <div className="py-24 px-6 text-center max-w-sm mx-auto">
-              <div className="w-20 h-20 mx-auto rounded-3xl bg-gradient-to-br from-paw-100 to-amber-100 text-paw-500 flex items-center justify-center text-3xl shadow-inner mb-4">
-                <FontAwesomeIcon icon={faPaw} />
-              </div>
-              <h2 className="font-mitr text-xl font-medium text-slate-800 mb-1.5">
-                ยังไม่มีข้อมูลน้องเหมียว
-              </h2>
-              <p className="text-xs text-slate-500 mb-6 leading-relaxed">
-                เริ่มต้นบันทึกวันเกิด ความทรงจำ และช่วงเวลาดีๆ ของเจ้าตัวโปรดกันเถอะ
-              </p>
-              <button
-                onClick={() => {
-                  setEditingPet(null);
-                  setIsModalOpen(true);
-                }}
-                className="px-6 py-3.5 rounded-2xl bg-paw-500 hover:bg-paw-600 text-white font-bold text-sm shadow-lg shadow-paw-500/25 transition-transform transition-colors duration-150 ease-out inline-flex items-center gap-2 active:scale-95 focus-visible:ring-2 focus-visible:ring-paw-500 outline-none"
-              >
-                <FontAwesomeIcon icon={faPlus} />
-                <span>เพิ่มน้องแมวตัวแรก</span>
-              </button>
+                )}
+              </main>
             </div>
-          ) : (
-            <div className="py-20 text-center text-slate-400">
-              <FontAwesomeIcon icon={faMagnifyingGlass} className="text-3xl text-slate-300 block mx-auto mb-3" />
-              <button
-                onClick={() => setActiveTab('all')}
-                className="px-4 py-2 rounded-xl bg-slate-200 text-slate-700 text-xs font-semibold hover:bg-slate-300 transition-colors duration-150 ease-out active:scale-95 focus-visible:ring-2 focus-visible:ring-slate-400 outline-none"
-              >
-                Show All
-              </button>
-            </div>
-          )}
-        </main>
 
+            {/* Screen 2: Notifications Screen (Full Screen View) */}
+            <div className="w-1/2 min-w-[50%] h-full min-h-0 flex flex-col overflow-hidden">
+              <NotificationScreen
+                pets={resolvedPets}
+                onUpdatePet={handleSavePet}
+                onOpenPetDetail={(p) => setDetailPet(p)}
+                onOpenMemorial={(p) => setMemorialPet(p)}
+                onOpenHealth={(p) => setHealthPet(p)}
+                isActive={activeScreen === 'notifications'}
+                onScroll={handleNotificationScroll}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* 📱 Mobile Floating Bottom Navigation Bar (Home | Notifications | Camera OCR FAB) */}
         {/* 📱 Mobile Floating Thumb Bar (Percentage-fitted for all phone widths) */}
         <nav 
           aria-label="Mobile Bottom Navigation"
@@ -894,73 +1140,60 @@ export default function App() {
         >
           <div className="pointer-events-auto bg-white/90 backdrop-blur-xl border border-slate-200/90 shadow-2xl shadow-slate-900/15 rounded-full p-1.5 flex items-center justify-between gap-1.5 w-full">
             
-            {/* Quick Segmented Filter Pills */}
-            <div className="flex-1 min-w-0 grid grid-cols-3 bg-slate-100/90 p-1 rounded-full text-xs font-bold text-slate-600">
+            {/* Quick Segmented Navigation Pills */}
+            <div className="flex-1 min-w-0 grid grid-cols-2 bg-slate-100/90 p-1 rounded-full text-xs font-bold text-slate-600">
               <button
                 onClick={() => {
-                  if (activeTab === 'all') {
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                  } else {
-                    setActiveTab('all');
-                  }
+                  setActiveScreen('home');
+                  resetIdleTimer(3200);
                 }}
-                className={`py-1.5 px-1 rounded-full transition-colors duration-150 ease-out active:scale-95 focus-visible:ring-2 focus-visible:ring-paw-500 outline-none text-center truncate ${
-                  activeTab === 'all'
-                    ? 'bg-white text-slate-900 shadow-xs'
+                className={`py-1.5 px-2 rounded-full transition-colors duration-150 ease-out flex items-center justify-center gap-1.5 active:scale-95 focus-visible:ring-2 focus-visible:ring-paw-500 outline-none truncate ${
+                  activeScreen === 'home'
+                    ? 'bg-white text-paw-600 shadow-xs'
                     : 'text-slate-500 hover:text-slate-800'
                 }`}
+                title="หน้าหลัก"
               >
-                All
+                <FontAwesomeIcon icon={faHouse} className="text-xs flex-shrink-0" />
+                <span className="truncate">หน้าหลัก</span>
               </button>
+
               <button
                 onClick={() => {
-                  if (activeTab === 'alive') {
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                  } else {
-                    setActiveTab('alive');
-                  }
+                  setActiveScreen('notifications');
+                  resetIdleTimer(3200);
                 }}
-                className={`py-1.5 px-1 rounded-full transition-colors duration-150 ease-out flex items-center justify-center gap-1 active:scale-95 focus-visible:ring-2 focus-visible:ring-paw-500 outline-none truncate ${
-                  activeTab === 'alive'
-                    ? 'bg-white text-emerald-700 shadow-xs'
+                className={`py-1.5 px-2 rounded-full transition-colors duration-150 ease-out flex items-center justify-center gap-1.5 active:scale-95 focus-visible:ring-2 focus-visible:ring-paw-500 outline-none truncate ${
+                  activeScreen === 'notifications'
+                    ? 'bg-white text-paw-600 shadow-xs'
                     : 'text-slate-500 hover:text-slate-800'
                 }`}
+                title="หน้าแจ้งเตือน"
               >
-                <FontAwesomeIcon icon={faSeedling} className="text-[10px] flex-shrink-0" />
-                <span className="truncate">With Us</span>
-              </button>
-              <button
-                onClick={() => {
-                  if (activeTab === 'deceased') {
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                  } else {
-                    setActiveTab('deceased');
-                  }
-                }}
-                className={`py-1.5 px-1 rounded-full transition-colors duration-150 ease-out flex items-center justify-center gap-1 active:scale-95 focus-visible:ring-2 focus-visible:ring-paw-500 outline-none truncate ${
-                  activeTab === 'deceased'
-                    ? 'bg-white text-sky-700 shadow-xs'
-                    : 'text-slate-500 hover:text-slate-800'
-                }`}
-              >
-                <FontAwesomeIcon icon={faRainbow} className="text-[10px] flex-shrink-0" />
-                <span className="truncate">Memorial</span>
+                <FontAwesomeIcon icon={faBell} className="text-xs flex-shrink-0" />
+                <span className="truncate">แจ้งเตือน</span>
+                {unreadNotificationsCount > 0 && (
+                  <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold text-white leading-none ${
+                    urgentNotificationsCount > 0 ? 'bg-amber-500' : 'bg-paw-500'
+                  }`}>
+                    {unreadNotificationsCount > 9 ? '9+' : unreadNotificationsCount}
+                  </span>
+                )}
               </button>
             </div>
 
-            {/* Quick Primary Actions in Easy Thumb Reach */}
+            {/* Quick Primary Actions in Easy Thumb Reach (Camera OCR FAB) */}
             <div className="flex items-center gap-1 pr-0.5">
-              {/* Add Pet Primary FAB */}
               <button
                 onClick={() => {
-                  setEditingPet(null);
-                  setIsModalOpen(true);
+                  resetIdleTimer(3200);
+                  cameraInputRef.current?.click();
                 }}
                 className="w-10 h-10 rounded-full bg-paw-500 hover:bg-paw-600 text-white flex items-center justify-center shadow-md shadow-paw-500/35 active:scale-95 transition-transform duration-150 ease-out focus-visible:ring-2 focus-visible:ring-paw-500 outline-none"
-                title="Add Pet"
-                aria-label="Add Pet"
+                title="เปิดกล้องสแกนเอกสาร (OCR)"
+                aria-label="Scan Document OCR"
               >
-                <FontAwesomeIcon icon={faPlus} className="text-sm" />
+                <FontAwesomeIcon icon={faCamera} className="text-sm" />
               </button>
             </div>
 
@@ -979,6 +1212,15 @@ export default function App() {
         }}
         onOpenBackup={() => setIsBackupOpen(true)}
         onOpenFamily={() => setIsFamilyOpen(true)}
+        onOpenNotifications={() => {
+          setIsDrawerOpen(false);
+          setActiveScreen('notifications');
+        }}
+        onOpenScanner={(petId) => {
+          setScannerPetId(petId || null);
+          cameraInputRef.current?.click();
+        }}
+        unreadNotificationsCount={unreadNotificationsCount}
         onOpenSharedImport={() => sharedFileInputRef.current?.click()}
         activeTab={activeTab}
         setActiveTab={setActiveTab}
@@ -1007,6 +1249,23 @@ export default function App() {
         }}
       />
 
+      {/* Hidden Camera Input for Instant Native/Mobile Capture */}
+      <input
+        ref={cameraInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) {
+            setScannerInitialFile(file);
+            setIsScannerOpen(true);
+          }
+          e.target.value = '';
+        }}
+      />
+
       {/* Modals */}
       <PetModal
         pet={editingPet ? pets.find(p => p.id === editingPet.id) || editingPet : null}
@@ -1018,11 +1277,11 @@ export default function App() {
           setIsModalOpen(false);
           setEditingPet(null);
           setInitialSharedPhotosForNew([]);
-          popNavStack();
         }}
         onSave={handleSavePet}
         onDelete={(id) => {
           navStackRef.current = [];
+          if (detailPet?.id === id) setDetailPet(null);
           handleDeletePet(id);
         }}
       />
@@ -1059,7 +1318,6 @@ export default function App() {
         dateFormat={dateFormat}
         onClose={() => {
           setMemorialPet(null);
-          popNavStack();
         }}
         onUpdatePet={handleSavePet}
       />
@@ -1071,9 +1329,50 @@ export default function App() {
         dateFormat={dateFormat}
         onClose={() => {
           setHealthPet(null);
-          popNavStack();
         }}
         onUpdatePet={handleSavePet}
+        onOpenScanner={(petId) => {
+          setScannerPetId(petId || null);
+          cameraInputRef.current?.click();
+        }}
+      />
+
+      {/* 📷 Vet Document & Clinic OCR Scanner Modal */}
+      <DocumentScannerModal
+        isOpen={isScannerOpen}
+        initialFile={scannerInitialFile}
+        onClose={() => {
+          setIsScannerOpen(false);
+          setScannerInitialFile(null);
+          setScannerPetId(null);
+          popNavStack();
+        }}
+        pets={resolvedPets}
+        selectedPetId={scannerPetId}
+        onUpdatePet={handleSavePet}
+      />
+
+      {/* 🔔 In-App Notification Center Modal */}
+      <NotificationModal
+        isOpen={isNotificationOpen}
+        onClose={() => {
+          setIsNotificationOpen(false);
+          popNavStack();
+        }}
+        pets={resolvedPets}
+        onUpdatePet={handleSavePet}
+        onOpenPetDetail={(p) => {
+          setIsNotificationOpen(false);
+          setDetailPet(p);
+        }}
+        onOpenMemorial={(p) => {
+          setIsNotificationOpen(false);
+          setMemorialPet(p);
+        }}
+        onOpenHealth={(p) => {
+          setIsNotificationOpen(false);
+          setHealthPet(p);
+        }}
       />
 
       {/* 🌳 Family Tree Modal (Interactive: tap any pet node to open its detail modal!) */}
@@ -1098,23 +1397,18 @@ export default function App() {
         dateFormat={dateFormat}
         isOpen={!!detailPet}
         onClose={() => {
-          navStackRef.current = [];
-          setDetailPet(null);
+          if (!popNavStack()) {
+            setDetailPet(null);
+          }
         }}
         onEdit={(p) => {
-          navStackRef.current.push({ type: 'detail', pet: p });
-          setDetailPet(null);
           setEditingPet(p);
           setIsModalOpen(true);
         }}
         onOpenMemorial={(p) => {
-          navStackRef.current.push({ type: 'detail', pet: p });
-          setDetailPet(null);
           setMemorialPet(p);
         }}
         onOpenHealth={(p) => {
-          navStackRef.current.push({ type: 'detail', pet: p });
-          setDetailPet(null);
           setHealthPet(p);
         }}
         onOpenFamily={() => {

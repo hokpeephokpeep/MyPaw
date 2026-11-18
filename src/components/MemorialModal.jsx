@@ -47,12 +47,12 @@ export default function MemorialModal({ pet, isOpen, dateFormat = 'en', onClose,
   return (
     <div 
       onClick={requestClose}
-      className={`fixed inset-0 z-50 flex items-end justify-center bg-black/75 sm:px-4 backdrop-blur-md overscroll-contain ${backdropAnimationClass}`}
+      className={`fixed inset-0 z-[60] flex items-end justify-center bg-black/75 sm:px-4 backdrop-blur-md overscroll-contain ${backdropAnimationClass}`}
     >
       <div 
         onClick={(e) => e.stopPropagation()}
         {...sheetProps}
-        className={`w-full max-w-md rounded-t-[32px] bg-gradient-to-b from-slate-900 via-indigo-950 to-slate-900 text-white shadow-2xl overflow-hidden flex flex-col max-h-[94dvh] sm:max-h-[90vh] border border-sky-400/20 ${sheetAnimationClass} pb-[var(--safe-bottom)] overscroll-contain`}
+        className={`w-full max-w-md rounded-t-[32px] bg-gradient-to-b from-slate-900 via-indigo-950 to-slate-900 text-white shadow-2xl overflow-hidden flex flex-col max-h-[92dvh] sm:max-h-[88vh] border border-sky-400/20 ${sheetAnimationClass} pb-[var(--safe-bottom)] overscroll-contain`}
       >
         {/* Pull Handle Grab Zone */}
         <div {...handleProps} className="w-full pt-2.5 pb-1 flex justify-center cursor-grab active:cursor-grabbing flex-shrink-0 select-none" title="ลากลงเพื่อปิด">

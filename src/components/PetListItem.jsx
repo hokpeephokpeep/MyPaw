@@ -47,7 +47,10 @@ export default function PetListItem({ pet, dateFormat = 'en', onOpenMore, onTogg
       e.stopPropagation();
       return;
     }
-    if (onToggleBottomNav) {
+    if (onOpenMore) {
+      e.stopPropagation();
+      onOpenMore(pet);
+    } else if (onToggleBottomNav) {
       e.stopPropagation();
       onToggleBottomNav();
     }
@@ -67,7 +70,7 @@ export default function PetListItem({ pet, dateFormat = 'en', onOpenMore, onTogg
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
-          onOpenDetail(pet);
+          onOpenMore?.(pet);
         }
       }}
       onContextMenu={(e) => {

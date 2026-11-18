@@ -181,6 +181,51 @@ export function formatDateTh(dateStr) {
   return `${d.getDate()} ${thMonths[d.getMonth()]} ${d.getFullYear() + 543}`;
 }
 
+/**
+ * Format Date to Thai with day-of-week prefix: e.g. "เสาร์ที่ 11 พ.ย. 2565"
+ */
+export function getThaiDayAndDate(dateObj) {
+  if (!dateObj) return '';
+  const d = typeof dateObj === 'string' ? parseLocalDate(dateObj) : dateObj;
+  if (!d || isNaN(d.getTime())) return '';
+
+  const dayNames = [
+    'อาทิตย์ที่',
+    'จันทร์ที่',
+    'อังคารที่',
+    'พุธที่',
+    'พฤหัสฯที่',
+    'ศุกร์ที่',
+    'เสาร์ที่'
+  ];
+
+  const thMonths = [
+    'ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.',
+    'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'
+  ];
+
+  return `${dayNames[d.getDay()]} ${d.getDate()} ${thMonths[d.getMonth()]} ${d.getFullYear() + 543}`;
+}
+
+/**
+ * Format relative difference in days: e.g. "(วันนี้)", "(อีก 3 วัน)", "(เลยกำหนด 737 วัน)"
+ */
+export function formatRelativeDiff(daysDiff) {
+  if (daysDiff === 0) return '(วันนี้)';
+  if (daysDiff > 0) return `(อีก ${daysDiff} วัน)`;
+  return `(เลยกำหนด ${Math.abs(daysDiff)} วัน)`;
+}
+
+/**
+ * Combined Thai day, date, and relative diff: e.g. "เสาร์ที่ 11 พ.ย. 2565 (เลยกำหนด 737 วัน)"
+ */
+export function formatThaiDayDateWithDiff(dateObj, daysDiff) {
+  const dayDate = getThaiDayAndDate(dateObj);
+  if (!dayDate) return '';
+  const diff = formatRelativeDiff(daysDiff);
+  return `${dayDate} ${diff}`;
+}
+
 // Configurable Date Formatter (locale: 'en' for สากล ค.ศ., 'th' for ไทย พ.ศ.)
 export function formatDate(dateStr, locale = 'en') {
   if (locale === 'th') return formatDateTh(dateStr);

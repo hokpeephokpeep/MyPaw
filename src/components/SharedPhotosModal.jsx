@@ -80,7 +80,7 @@ export default function SharedPhotosModal({
       <div 
         onClick={(e) => e.stopPropagation()}
         {...sheetProps}
-        className={`w-full max-w-md max-h-[90vh] rounded-t-[32px] sm:rounded-t-[36px] bg-white shadow-2xl overflow-hidden flex flex-col ${sheetAnimationClass} pb-[var(--safe-bottom)] overscroll-contain`}
+        className={`w-full max-w-md max-h-[92dvh] sm:max-h-[88vh] rounded-t-[32px] bg-white shadow-2xl overflow-hidden flex flex-col ${sheetAnimationClass} pb-[var(--safe-bottom)] overscroll-contain`}
       >
         {/* Pull Handle Grab Zone */}
         <div 

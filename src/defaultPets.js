@@ -1,3 +1,11 @@
+import { getTodayLocal, toLocalDateString } from './utils.js';
+
+const today = getTodayLocal();
+const getOffsetDate = (offsetDays) => {
+  const d = new Date(today.getFullYear(), today.getMonth(), today.getDate() + offsetDays);
+  return toLocalDateString(d);
+};
+
 export const initialPets = [
   {
     "id": "pet-1",
@@ -69,7 +77,7 @@ export const initialPets = [
     "note": "คุณแม่ผู้ใจดีและเรียบร้อย รักลูกๆ ทุกตัว",
     "avatar": "/avatars/tangthon.png",
     "latestWeight": 4.3,
-    "fleaDate": "2024-10-10",
+    "fleaDate": getOffsetDate(-28),
     "weightHistory": [
       {
         "id": "w-201",
@@ -135,7 +143,7 @@ export const initialPets = [
     "note": "คุณพ่อจอมซน ขี้อ้อน ชอบนอนตัก",
     "avatar": "/avatars/khaitom.png",
     "latestWeight": 5.1,
-    "fleaDate": "2024-10-12",
+    "fleaDate": getOffsetDate(-31),
     "weightHistory": [
       {
         "id": "w-301",
@@ -198,7 +206,7 @@ export const initialPets = [
     "note": "ลูกชุดแรก • พี่น้องฝาแฝดกับทัศนัยภูวดล เรียบร้อย พูดเก่ง",
     "avatar": "/avatars/phuayphuay.png",
     "latestWeight": 3.8,
-    "fleaDate": "2024-10-10",
+    "fleaDate": getOffsetDate(-10),
     "weightHistory": [
       {
         "id": "w-401",
@@ -253,7 +261,7 @@ export const initialPets = [
     "note": "ลูกชุดแรก • พี่น้องฝาแฝดกับพวยพวย ตัวแน่น ขนปุย",
     "avatar": "/avatars/tassanai.png",
     "latestWeight": 5.4,
-    "fleaDate": "2024-10-10",
+    "fleaDate": getOffsetDate(-12),
     "weightHistory": [
       {
         "id": "w-501",
@@ -306,7 +314,7 @@ export const initialPets = [
     "note": "ลูกชุดสอง • หนุ่มน้อยเรียบร้อย ตาแป๋ว ชอบกินขนมแมวเลีย",
     "avatar": "/avatars/thongjiew.png",
     "latestWeight": 3.6,
-    "fleaDate": "2024-10-05",
+    "fleaDate": getOffsetDate(-15),
     "weightHistory": [
       {
         "id": "w-601",
@@ -353,7 +361,7 @@ export const initialPets = [
     "note": "ลูกชุดสาม • น้องเล็กสุดประจำบ้าน ซนที่สุด วิ่งไล่พี่ๆ ทั้งวัน",
     "avatar": "/avatars/kuaytiew.png",
     "latestWeight": 4,
-    "fleaDate": "2024-10-25",
+    "fleaDate": getOffsetDate(-18),
     "weightHistory": [
       {
         "id": "w-701",

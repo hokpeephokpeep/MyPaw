@@ -133,7 +133,7 @@ export default function PetDetailModal({ pet, allPets = [], dateFormat = 'en', i
       <div 
         onClick={(e) => e.stopPropagation()}
         {...sheetProps}
-        className={`w-full max-w-md rounded-t-[32px] bg-white text-slate-800 shadow-2xl overflow-hidden flex flex-col max-h-[94dvh] sm:max-h-[90vh] ${sheetAnimationClass} pb-[var(--safe-bottom)] relative overscroll-contain`}
+        className={`w-full max-w-md rounded-t-[32px] bg-white text-slate-800 shadow-2xl overflow-hidden flex flex-col max-h-[92dvh] sm:max-h-[88vh] ${sheetAnimationClass} pb-[var(--safe-bottom)] relative overscroll-contain`}
       >
         {/* Header with Hero preview - Pinned at top of modal, swipe left/right to change photo */}
         <div 
@@ -187,7 +187,7 @@ export default function PetDetailModal({ pet, allPets = [], dateFormat = 'en', i
               requestClose();
             }}
             aria-label="Close details"
-            className="absolute top-4 right-4 w-9 h-9 rounded-full bg-black/40 text-white backdrop-blur-md hover:bg-black/60 flex items-center justify-center transition-colors duration-150 ease-out active:scale-95 focus-visible:ring-2 focus-visible:ring-white outline-none z-30"
+            className="absolute top-4 right-4 w-10 h-10 rounded-full bg-black/40 text-white backdrop-blur-md hover:bg-black/60 flex items-center justify-center transition-colors duration-150 ease-out active:scale-95 focus-visible:ring-2 focus-visible:ring-white outline-none z-30"
           >
             <FontAwesomeIcon icon={faXmark} className="text-base" />
           </button>

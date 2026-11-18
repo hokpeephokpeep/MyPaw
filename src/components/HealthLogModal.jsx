@@ -2,13 +2,13 @@ import React, { useState, useEffect, useRef } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
   faXmark, faWeightScale, faShieldHalved, faCalendarDays, 
-  faPlus, faCheck, faSyringe, faDroplet, faArrowTrendUp, faStethoscope 
+  faPlus, faCheck, faSyringe, faDroplet, faArrowTrendUp, faStethoscope, faCamera 
 } from '@fortawesome/free-solid-svg-icons';
 import { formatDate, toLocalDateString, parseLocalDate, getTodayLocal } from '../utils';
 import DateField from './DateField';
 import { useSheetDrag } from '../useSheetDrag';
 
-export default function HealthLogModal({ pet, isOpen, dateFormat = 'th', onClose, onUpdatePet }) {
+export default function HealthLogModal({ pet, isOpen, dateFormat = 'th', onClose, onUpdatePet, onOpenScanner }) {
   const {
     isVisible,
     activeData: activePet,
@@ -99,12 +99,12 @@ export default function HealthLogModal({ pet, isOpen, dateFormat = 'th', onClose
   return (
     <div 
       onClick={requestClose}
-      className={`fixed inset-0 z-50 flex items-end justify-center bg-black/60 sm:px-4 backdrop-blur-xs overscroll-contain ${backdropAnimationClass}`}
+      className={`fixed inset-0 z-[60] flex items-end justify-center bg-black/60 sm:px-4 backdrop-blur-xs overscroll-contain ${backdropAnimationClass}`}
     >
       <div 
         onClick={(e) => e.stopPropagation()}
         {...sheetProps}
-        className={`w-full max-w-md rounded-t-[32px] bg-white text-slate-800 shadow-2xl overflow-hidden flex flex-col max-h-[94dvh] sm:max-h-[90vh] ${sheetAnimationClass} pb-[var(--safe-bottom)] overscroll-contain`}
+        className={`w-full max-w-md rounded-t-[32px] bg-white text-slate-800 shadow-2xl overflow-hidden flex flex-col max-h-[92dvh] sm:max-h-[88vh] ${sheetAnimationClass} pb-[var(--safe-bottom)] overscroll-contain`}
       >
         {/* Pull Handle Grab Zone */}
         <div {...handleProps} className="w-full pt-2.5 pb-1 flex justify-center cursor-grab active:cursor-grabbing flex-shrink-0 select-none bg-slate-50/50" title="ลากลงเพื่อปิด">
@@ -137,6 +137,31 @@ export default function HealthLogModal({ pet, isOpen, dateFormat = 'th', onClose
 
         {/* Content Body */}
         <div ref={scrollRef} className="px-[5%] py-5 flex-1 min-h-0 overflow-y-auto space-y-5 overscroll-contain touch-pan-y">
+          
+          {/* Quick Scan Action Button */}
+          {onOpenScanner && (
+            <button
+              type="button"
+              onClick={() => {
+                requestClose();
+                setTimeout(() => onOpenScanner(currentPet.id), 150);
+              }}
+              className="w-full flex items-center justify-between p-3 rounded-2xl bg-gradient-to-r from-emerald-50 to-teal-50 hover:from-emerald-100/70 hover:to-teal-100/70 text-slate-800 font-bold text-xs transition-colors transition-transform duration-150 border border-emerald-200/80 active:scale-[0.98] shadow-2xs"
+            >
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-emerald-500 text-white flex items-center justify-center shadow-xs">
+                  <FontAwesomeIcon icon={faCamera} className="text-xs" />
+                </div>
+                <div className="text-left">
+                  <div>สแกนใบนัด / ใบเสร็จคลินิก</div>
+                  <div className="text-[10px] text-slate-500 font-normal">อ่านข้อมูลและอัปเดตอัตโนมัติ (OCR)</div>
+                </div>
+              </div>
+              <span className="text-[10px] bg-white px-2 py-0.5 rounded-full border border-emerald-200 text-emerald-700 font-semibold shadow-2xs">
+                สแกนเลย
+              </span>
+            </button>
+          )}
           
           {/* ⚖️ Section 1: Weight Tracker */}
           <div className="space-y-3">

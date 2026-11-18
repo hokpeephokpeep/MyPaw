@@ -282,12 +282,12 @@ export default function PetModal({ pet, allPets = [], isOpen, onClose, onSave, o
   return (
     <div 
       onClick={requestClose}
-      className={`fixed inset-0 z-50 flex items-end justify-center bg-black/60 sm:px-4 backdrop-blur-xs overscroll-contain ${backdropAnimationClass}`}
+      className={`fixed inset-0 z-[60] flex items-end justify-center bg-black/60 sm:px-4 backdrop-blur-xs overscroll-contain ${backdropAnimationClass}`}
     >
       <div 
         onClick={(e) => e.stopPropagation()}
         {...sheetProps}
-        className={`w-full max-w-md rounded-t-[32px] bg-white shadow-2xl overflow-hidden flex flex-col max-h-[94dvh] sm:max-h-[90vh] ${sheetAnimationClass} pb-[var(--safe-bottom)] overscroll-contain`}
+        className={`w-full max-w-md rounded-t-[32px] bg-white shadow-2xl overflow-hidden flex flex-col max-h-[92dvh] sm:max-h-[88vh] ${sheetAnimationClass} pb-[var(--safe-bottom)] overscroll-contain`}
       >
         {/* Pull Handle Grab Zone */}
         <div {...handleProps} className="w-full pt-2.5 pb-1 flex justify-center cursor-grab active:cursor-grabbing flex-shrink-0 select-none bg-slate-50/60" title="ลากลงเพื่อปิด">

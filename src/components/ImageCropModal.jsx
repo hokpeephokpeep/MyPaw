@@ -245,7 +245,7 @@ export default function ImageCropModal({
     >
       <div 
         {...sheetProps}
-        className={`w-full max-w-md bg-white rounded-t-[32px] sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col border border-slate-200/80 ${sheetAnimationClass}`}
+        className={`w-full max-w-md bg-white rounded-t-[32px] sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[92dvh] sm:max-h-[88vh] border border-slate-200/80 ${sheetAnimationClass}`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Header */}
