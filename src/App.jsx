@@ -898,11 +898,12 @@ export default function App() {
                 setIsBottomNavVisible(true);
                 resetIdleTimer(3200);
               }}
-              className="font-mitr text-2xl font-semibold text-slate-900 tracking-wide flex items-center gap-1.5 cursor-pointer active:scale-98 transition-transform"
+              className="font-mitr text-2xl font-semibold text-slate-900 tracking-wide flex items-center cursor-pointer active:scale-98 transition-transform select-none"
               title="แตะเพื่อเลื่อนขึ้นบนสุด"
             >
-              <span>MyPaw</span>
-              <FontAwesomeIcon icon={faPaw} className="text-paw-500 text-base" />
+              <span>MyP</span>
+              <FontAwesomeIcon icon={faPaw} className="text-paw-500 text-[0.78em] mx-[1px] -translate-y-[1px]" />
+              <span>w</span>
             </h1>
           </div>
 

@@ -131,7 +131,11 @@ export default function HamburgerDrawer({
                 <FontAwesomeIcon icon={faXmark} className="text-sm" />
               </button>
             </div>
-            <h2 className="mt-3 font-mitr text-2xl font-semibold tracking-wide">MyPaw</h2>
+            <h2 className="mt-3 font-mitr text-2xl font-semibold tracking-wide flex items-center">
+              <span>MyP</span>
+              <FontAwesomeIcon icon={faPaw} className="text-white text-[0.78em] mx-[1px] -translate-y-[1px]" />
+              <span>w</span>
+            </h2>
 
             {/* Quick Stats Pill (FontAwesome Unified) */}
             <div className="mt-3 flex items-center gap-2 pt-2.5 border-t border-white/20 text-xs">
@@ -389,8 +393,11 @@ export default function HamburgerDrawer({
         <div className="p-4 border-t border-slate-100 bg-slate-50/80 flex flex-col gap-2 text-xs">
           <div className="flex items-center justify-between text-slate-600">
             <div className="flex items-center gap-1.5 font-mitr font-medium text-slate-800">
-              <FontAwesomeIcon icon={faPaw} className="text-paw-500 text-xs" />
-              <span>MyPaw</span>
+              <span className="flex items-center">
+                <span>MyP</span>
+                <FontAwesomeIcon icon={faPaw} className="text-paw-500 text-[0.78em] mx-[0.5px] -translate-y-[0.5px]" />
+                <span>w</span>
+              </span>
               <span className="text-[10px] font-sans text-slate-400 font-normal">v1.3.0</span>
             </div>
 

@@ -235,8 +235,10 @@ export default function SplashScreen({ onFinish }) {
 
         {/* App Title in Mitr */}
         <div className="mt-5 text-center">
-          <h1 className="font-mitr text-4xl font-semibold tracking-wide bg-gradient-to-r from-paw-600 via-amber-600 to-orange-600 bg-clip-text text-transparent drop-shadow-2xs">
-            MyPaw
+          <h1 className="font-mitr text-4xl font-semibold tracking-wide flex items-center justify-center drop-shadow-2xs">
+            <span className="bg-gradient-to-r from-paw-600 via-amber-600 to-orange-600 bg-clip-text text-transparent">MyP</span>
+            <FontAwesomeIcon icon={faPaw} className="text-paw-500 text-[0.78em] mx-[1.5px] -translate-y-[2px]" />
+            <span className="bg-gradient-to-r from-paw-600 via-amber-600 to-orange-600 bg-clip-text text-transparent">w</span>
           </h1>
         </div>
 
