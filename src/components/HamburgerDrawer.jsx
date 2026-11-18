@@ -131,9 +131,9 @@ export default function HamburgerDrawer({
                 <FontAwesomeIcon icon={faXmark} className="text-sm" />
               </button>
             </div>
-            <h2 className="mt-3 font-mitr text-2xl font-semibold tracking-wide flex items-center">
+            <h2 className="mt-3 font-mitr text-2xl font-semibold tracking-normal flex items-center">
               <span>MyP</span>
-              <FontAwesomeIcon icon={faPaw} className="text-white text-[0.78em] mx-[1px] -translate-y-[1px]" />
+              <FontAwesomeIcon icon={faPaw} className="text-white text-[0.70em] ml-[1px] mr-0 -translate-y-[0.5px]" />
               <span>w</span>
             </h2>
 
@@ -395,7 +395,7 @@ export default function HamburgerDrawer({
             <div className="flex items-center gap-1.5 font-mitr font-medium text-slate-800">
               <span className="flex items-center">
                 <span>MyP</span>
-                <FontAwesomeIcon icon={faPaw} className="text-paw-500 text-[0.78em] mx-[0.5px] -translate-y-[0.5px]" />
+                <FontAwesomeIcon icon={faPaw} className="text-paw-500 text-[0.70em] ml-[1px] mr-0 -translate-y-[0.5px]" />
                 <span>w</span>
               </span>
               <span className="text-[10px] font-sans text-slate-400 font-normal">v1.3.0</span>
