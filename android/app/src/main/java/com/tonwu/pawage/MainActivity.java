@@ -57,6 +57,13 @@ public class MainActivity extends BridgeActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        androidx.core.view.WindowInsetsControllerCompat controller = 
+            androidx.core.view.WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
+        if (controller != null) {
+            controller.setAppearanceLightStatusBars(false);
+            controller.setAppearanceLightNavigationBars(false);
+        }
+
         if (getBridge() != null && getBridge().getWebView() != null) {
             getBridge().getWebView().getSettings().setTextZoom(100);
             getBridge().getWebView().addJavascriptInterface(new SafeAreaBridge(), "AndroidSafeArea");
