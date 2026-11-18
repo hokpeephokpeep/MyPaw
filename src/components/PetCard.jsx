@@ -170,45 +170,22 @@ export default function PetCard({ pet, allPets = [], dateFormat = 'en', compact 
 
   const handleTouchMove = (e) => {
     if (!e.touches || !e.touches[0]) return;
-    const currentX = e.touches[0].clientX;
-    const currentY = e.touches[0].clientY;
-    const deltaX = currentX - touchStartPosRef.current.x;
-    const deltaY = currentY - touchStartPosRef.current.y;
+    const deltaX = e.touches[0].clientX - touchStartPosRef.current.x;
+    const deltaY = e.touches[0].clientY - touchStartPosRef.current.y;
 
     if (Math.abs(deltaX) > 10 || Math.abs(deltaY) > 10) {
       cancelPress();
     }
   };
 
-  const handleTouchEnd = (e) => {
+  const handleTouchEnd = () => {
     cancelPress();
-    if (!e.changedTouches || !e.changedTouches[0]) return;
-    const currentX = e.changedTouches[0].clientX;
-    const currentY = e.changedTouches[0].clientY;
-    const deltaX = currentX - touchStartPosRef.current.x;
-    const deltaY = currentY - touchStartPosRef.current.y;
-
-    // Detect horizontal swipe (at least 35px, predominantly horizontal)
-    if (Math.abs(deltaX) > 35 && Math.abs(deltaX) > Math.abs(deltaY) * 1.2) {
-      isSwipingRef.current = true;
-      if (hasMultiplePhotos) {
-        if (deltaX < 0) {
-          // Swipe Left -> Next Photo
-          setPhotoIndex(prev => (prev + 1) % photos.length);
-        } else {
-          // Swipe Right -> Prev Photo
-          setPhotoIndex(prev => (prev - 1 + photos.length) % photos.length);
-        }
-        triggerIndicator();
-      }
-    }
   };
 
   const handleClickCard = (e) => {
-    if (isLongPressRef.current || isSwipingRef.current) {
+    if (isLongPressRef.current) {
       e.preventDefault();
       e.stopPropagation();
-      isSwipingRef.current = false;
       return;
     }
     // Normal short tap toggles bottom nav bar

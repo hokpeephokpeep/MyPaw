@@ -35,13 +35,13 @@ export default function NotificationScreen({
     typeof window !== 'undefined' && 'Notification' in window ? Notification.permission : 'unsupported'
   );
 
-  // Refresh notifications whenever pets, prefs, or screen becomes active
+  // Refresh notifications whenever pets change (decoupled from isActive to prevent swipe stutter)
   useEffect(() => {
     const currentPrefs = getNotificationPrefs();
     setPrefs(currentPrefs);
     const list = generatePetNotifications(pets, { prefs: currentPrefs });
     setNotifications(list);
-  }, [pets, isActive]);
+  }, [pets]);
 
   // Filtered notifications
   const filteredList = notifications.filter(n => {
