@@ -969,7 +969,7 @@ export default function App() {
             }}
           >
             {/* Pure Pet Cards Feed */}
-            <main className="px-4 sm:px-5 py-3 flex-1 w-full pb-28 overflow-x-hidden" style={{ overflowAnchor: 'none' }}>
+            <main className="px-4 sm:px-5 py-3 flex-1 w-full pb-6 sm:pb-8 overflow-x-hidden" style={{ overflowAnchor: 'none' }}>
               {filteredPets.length > 0 ? (
                 viewMode === 'list' ? (
                   /* 3. Card List View */
