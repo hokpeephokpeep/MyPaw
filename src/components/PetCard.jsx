@@ -223,17 +223,64 @@ export default function PetCard({ pet, allPets = [], dateFormat = 'en', compact 
         onOpenMore(pet);
       }}
       data-multi-photo={hasMultiplePhotos ? "true" : undefined}
-      className={`relative overflow-hidden ${
+      className={`relative ${isDeceased ? 'overflow-visible' : 'overflow-hidden'} ${
         compact ? 'rounded-2xl' : 'rounded-[32px]'
       } select-none touch-manipulation cursor-pointer group/card focus-visible:ring-2 focus-visible:ring-paw-500 outline-none ${
         isDeceased ? 'card-deceased-transition' : 'card-alive-transition'
       }`}
     >
+      {/* ☁️ OVERSHOOT CLOUDS GRAPHIC (3 CLOUDS: 1 LEFT, 2 RIGHT STAGGERED) */}
+      {isDeceased && (
+        <div className="absolute inset-0 pointer-events-none z-30 overflow-visible select-none">
+          {/* 1. Left Cloud (1 ก้อนซ้าย: ขยับออกไปทางซ้ายตามลูกศร) */}
+          <div className={`absolute ${compact ? '-left-[20px] top-[34%] w-[68px]' : '-left-[56px] sm:-left-[72px] top-[34%] sm:top-[36%] w-[160px] sm:w-[176px]'}`}>
+            <img
+              src="/clouds/C3.svg"
+              alt=""
+              className={`w-full h-auto ${compact ? 'animate-cloud-float-subtle' : 'animate-cloud-float-1'} motion-reduce:animate-none select-none pointer-events-none`}
+              style={{
+                filter: compact
+                  ? 'drop-shadow(0 4px 8px rgba(12, 74, 110, 0.25)) drop-shadow(0 1px 3px rgba(0, 0, 0, 0.12))'
+                  : 'drop-shadow(0 16px 24px rgba(12, 74, 110, 0.45)) drop-shadow(0 6px 12px rgba(0, 0, 0, 0.22))'
+              }}
+            />
+          </div>
+
+          {/* 2. Right Cloud 1 (ก้อนขวาบน: ขยับออกไปทางขวาตามลูกศร) */}
+          <div className={`absolute ${compact ? '-right-[14px] top-[18%] w-[50px]' : '-right-[40px] sm:-right-[56px] top-[18%] sm:top-[20%] w-[128px] sm:w-[144px]'}`}>
+            <img
+              src="/clouds/C1.svg"
+              alt=""
+              className={`w-full h-auto ${compact ? 'animate-cloud-float-subtle' : 'animate-cloud-float-3'} motion-reduce:animate-none select-none pointer-events-none`}
+              style={{
+                filter: compact
+                  ? 'drop-shadow(0 3px 6px rgba(14, 165, 233, 0.25)) drop-shadow(0 1px 3px rgba(0, 0, 0, 0.1))'
+                  : 'drop-shadow(0 14px 20px rgba(14, 165, 233, 0.35)) drop-shadow(0 4px 10px rgba(0, 0, 0, 0.18))'
+              }}
+            />
+          </div>
+
+          {/* 3. Right Cloud 2 (ก้อนขวาล่าง: ขยับออกไปทางขวาตามลูกศร) */}
+          <div className={`absolute ${compact ? '-right-[16px] top-[50%] w-[56px]' : '-right-[56px] sm:-right-[72px] top-[50%] sm:top-[52%] w-[144px] sm:w-[160px]'}`}>
+            <img
+              src="/clouds/C2.svg"
+              alt=""
+              className={`w-full h-auto ${compact ? 'animate-cloud-float-subtle' : 'animate-cloud-float-2'} motion-reduce:animate-none select-none pointer-events-none`}
+              style={{
+                filter: compact
+                  ? 'drop-shadow(0 4px 7px rgba(79, 70, 229, 0.22)) drop-shadow(0 1px 3px rgba(14, 165, 233, 0.15))'
+                  : 'drop-shadow(0 16px 22px rgba(79, 70, 229, 0.35)) drop-shadow(0 6px 14px rgba(14, 165, 233, 0.3))'
+              }}
+            />
+          </div>
+        </div>
+      )}
+
       {/* Main Card Container Box (Clipped Inner Elements) */}
       <div 
         className={`relative overflow-hidden ${compact ? 'rounded-2xl' : 'rounded-[32px]'} shadow-xs transition-[color,background-color,border-color,box-shadow] duration-200 [transition-timing-function:var(--ease-out)] ${
           isDeceased
-            ? 'border-2 border-slate-300/80 bg-slate-900/5 shadow-sm'
+            ? 'border-2 border-sky-200/90 shadow-[0_6px_24px_-4px_rgba(56,189,248,0.22)]'
             : 'bg-white border border-slate-200/70 hover:border-paw-300'
         }`}
       >
@@ -242,13 +289,14 @@ export default function PetCard({ pet, allPets = [], dateFormat = 'en', compact 
           <BorderBeam size={compact ? 120 : 180} duration={6} colorFrom="#f97316" colorTo="#fbbf24" borderWidth={2} />
         )}
         
-        {/* Memorial Sky Subtle Texture (ONLY FOR DECEASED PETS: Peaceful & Restrained) */}
+        {/* 🌈 Heavenly Sky Background (ONLY FOR DECEASED PETS: Feel good คิดถึง ปนเหงา) */}
         {isDeceased && (
-          <div className="absolute inset-0 pointer-events-none overflow-hidden z-0 bg-gradient-to-b from-slate-900/15 via-slate-800/5 to-slate-900/10">
-            {/* Delicate starlight twinkle in memorial sky */}
-            <div className="absolute top-4 left-6 w-1 h-1 rounded-full bg-amber-200/70 pointer-events-none" />
-            <div className="absolute top-10 right-14 w-1.5 h-1.5 rounded-full bg-slate-200/60 pointer-events-none" />
-            <div className="absolute top-20 left-16 w-1 h-1 rounded-full bg-white/50 pointer-events-none" />
+          <div className="absolute inset-0 pointer-events-none overflow-hidden z-0 bg-gradient-to-b from-sky-400 via-sky-200 to-indigo-100">
+            <div className="absolute -top-12 -right-12 w-80 h-80 rounded-full opacity-40 blur-xs animate-rainbow pointer-events-none bg-gradient-to-tr from-transparent via-red-300 via-amber-200 via-emerald-200 via-sky-300 to-purple-400" />
+            {/* 🌟 Delicate starlight twinkle in memorial sky */}
+            <div className="absolute top-4 left-6 w-1.5 h-1.5 rounded-full bg-white animate-star-1 opacity-70 pointer-events-none" />
+            <div className="absolute top-10 right-14 w-2 h-2 rounded-full bg-amber-100 animate-star-2 opacity-80 pointer-events-none" />
+            <div className="absolute top-20 left-16 w-1 h-1 rounded-full bg-white animate-star-3 opacity-60 pointer-events-none" />
           </div>
         )}
 
@@ -380,15 +428,15 @@ export default function PetCard({ pet, allPets = [], dateFormat = 'en', compact 
           }}
           className={`${compact ? 'px-[6%] py-2 rounded-b-2xl' : 'px-[5%] py-3.5'} relative ${
             isDeceased 
-              ? 'bg-slate-50/95 border-t border-slate-200/80' 
+              ? 'bg-gradient-to-r from-sky-50/95 via-white/95 to-indigo-50/90 backdrop-blur-md border-t border-sky-200/60' 
               : 'bg-white'
           }`}
         >
           {/* Subtle Watermark Paw (Brand Gimmick) */}
           <FontAwesomeIcon 
             icon={faPaw} 
-            className={`absolute right-24 bottom-2 text-4xl -rotate-12 pointer-events-none opacity-[0.03] ${
-              isDeceased ? 'text-slate-900' : 'text-paw-900'
+            className={`absolute right-24 bottom-2 text-4xl -rotate-12 pointer-events-none opacity-[0.035] ${
+              isDeceased ? 'text-sky-900' : 'text-paw-900'
             }`} 
           />
 
@@ -397,11 +445,11 @@ export default function PetCard({ pet, allPets = [], dateFormat = 'en', compact 
             <div className="flex items-baseline gap-1 select-none min-w-0 truncate">
               {age.years > 0 && (
                 <span className={`${compact ? 'text-base sm:text-lg' : 'text-2xl'} font-mitr font-semibold tracking-tight tabular-nums inline-flex items-baseline leading-none ${
-                  isDeceased ? 'text-slate-700' : 'text-paw-600'
+                  isDeceased ? 'text-sky-800' : 'text-paw-600'
                 }`}>
                   {age.years}
                   <span className={`${compact ? 'text-[8px] sm:text-[9px] mr-0.5' : 'text-[11px] mr-1'} font-sans font-normal lowercase ml-[1px] select-none ${
-                    isDeceased ? 'text-slate-400' : 'text-paw-400'
+                    isDeceased ? 'text-sky-400' : 'text-paw-400'
                   }`}>y</span>
                 </span>
               )}
@@ -428,10 +476,10 @@ export default function PetCard({ pet, allPets = [], dateFormat = 'en', compact 
             ) : (
               <div 
                 title="จากเราไปสู่ดาวแมวแล้วนานแค่ไหน"
-                className={`bg-slate-100/90 border border-slate-200/80 rounded-xl ${compact ? 'px-1.5 py-0.5' : 'px-2.5 py-1'} flex items-center gap-1 shadow-2xs flex-shrink-0`}
+                className={`bg-gradient-to-r from-sky-50 via-amber-50/70 to-indigo-50/80 border border-sky-200/90 rounded-xl ${compact ? 'px-1.5 py-0.5' : 'px-2.5 py-1'} flex items-center gap-1 shadow-2xs flex-shrink-0`}
               >
-                <FontAwesomeIcon icon={faRainbow} className="text-slate-400 text-[9px] sm:text-[10px]" />
-                <span className={`${compact ? 'text-[10px] sm:text-[11px]' : 'text-xs'} font-medium text-slate-700 tabular-nums whitespace-nowrap`}>
+                <FontAwesomeIcon icon={faRainbow} className="text-amber-500 text-[9px] sm:text-[10px]" />
+                <span className={`${compact ? 'text-[10px] sm:text-[11px]' : 'text-xs'} font-bold text-slate-700 tabular-nums whitespace-nowrap`}>
                   {compact ? (
                     timeSincePassing 
                       ? `${timeSincePassing.years > 0 ? `${timeSincePassing.years}y+` : (timeSincePassing.months > 0 ? `${timeSincePassing.months}m+` : `${timeSincePassing.days}d`)}`
