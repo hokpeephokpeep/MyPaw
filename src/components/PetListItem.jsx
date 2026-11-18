@@ -60,6 +60,7 @@ export default function PetListItem({ pet, dateFormat = 'en', onOpenMore, onTogg
     <div 
       role="button"
       tabIndex={0}
+      aria-label={`ดูรายละเอียดของ ${pet.name}`}
       onTouchStart={startPress}
       onTouchEnd={cancelPress}
       onTouchMove={cancelPress}

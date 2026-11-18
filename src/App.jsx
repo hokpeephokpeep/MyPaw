@@ -16,6 +16,7 @@ import {
   faSeedling, faRainbow, faSquare, faTableCellsLarge, faList, faImages, faBell,
   faHouse, faCamera
 } from '@fortawesome/free-solid-svg-icons';
+import { motion } from 'motion/react';
 import confetti from 'canvas-confetti';
 
 // 🚀 Code-Split Heavy Modals via React.lazy for instant launch & 60fps swipes
@@ -1102,20 +1103,27 @@ export default function App() {
         >
           <div className="pointer-events-auto bg-white/90 backdrop-blur-xl border border-slate-200/90 shadow-2xl shadow-slate-900/15 rounded-full p-1.5 flex items-center justify-between gap-1.5 w-full">
             
-            {/* Quick Segmented Navigation Pills */}
-            <div className="flex-1 min-w-0 grid grid-cols-2 bg-slate-100/90 p-1 rounded-full text-xs font-bold text-slate-600">
+            {/* Quick Segmented Navigation Pills with Motion spring indicator */}
+            <div className="flex-1 min-w-0 grid grid-cols-2 bg-slate-100/90 p-1 rounded-full text-xs font-bold text-slate-600 relative">
               <button
                 onClick={() => {
                   setActiveScreen('home');
                   resetIdleTimer(3200);
                 }}
-                className={`py-1.5 px-2 rounded-full transition-colors duration-150 ease-out flex items-center justify-center gap-1.5 active:scale-95 focus-visible:ring-2 focus-visible:ring-paw-500 outline-none truncate ${
+                className={`relative py-1.5 px-2 rounded-full transition-colors duration-150 flex items-center justify-center gap-1.5 focus-visible:ring-2 focus-visible:ring-paw-500 outline-none truncate z-10 ${
                   activeScreen === 'home'
-                    ? 'bg-white text-paw-600 shadow-xs'
+                    ? 'text-paw-600 font-bold'
                     : 'text-slate-500 hover:text-slate-800'
                 }`}
                 title="หน้าหลัก"
               >
+                {activeScreen === 'home' && (
+                  <motion.div
+                    layoutId="active-screen-indicator"
+                    className="absolute inset-0 bg-white rounded-full shadow-xs -z-10"
+                    transition={{ type: 'spring', stiffness: 450, damping: 32 }}
+                  />
+                )}
                 <FontAwesomeIcon icon={faHouse} className="text-xs flex-shrink-0" />
                 <span className="truncate">หน้าหลัก</span>
               </button>
@@ -1125,13 +1133,20 @@ export default function App() {
                   setActiveScreen('notifications');
                   resetIdleTimer(3200);
                 }}
-                className={`py-1.5 px-2 rounded-full transition-colors duration-150 ease-out flex items-center justify-center gap-1.5 active:scale-95 focus-visible:ring-2 focus-visible:ring-paw-500 outline-none truncate ${
+                className={`relative py-1.5 px-2 rounded-full transition-colors duration-150 flex items-center justify-center gap-1.5 focus-visible:ring-2 focus-visible:ring-paw-500 outline-none truncate z-10 ${
                   activeScreen === 'notifications'
-                    ? 'bg-white text-paw-600 shadow-xs'
+                    ? 'text-paw-600 font-bold'
                     : 'text-slate-500 hover:text-slate-800'
                 }`}
                 title="หน้าแจ้งเตือน"
               >
+                {activeScreen === 'notifications' && (
+                  <motion.div
+                    layoutId="active-screen-indicator"
+                    className="absolute inset-0 bg-white rounded-full shadow-xs -z-10"
+                    transition={{ type: 'spring', stiffness: 450, damping: 32 }}
+                  />
+                )}
                 <FontAwesomeIcon icon={faBell} className="text-xs flex-shrink-0" />
                 <span className="truncate">แจ้งเตือน</span>
                 {unreadNotificationsCount > 0 && (
@@ -1144,19 +1159,22 @@ export default function App() {
               </button>
             </div>
 
-            {/* Quick Primary Actions in Easy Thumb Reach (Camera OCR FAB) */}
+            {/* Quick Primary Actions in Easy Thumb Reach (Camera OCR FAB with tactile spring) */}
             <div className="flex items-center gap-1 pr-0.5">
-              <button
+              <motion.button
+                whileHover={{ scale: 1.06 }}
+                whileTap={{ scale: 0.92 }}
+                transition={{ type: 'spring', stiffness: 420, damping: 25 }}
                 onClick={() => {
                   resetIdleTimer(3200);
                   cameraInputRef.current?.click();
                 }}
-                className="w-10 h-10 rounded-full bg-paw-500 hover:bg-paw-600 text-white flex items-center justify-center shadow-md shadow-paw-500/35 active:scale-95 transition-transform duration-150 ease-out focus-visible:ring-2 focus-visible:ring-paw-500 outline-none"
+                className="w-10 h-10 rounded-full bg-paw-500 hover:bg-paw-600 text-white flex items-center justify-center shadow-md shadow-paw-500/35 focus-visible:ring-2 focus-visible:ring-paw-500 outline-none"
                 title="เปิดกล้องสแกนเอกสาร (OCR)"
                 aria-label="Scan Document OCR"
               >
                 <FontAwesomeIcon icon={faCamera} className="text-sm" />
-              </button>
+              </motion.button>
             </div>
 
           </div>
