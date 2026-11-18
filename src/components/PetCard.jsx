@@ -432,10 +432,10 @@ export default function PetCard({ pet, allPets = [], dateFormat = 'en', compact 
           />
 
           <div className="flex items-center justify-between gap-1 relative z-10 min-w-0">
-            {/* Typographic Age Design: Bold Google Sans numbers with subtle unit indicators */}
-            <div className="flex items-baseline gap-0.5 select-none min-w-0 truncate">
+            {/* Typographic Age Design: Bold Mitr numbers with prominent leading digit and subtle y m d units */}
+            <div className="flex items-baseline gap-1 select-none min-w-0 truncate">
               {age.years > 0 && (
-                <span className={`${compact ? 'text-base sm:text-lg' : 'text-2xl'} font-sans font-bold tracking-tight tabular-nums inline-flex items-baseline leading-none ${
+                <span className={`${compact ? 'text-lg sm:text-xl' : 'text-2xl sm:text-3xl'} font-mitr font-semibold tracking-tight tabular-nums inline-flex items-baseline leading-none ${
                   isDeceased ? 'text-sky-800' : 'text-paw-600'
                 }`}>
                   {age.years}
@@ -444,11 +444,11 @@ export default function PetCard({ pet, allPets = [], dateFormat = 'en', compact 
                   }`}>y</span>
                 </span>
               )}
-              <span className={`${compact ? 'text-sm sm:text-base' : 'text-xl'} font-sans font-bold tracking-tight text-slate-800 tabular-nums inline-flex items-baseline leading-none`}>
+              <span className={`${compact ? 'text-sm sm:text-base' : 'text-xl'} font-mitr font-semibold tracking-tight text-slate-800 tabular-nums inline-flex items-baseline leading-none`}>
                 {age.months || 0}
                 <span className={`${compact ? 'text-[8px] sm:text-[9px] mr-0.5' : 'text-[11px] mr-1'} font-sans font-normal text-slate-400 lowercase ml-[1px] select-none`}>m</span>
               </span>
-              <span className={`${compact ? 'text-sm sm:text-base' : 'text-xl'} font-sans font-bold tracking-tight text-slate-800 tabular-nums inline-flex items-baseline leading-none`}>
+              <span className={`${compact ? 'text-sm sm:text-base' : 'text-xl'} font-mitr font-semibold tracking-tight text-slate-800 tabular-nums inline-flex items-baseline leading-none`}>
                 {age.days}
                 <span className={`${compact ? 'text-[8px] sm:text-[9px]' : 'text-[11px]'} font-sans font-normal text-slate-400 lowercase ml-[1px] select-none`}>d</span>
               </span>
