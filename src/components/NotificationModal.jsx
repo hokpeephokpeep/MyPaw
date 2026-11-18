@@ -225,11 +225,11 @@ export default function NotificationModal({
 
             <div className="grid grid-cols-2 gap-2 text-xs">
               {[
-                { key: 'birthday', label: '🎂 วันเกิด', icon: faCakeCandles },
-                { key: 'flea', label: '💊 หยดยาเห็บหมัด', icon: faShieldHalved },
-                { key: 'vaccine', label: '💉 วัคซีนประจำปี', icon: faSyringe },
-                { key: 'checkup', label: '🩺 นัดสัตวแพทย์', icon: faStethoscope },
-                { key: 'memorial', label: '🌈 วันครบรอบดาวแมว', icon: faRainbow }
+                { key: 'birthday', label: 'วันเกิด', icon: faCakeCandles },
+                { key: 'flea', label: 'หยดยาเห็บหมัด', icon: faShieldHalved },
+                { key: 'vaccine', label: 'วัคซีนประจำปี', icon: faSyringe },
+                { key: 'checkup', label: 'นัดสัตวแพทย์', icon: faStethoscope },
+                { key: 'memorial', label: 'วันครบรอบดาวแมว', icon: faRainbow }
               ].map(cat => (
                 <button
                   key={cat.key}
@@ -240,7 +240,10 @@ export default function NotificationModal({
                       : 'border-slate-200 bg-slate-100/70 text-slate-400'
                   }`}
                 >
-                  <span className="truncate">{cat.label}</span>
+                  <span className="truncate flex items-center gap-1.5">
+                    <FontAwesomeIcon icon={cat.icon} className="text-[11px] text-slate-400" />
+                    <span>{cat.label}</span>
+                  </span>
                   <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[9px] ${
                     prefs.categories[cat.key] ? 'bg-paw-500 text-white' : 'bg-slate-200 text-transparent'
                   }`}>

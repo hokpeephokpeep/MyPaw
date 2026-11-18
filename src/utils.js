@@ -95,9 +95,9 @@ export function getLifeStage(years, months) {
       stage: 'Kitten', 
       label: 'วัยเบบี๋', 
       icon: faBaby, 
-      bg: 'bg-pink-50', 
-      text: 'text-pink-600', 
-      border: 'border-pink-200' 
+      bg: 'bg-stone-100/90 dark:bg-stone-800/80', 
+      text: 'text-stone-700 dark:text-stone-300', 
+      border: 'border-stone-200/80 dark:border-stone-700' 
     };
   }
   if (totalMonths <= 24) {
@@ -105,9 +105,9 @@ export function getLifeStage(years, months) {
       stage: 'Junior', 
       label: 'วัยซน', 
       icon: faBolt, 
-      bg: 'bg-amber-50', 
-      text: 'text-amber-600', 
-      border: 'border-amber-200' 
+      bg: 'bg-stone-100/90 dark:bg-stone-800/80', 
+      text: 'text-stone-700 dark:text-stone-300', 
+      border: 'border-stone-200/80 dark:border-stone-700' 
     };
   }
   if (years <= 6) {
@@ -115,9 +115,9 @@ export function getLifeStage(years, months) {
       stage: 'Prime', 
       label: 'วัยหนุ่มสาว', 
       icon: faSun, 
-      bg: 'bg-emerald-50', 
-      text: 'text-emerald-600', 
-      border: 'border-emerald-200' 
+      bg: 'bg-stone-100/90 dark:bg-stone-800/80', 
+      text: 'text-stone-700 dark:text-stone-300', 
+      border: 'border-stone-200/80 dark:border-stone-700' 
     };
   }
   if (years <= 10) {
@@ -125,9 +125,9 @@ export function getLifeStage(years, months) {
       stage: 'Mature', 
       label: 'วัยผู้ใหญ่', 
       icon: faCrown, 
-      bg: 'bg-sky-50', 
-      text: 'text-sky-600', 
-      border: 'border-sky-200' 
+      bg: 'bg-stone-100/90 dark:bg-stone-800/80', 
+      text: 'text-stone-700 dark:text-stone-300', 
+      border: 'border-stone-200/80 dark:border-stone-700' 
     };
   }
   if (years <= 14) {
@@ -135,18 +135,18 @@ export function getLifeStage(years, months) {
       stage: 'Senior', 
       label: 'วัยอาวุโส', 
       icon: faFeather, 
-      bg: 'bg-indigo-50', 
-      text: 'text-indigo-600', 
-      border: 'border-indigo-200' 
+      bg: 'bg-stone-100/90 dark:bg-stone-800/80', 
+      text: 'text-stone-700 dark:text-stone-300', 
+      border: 'border-stone-200/80 dark:border-stone-700' 
     };
   }
   return { 
     stage: 'Super Senior', 
     label: 'วัยทวด', 
     icon: faGem, 
-    bg: 'bg-purple-50', 
-    text: 'text-purple-600', 
-    border: 'border-purple-200' 
+    bg: 'bg-stone-100/90 dark:bg-stone-800/80', 
+    text: 'text-stone-700 dark:text-stone-300', 
+    border: 'border-stone-200/80 dark:border-stone-700' 
   };
 }
 
@@ -259,14 +259,14 @@ export function getPetSpecialEvents(pet) {
     return events; // Deceased cats stay dedicated to the Rainbow Bridge memorial
   }
 
-  // 2. Birthday Today! 🎂
+  // 2. Birthday Today!
   const daysUntilBday = getDaysUntilBirthday(pet.birthDate);
   if (daysUntilBday === 0) {
     events.push({
       type: 'birthday_today',
-      label: 'วันเกิดวันนี้! 🎂',
+      label: 'วันเกิดวันนี้',
       icon: faCakeCandles,
-      bgClass: 'bg-gradient-to-r from-pink-500 to-rose-500 text-white font-bold border-white/30 shadow-md shadow-rose-500/25 animate-pulse motion-reduce:animate-none',
+      bgClass: 'bg-gradient-to-r from-rose-500 to-amber-500 text-white font-semibold border-white/30 shadow-sm',
       iconClass: 'text-amber-200'
     });
   }
@@ -279,15 +279,15 @@ export function getPetSpecialEvents(pet) {
       if (daysUntilCheckup === 0) {
         events.push({
           type: 'checkup_today',
-          label: 'นัดตรวจสุขภาพวันนี้ 🩺',
+          label: 'นัดตรวจสุขภาพวันนี้',
           icon: faStethoscope,
-          bgClass: 'bg-emerald-600/95 backdrop-blur-md text-white border-white/25 shadow-md shadow-emerald-600/25 animate-pulse motion-reduce:animate-none',
+          bgClass: 'bg-emerald-600/95 backdrop-blur-md text-white border-white/25 shadow-sm',
           iconClass: 'text-emerald-200'
         });
       } else if (daysUntilCheckup > 0 && daysUntilCheckup <= 14) {
         events.push({
           type: 'checkup_soon',
-          label: daysUntilCheckup === 1 ? 'นัดตรวจพรุ่งนี้ 🩺' : `นัดตรวจอีก ${daysUntilCheckup} วัน`,
+          label: daysUntilCheckup === 1 ? 'นัดตรวจพรุ่งนี้' : `นัดตรวจอีก ${daysUntilCheckup} วัน`,
           icon: faStethoscope,
           bgClass: 'bg-sky-600/90 backdrop-blur-md text-white border-white/25 shadow-sm',
           iconClass: 'text-sky-200'
@@ -304,16 +304,16 @@ export function getPetSpecialEvents(pet) {
       if (daysSinceVaccine >= 365) {
         events.push({
           type: 'vaccine_overdue',
-          label: 'ถึงกำหนดวัคซีน 💉',
+          label: 'ถึงกำหนดวัคซีน',
           icon: faSyringe,
-          bgClass: 'bg-rose-600/95 backdrop-blur-md text-white border-white/25 shadow-sm shadow-rose-600/25 animate-pulse motion-reduce:animate-none',
+          bgClass: 'bg-rose-600/95 backdrop-blur-md text-white border-white/25 shadow-sm',
           iconClass: 'text-rose-200'
         });
       } else if (daysSinceVaccine >= 335) { // ภายใน 30 วันก่อนครบรอบ
         const daysLeft = 365 - daysSinceVaccine;
         events.push({
           type: 'vaccine_soon',
-          label: daysLeft === 1 ? 'วัคซีนพรุ่งนี้ 💉' : `วัคซีนอีก ${daysLeft} วัน`,
+          label: daysLeft === 1 ? 'วัคซีนพรุ่งนี้' : `วัคซีนอีก ${daysLeft} วัน`,
           icon: faSyringe,
           bgClass: 'bg-amber-600/90 backdrop-blur-md text-white border-white/25 shadow-sm',
           iconClass: 'text-amber-200'
@@ -326,9 +326,9 @@ export function getPetSpecialEvents(pet) {
   if (daysUntilBday > 0 && daysUntilBday <= 14) {
     events.push({
       type: 'birthday_soon',
-      label: daysUntilBday === 1 ? 'วันเกิดพรุ่งนี้ 🎂' : `วันเกิดอีก ${daysUntilBday} วัน`,
+      label: daysUntilBday === 1 ? 'วันเกิดพรุ่งนี้' : `วันเกิดอีก ${daysUntilBday} วัน`,
       icon: faCakeCandles,
-      bgClass: 'bg-paw-500/90 backdrop-blur-md text-white border-white/25 shadow-sm',
+      bgClass: 'bg-stone-800/90 backdrop-blur-md text-white border-white/25 shadow-sm',
       iconClass: 'text-amber-200'
     });
   }

@@ -314,9 +314,9 @@ export default function PetDetailModal({ pet, allPets = [], dateFormat = 'en', i
                     {age.days}<span className="text-[10px] sm:text-[11px] font-sans font-normal text-slate-400 lowercase ml-0.5">d</span>
                   </span>
                 </div>
-                <div className="text-[10px] sm:text-[11px] text-slate-500 mt-1 font-sans font-semibold truncate">
+                <div className="text-[10px] sm:text-[11px] text-slate-500 mt-1 font-sans font-medium truncate">
                   {isDeceased && timeSincePassing 
-                    ? `🌈 ดาวแมว ${timeSincePassing.years}y ${timeSincePassing.months}m ${timeSincePassing.days}d`
+                    ? `ดาวแมว ${timeSincePassing.years}y ${timeSincePassing.months}m ${timeSincePassing.days}d`
                     : `~${humanAge}y human`
                   }
                 </div>

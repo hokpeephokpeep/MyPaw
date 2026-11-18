@@ -80,14 +80,14 @@ export default function PetListItem({ pet, dateFormat = 'en', onOpenMore, onTogg
       }}
       className={`p-3 rounded-2xl flex items-center justify-between gap-3 cursor-pointer select-none active:scale-[0.985] shadow-2xs focus-visible:ring-2 focus-visible:ring-paw-500 outline-none ${
         isDeceased
-          ? 'card-deceased-transition bg-gradient-to-r from-sky-50/90 via-indigo-50/40 to-slate-50 border border-sky-200/80 shadow-[0_2px_12px_rgba(56,189,248,0.1)]'
+          ? 'card-deceased-transition bg-slate-50/90 border border-slate-200/80'
           : 'card-alive-transition bg-white border border-slate-200/80 hover:border-paw-300'
       }`}
     >
       <div className="flex items-center gap-3 min-w-0 flex-1">
         {/* Avatar thumbnail */}
         <div className={`relative w-14 h-14 rounded-2xl overflow-hidden bg-slate-900 flex-shrink-0 shadow-xs group ${
-          isDeceased ? 'ring-2 ring-sky-200/80 shadow-[0_0_12px_rgba(186,230,253,0.35)]' : ''
+          isDeceased ? 'ring-2 ring-slate-300' : ''
         }`}>
           {(pet.avatarThumb || pet.avatar) ? (
             <img 
@@ -152,19 +152,19 @@ export default function PetListItem({ pet, dateFormat = 'en', onOpenMore, onTogg
       {/* Right side: Single-line Human Equivalent / Memorial Lifespan Pill */}
       <div className="flex items-center gap-2 flex-shrink-0">
         {!isDeceased ? (
-          <div className="bg-amber-50/90 border border-amber-200/70 rounded-full px-3 py-1 flex items-center gap-1.5 shadow-2xs whitespace-nowrap">
-            <FontAwesomeIcon icon={getHumanAgeIcon(humanAge)} className="text-amber-500 text-[10px]" />
-            <span className="text-xs font-bold text-amber-900 tabular-nums">
-              ~{humanAge} <span className="font-semibold text-amber-700/90 text-[11px] font-sans">human yrs</span>
+          <div className="bg-stone-50 border border-stone-200/80 rounded-full px-2.5 py-1 flex items-center gap-1.5 shadow-2xs whitespace-nowrap">
+            <FontAwesomeIcon icon={getHumanAgeIcon(humanAge)} className="text-stone-500 text-[10px]" />
+            <span className="text-xs font-medium text-stone-800 tabular-nums">
+              ~{humanAge} <span className="font-normal text-stone-500 text-[11px] font-sans">human yrs</span>
             </span>
           </div>
         ) : (
           <div 
             title="จากเราไปสู่ดาวแมวแล้วนานแค่ไหน"
-            className="bg-gradient-to-r from-sky-50 via-amber-50/70 to-indigo-50/80 border border-sky-200/80 rounded-full px-3 py-1 flex items-center gap-1.5 shadow-2xs whitespace-nowrap"
+            className="bg-slate-100/90 border border-slate-200/80 rounded-full px-2.5 py-1 flex items-center gap-1.5 shadow-2xs whitespace-nowrap"
           >
-            <FontAwesomeIcon icon={faRainbow} className="text-amber-500 text-[10px]" />
-            <span className="text-xs font-bold text-slate-700 tabular-nums">
+            <FontAwesomeIcon icon={faRainbow} className="text-slate-400 text-[10px]" />
+            <span className="text-xs font-medium text-slate-700 tabular-nums">
               {timeSincePassing ? `${timeSincePassing.years}y ${timeSincePassing.months}m ${timeSincePassing.days}d` : ''}
             </span>
           </div>

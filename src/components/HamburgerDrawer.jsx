@@ -128,17 +128,17 @@ export default function HamburgerDrawer({
 
               {/* Quick Stats Pill */}
               <div className="flex items-center gap-1.5 text-xs">
-                <span className="bg-white/20 px-2 py-0.5 rounded-full font-semibold inline-flex items-center gap-1">
+                <span className="bg-black/15 text-white/95 px-2 py-0.5 rounded-full font-medium inline-flex items-center gap-1">
                   <FontAwesomeIcon icon={faPaw} className="text-[10px]" />
                   <span>{totalPets}</span>
                 </span>
-                <span className="bg-emerald-400/30 px-2 py-0.5 rounded-full font-semibold inline-flex items-center gap-1">
-                  <FontAwesomeIcon icon={faSeedling} className="text-[10px] text-emerald-100" />
+                <span className="bg-black/15 text-white/95 px-2 py-0.5 rounded-full font-medium inline-flex items-center gap-1">
+                  <FontAwesomeIcon icon={faSeedling} className="text-[10px]" />
                   <span>{aliveCount}</span>
                 </span>
                 {deceasedCount > 0 && (
-                  <span className="bg-sky-400/30 px-2 py-0.5 rounded-full font-semibold inline-flex items-center gap-1">
-                    <FontAwesomeIcon icon={faRainbow} className="text-[10px] text-amber-200" />
+                  <span className="bg-black/15 text-white/95 px-2 py-0.5 rounded-full font-medium inline-flex items-center gap-1">
+                    <FontAwesomeIcon icon={faRainbow} className="text-[10px]" />
                     <span>{deceasedCount}</span>
                   </span>
                 )}
