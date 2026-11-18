@@ -132,9 +132,9 @@ export default function PetListItem({ pet, dateFormat = 'en', onOpenMore, onTogg
           </div>
 
           {/* Typo Age: 8y 6m 15d */}
-          <div className="flex items-baseline gap-1 font-mitr font-semibold tracking-tight text-xs text-slate-600 mt-0.5">
+          <div className="flex items-baseline gap-1 font-mitr font-semibold tracking-tight text-xs text-slate-700 mt-0.5">
             {age.years > 0 && (
-              <span className={`${isDeceased ? 'text-sky-800' : 'text-paw-600'} text-sm`}>
+              <span className={isDeceased ? 'text-sky-800' : 'text-paw-600'}>
                 {age.years}<span className={`text-[10px] font-sans font-normal lowercase ${isDeceased ? 'text-sky-400' : 'text-paw-400'}`}>y</span>
               </span>
             )}

@@ -301,17 +301,17 @@ export default function PetDetailModal({ pet, allPets = [], dateFormat = 'en', i
                 <FontAwesomeIcon icon={isDeceased ? faRainbow : getHumanAgeIcon(humanAge)} className="text-xs sm:text-sm" />
               </div>
               <div className="min-w-0 flex-1">
-                <div className="text-sm sm:text-base font-sans font-bold text-slate-800 truncate inline-flex items-baseline leading-none">
+                <div className="text-xl sm:text-2xl font-mitr font-semibold tracking-tight text-slate-800 truncate inline-flex items-baseline leading-none">
                   {age.years > 0 && (
-                    <span className="text-paw-600 font-mitr font-semibold text-xl sm:text-2xl inline-flex items-baseline mr-1">
-                      {age.years}<span className="text-[9px] sm:text-[10px] font-sans font-normal text-paw-400 lowercase ml-0.5">y</span>
+                    <span className="text-paw-600 inline-flex items-baseline mr-1">
+                      {age.years}<span className="text-[10px] sm:text-[11px] font-sans font-normal text-paw-400 lowercase ml-0.5">y</span>
                     </span>
                   )}
-                  <span className="text-slate-800 font-mitr font-semibold inline-flex items-baseline mr-1">
-                    {age.months || 0}<span className="text-[9px] sm:text-[10px] font-sans font-normal text-slate-400 lowercase ml-0.5">m</span>
+                  <span className="text-slate-800 inline-flex items-baseline mr-1">
+                    {age.months || 0}<span className="text-[10px] sm:text-[11px] font-sans font-normal text-slate-400 lowercase ml-0.5">m</span>
                   </span>
-                  <span className="text-slate-800 font-mitr font-semibold inline-flex items-baseline">
-                    {age.days}<span className="text-[9px] sm:text-[10px] font-sans font-normal text-slate-400 lowercase ml-0.5">d</span>
+                  <span className="text-slate-800 inline-flex items-baseline">
+                    {age.days}<span className="text-[10px] sm:text-[11px] font-sans font-normal text-slate-400 lowercase ml-0.5">d</span>
                   </span>
                 </div>
                 <div className="text-[10px] sm:text-[11px] text-slate-500 mt-1 font-sans font-semibold truncate">
