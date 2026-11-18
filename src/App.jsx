@@ -993,7 +993,10 @@ export default function App() {
                   /* 2. Two Columns Grid */
                   <div className="grid grid-cols-2 gap-3 w-full max-w-3xl mx-auto animate-fadeIn">
                     {filteredPets.map(pet => (
-                      <div key={pet.id} className="min-w-0 w-full">
+                      <div 
+                        key={pet.id} 
+                        className={`min-w-0 w-full ${pet.status === 'deceased' ? 'relative z-20' : 'relative z-0'}`}
+                      >
                         <PetCard
                           pet={pet}
                           compact={true}
@@ -1023,7 +1026,10 @@ export default function App() {
                   /* 1. One Column Full Hero Card */
                   <div className="grid grid-cols-1 gap-4 w-full max-w-lg mx-auto animate-fadeIn">
                     {filteredPets.map(pet => (
-                      <div key={pet.id} className="min-w-0 w-full">
+                      <div 
+                        key={pet.id} 
+                        className={`min-w-0 w-full ${pet.status === 'deceased' ? 'relative z-20' : 'relative z-0'}`}
+                      >
                         <PetCard
                           pet={pet}
                           compact={false}

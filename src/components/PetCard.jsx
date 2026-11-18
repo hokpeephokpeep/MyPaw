@@ -225,7 +225,7 @@ export default function PetCard({ pet, allPets = [], dateFormat = 'en', compact 
         onOpenMore(pet);
       }}
       data-multi-photo={hasMultiplePhotos ? "true" : undefined}
-      className={`relative ${isDeceased ? 'overflow-visible' : 'overflow-hidden'} ${
+      className={`relative ${isDeceased ? 'overflow-visible z-20' : 'overflow-hidden z-0'} ${
         compact ? 'rounded-2xl' : 'rounded-[32px]'
       } select-none touch-manipulation cursor-pointer group/card focus-visible:ring-2 focus-visible:ring-paw-500 outline-none ${
         isDeceased ? 'card-deceased-transition' : 'card-alive-transition'
