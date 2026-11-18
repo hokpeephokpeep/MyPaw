@@ -85,17 +85,41 @@
       "skillPath": "skills/learn-taste/SKILL.md",
       "computedHash": "5d0bf0e586453199d8201550d9621a1aac864c6969dfca8fc627cba3759d7ede"
     },
+    "lucide-icons": {
+      "source": "aksuharun/skills",
+      "sourceType": "github",
+      "skillPath": "lucide-icons/SKILL.md",
+      "computedHash": "ece26f66323183047496bbf3fef1c2487629d60917e8e43fe710d8b3dc54975a"
+    },
+    "magic-ui": {
+      "source": "magicuidesign/magicui",
+      "sourceType": "github",
+      "skillPath": "skills/magic-ui/SKILL.md",
+      "computedHash": "6ff45330fc3b3c0901cc3d9d6febacef519dc477d36c1aaabe73e4879c4833c9"
+    },
     "mobile-native": {
       "source": "emilkowalski/skills",
       "sourceType": "github",
       "skillPath": "skills/mobile-native/SKILL.md",
       "computedHash": "5a848356e54c9aea29faade0d39589ff5ffc609207c403706795783b41d670b4"
     },
+    "penpot-uiux-design": {
+      "source": "github/awesome-copilot",
+      "sourceType": "github",
+      "skillPath": "skills/penpot-uiux-design/SKILL.md",
+      "computedHash": "cd29e08bb7d2d4b9212582bcd9b70823619fbc6397078b8ba853962054ba4230"
+    },
     "pick-ui-library": {
       "source": "emilkowalski/skills",
       "sourceType": "github",
       "skillPath": "skills/pick-ui-library/SKILL.md",
       "computedHash": "937cc20ce6b3a3b82b4a2584958e65ab576f5739b8b57b1f8aacaccab4fd5f3d"
+    },
+    "playwright-best-practices": {
+      "source": "currents-dev/playwright-best-practices-skill",
+      "sourceType": "github",
+      "skillPath": "playwright-best-practices/SKILL.md",
+      "computedHash": "1c2babf492719b9fbfec4221df88e463b133ffb3983556073540f73427baa92e"
     },
     "prototype": {
       "source": "emilkowalski/skills",
@@ -114,6 +138,30 @@
       "sourceType": "github",
       "skillPath": "skills/review-animations/SKILL.md",
       "computedHash": "60049d4d140565fe2fd22c240a6ba921069cf88c3460d7561ac772d11145ec9f"
+    },
+    "shadcn": {
+      "source": "shadcn-ui/ui",
+      "sourceType": "github",
+      "skillPath": "skills/shadcn/SKILL.md",
+      "computedHash": "1012a895f621e53c9d87779d632eecc756be241d02ddca121da5337198718983"
+    },
+    "storybook": {
+      "source": "dalestudy/skills",
+      "sourceType": "github",
+      "skillPath": "skills/storybook/SKILL.md",
+      "computedHash": "e387b1cf0c09f914d881475a49e3ec3ec34ea6ea913139a87187eaa016735771"
+    },
+    "tailwind-css-patterns": {
+      "source": "giuseppe-trisciuoglio/developer-kit",
+      "sourceType": "github",
+      "skillPath": "plugins/developer-kit-typescript/skills/tailwind-css-patterns/SKILL.md",
+      "computedHash": "2fa1b2d4e0bc020dcbaa1e65af6f7ba75715116686e0fd663a4b268c8ace22d4"
+    },
+    "ui-ux-pro-max": {
+      "source": "nextlevelbuilder/ui-ux-pro-max-skill",
+      "sourceType": "github",
+      "skillPath": ".claude/skills/ui-ux-pro-max/SKILL.md",
+      "computedHash": "1a92d8121b8dd0768ef18f4154f0cb1b36be2de31f563858db502ed77c7e986a"
     },
     "vercel-composition-patterns": {
       "source": "vercel-labs/agent-skills",
