@@ -133,8 +133,9 @@ export default function QuickNotificationDropdown({
         ref={dropdownRef}
         role="dialog"
         aria-label="การแจ้งเตือนด่วน"
-        className="fixed right-3 top-16 w-[calc(100vw-1.5rem)] max-w-sm bg-white rounded-3xl shadow-2xl border border-slate-200/90 z-50 overflow-hidden flex flex-col origin-top-right transition-all animate-in fade-in zoom-in-95 duration-200 ease-out"
+        className="fixed right-3 w-[calc(100vw-1.5rem)] max-w-sm bg-white rounded-3xl shadow-2xl border border-slate-200/90 z-50 overflow-hidden flex flex-col origin-top-right transition-all animate-in fade-in zoom-in-95 duration-200 ease-out"
         style={{
+          top: 'calc(var(--safe-top, 0px) + 3.75rem)',
           boxShadow: '0 25px 50px -12px rgba(15, 23, 42, 0.35), 0 0 1px 1px rgba(0, 0, 0, 0.08)'
         }}
       >

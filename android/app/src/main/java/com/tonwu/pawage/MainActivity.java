@@ -7,9 +7,12 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.util.Base64;
 import android.util.Log;
+import android.webkit.JavascriptInterface;
 import android.webkit.WebView;
 import androidx.activity.OnBackPressedCallback;
 import androidx.core.content.IntentCompat;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import com.getcapacitor.BridgeActivity;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
@@ -22,6 +25,33 @@ import org.json.JSONArray;
 public class MainActivity extends BridgeActivity {
     private static final String TAG = "MyPawMainActivity";
     private final ExecutorService imageProcessingExecutor = Executors.newSingleThreadExecutor();
+    private volatile int safeTopDp = 0;
+    private volatile int safeBottomDp = 0;
+
+    public class SafeAreaBridge {
+        @JavascriptInterface
+        public int getStatusBarHeightDp() {
+            return safeTopDp;
+        }
+
+        @JavascriptInterface
+        public int getNavigationBarHeightDp() {
+            return safeBottomDp;
+        }
+    }
+
+    private void applySafeAreaToWebView() {
+        if (getBridge() != null && getBridge().getWebView() != null && (safeTopDp > 0 || safeBottomDp > 0)) {
+            String js = String.format(
+                "(function() {" +
+                "  document.documentElement.style.setProperty('--safe-area-inset-top', '%dpx');" +
+                "  document.documentElement.style.setProperty('--safe-area-inset-bottom', '%dpx');" +
+                "})();",
+                safeTopDp, safeBottomDp
+            );
+            getBridge().getWebView().post(() -> getBridge().getWebView().evaluateJavascript(js, null));
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -29,7 +59,22 @@ public class MainActivity extends BridgeActivity {
 
         if (getBridge() != null && getBridge().getWebView() != null) {
             getBridge().getWebView().getSettings().setTextZoom(100);
+            getBridge().getWebView().addJavascriptInterface(new SafeAreaBridge(), "AndroidSafeArea");
         }
+
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(android.R.id.content), (view, windowInsets) -> {
+            androidx.core.graphics.Insets insets = windowInsets.getInsets(
+                WindowInsetsCompat.Type.statusBars() | WindowInsetsCompat.Type.displayCutout()
+            );
+            androidx.core.graphics.Insets navInsets = windowInsets.getInsets(
+                WindowInsetsCompat.Type.navigationBars()
+            );
+            float density = getResources().getDisplayMetrics().density;
+            safeTopDp = Math.round(insets.top / density);
+            safeBottomDp = Math.round(navInsets.bottom / density);
+            applySafeAreaToWebView();
+            return windowInsets;
+        });
 
         handleSharedIntent(getIntent());
 
@@ -66,6 +111,12 @@ public class MainActivity extends BridgeActivity {
         super.onNewIntent(intent);
         setIntent(intent);
         handleSharedIntent(intent);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        applySafeAreaToWebView();
     }
 
     @Override

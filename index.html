@@ -12,6 +12,22 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Mitr:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+      (function() {
+        function syncAndroidSafeArea() {
+          if (window.AndroidSafeArea) {
+            try {
+              var top = window.AndroidSafeArea.getStatusBarHeightDp();
+              var bottom = window.AndroidSafeArea.getNavigationBarHeightDp();
+              if (top > 0) document.documentElement.style.setProperty('--safe-area-inset-top', top + 'px');
+              if (bottom > 0) document.documentElement.style.setProperty('--safe-area-inset-bottom', bottom + 'px');
+            } catch (e) {}
+          }
+        }
+        syncAndroidSafeArea();
+        window.addEventListener('DOMContentLoaded', syncAndroidSafeArea);
+      })();
+    </script>
   </head>
   <body class="bg-slate-50">
     <div id="root">

@@ -120,7 +120,7 @@ export default function HamburgerDrawer({
       >
         <div>
           {/* Header with Title and Unified Badges */}
-          <div className="px-5 pt-4 pb-3.5 bg-gradient-to-br from-paw-500 to-amber-500 text-white">
+          <div className="px-5 pt-[calc(var(--safe-top,0px)+1rem)] pb-3.5 bg-gradient-to-br from-paw-500 to-amber-500 text-white">
             <div className="flex items-center justify-between gap-2">
               <h2 className="font-mitr text-2xl font-semibold tracking-normal flex items-center leading-none">
                 <span>MyP</span>
