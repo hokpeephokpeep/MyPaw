@@ -205,7 +205,7 @@ export default function HamburgerDrawer({
                     <div className="w-7 h-7 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center flex-shrink-0">
                       <FontAwesomeIcon icon={faBell} className="text-xs" />
                     </div>
-                    <span className="truncate">การแจ้งเตือน</span>
+                    <span className="truncate">แจ้งเตือน</span>
                   </div>
                   {unreadNotificationsCount > 0 && (
                     <span className="text-[10px] bg-amber-500 px-1.5 py-0.5 rounded-full text-white font-bold flex-shrink-0">
