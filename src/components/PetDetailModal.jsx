@@ -307,11 +307,9 @@ export default function PetDetailModal({ pet, allPets = [], dateFormat = 'en', i
                       {age.years}<span className="text-[9px] sm:text-[10px] font-sans font-normal text-paw-400 lowercase ml-0.5">y</span>
                     </span>
                   )}
-                  {age.months > 0 && (
-                    <span className="text-slate-800 font-sans font-bold inline-flex items-baseline mr-1">
-                      {age.months}<span className="text-[9px] sm:text-[10px] font-sans font-normal text-slate-400 lowercase ml-0.5">m</span>
-                    </span>
-                  )}
+                  <span className="text-slate-800 font-sans font-bold inline-flex items-baseline mr-1">
+                    {age.months || 0}<span className="text-[9px] sm:text-[10px] font-sans font-normal text-slate-400 lowercase ml-0.5">m</span>
+                  </span>
                   <span className="text-slate-800 font-sans font-bold inline-flex items-baseline">
                     {age.days}<span className="text-[9px] sm:text-[10px] font-sans font-normal text-slate-400 lowercase ml-0.5">d</span>
                   </span>

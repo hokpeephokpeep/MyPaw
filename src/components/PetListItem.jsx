@@ -138,11 +138,9 @@ export default function PetListItem({ pet, dateFormat = 'en', onOpenMore, onTogg
                 {age.years}<span className={`text-[10px] lowercase font-mono ${isDeceased ? 'text-sky-400' : 'text-paw-400'}`}>y</span>
               </span>
             )}
-            {age.months > 0 && (
-              <span>
-                {age.months}<span className="text-[10px] text-slate-400 lowercase font-mono">m</span>
-              </span>
-            )}
+            <span>
+              {age.months || 0}<span className="text-[10px] text-slate-400 lowercase font-mono">m</span>
+            </span>
             <span>
               {age.days}<span className="text-[10px] text-slate-400 lowercase font-mono">d</span>
             </span>

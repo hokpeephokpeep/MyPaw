@@ -444,12 +444,10 @@ export default function PetCard({ pet, allPets = [], dateFormat = 'en', compact 
                   }`}>y</span>
                 </span>
               )}
-              {age.months > 0 && (
-                <span className={`${compact ? 'text-sm sm:text-base' : 'text-xl'} font-sans font-bold tracking-tight text-slate-800 tabular-nums inline-flex items-baseline leading-none`}>
-                  {age.months}
-                  <span className={`${compact ? 'text-[8px] sm:text-[9px] mr-0.5' : 'text-[11px] mr-1'} font-sans font-normal text-slate-400 lowercase ml-[1px] select-none`}>m</span>
-                </span>
-              )}
+              <span className={`${compact ? 'text-sm sm:text-base' : 'text-xl'} font-sans font-bold tracking-tight text-slate-800 tabular-nums inline-flex items-baseline leading-none`}>
+                {age.months || 0}
+                <span className={`${compact ? 'text-[8px] sm:text-[9px] mr-0.5' : 'text-[11px] mr-1'} font-sans font-normal text-slate-400 lowercase ml-[1px] select-none`}>m</span>
+              </span>
               <span className={`${compact ? 'text-sm sm:text-base' : 'text-xl'} font-sans font-bold tracking-tight text-slate-800 tabular-nums inline-flex items-baseline leading-none`}>
                 {age.days}
                 <span className={`${compact ? 'text-[8px] sm:text-[9px]' : 'text-[11px]'} font-sans font-normal text-slate-400 lowercase ml-[1px] select-none`}>d</span>
