@@ -4,7 +4,7 @@ import {
   faPlus, faDatabase, 
   faArrowDownWideShort, faFilter, faHeart, faPaw, faSitemap, faGlobe,
   faSeedling, faRainbow, faImages, faBell, faCamera,
-  faSquare, faTableCellsLarge, faList
+  faSquare, faTableCellsLarge, faList, faChevronRight
 } from '@fortawesome/free-solid-svg-icons';
 
 export default function HamburgerDrawer({ 
@@ -103,7 +103,7 @@ export default function HamburgerDrawer({
         }`}
       />
 
-      {/* Drawer Panel (Slides in from left -> Slides back out to left on close) */}
+      {/* Drawer Panel */}
       <div
         onTouchStart={handleDrawerTouchStart}
         onTouchEnd={handleDrawerTouchEnd}
@@ -117,7 +117,7 @@ export default function HamburgerDrawer({
         } overscroll-contain`}
       >
         <div>
-          {/* Header */}
+          {/* Header with Title and Unified Badges */}
           <div className="px-5 pt-4 pb-3.5 bg-gradient-to-br from-paw-500 to-amber-500 text-white">
             <div className="flex items-center justify-between gap-2">
               <h2 className="font-mitr text-2xl font-semibold tracking-normal flex items-center leading-none">
@@ -128,16 +128,16 @@ export default function HamburgerDrawer({
 
               {/* Quick Stats Pill */}
               <div className="flex items-center gap-1.5 text-xs">
-                <span className="bg-black/15 text-white/95 px-2 py-0.5 rounded-full font-medium inline-flex items-center gap-1">
+                <span className="bg-black/15 text-white/95 px-2 py-0.5 rounded-full font-medium inline-flex items-center gap-1" title="ทั้งหมด">
                   <FontAwesomeIcon icon={faPaw} className="text-[10px]" />
                   <span>{totalPets}</span>
                 </span>
-                <span className="bg-black/15 text-white/95 px-2 py-0.5 rounded-full font-medium inline-flex items-center gap-1">
+                <span className="bg-black/15 text-white/95 px-2 py-0.5 rounded-full font-medium inline-flex items-center gap-1" title="อยู่ด้วยกัน">
                   <FontAwesomeIcon icon={faSeedling} className="text-[10px]" />
                   <span>{aliveCount}</span>
                 </span>
                 {deceasedCount > 0 && (
-                  <span className="bg-black/15 text-white/95 px-2 py-0.5 rounded-full font-medium inline-flex items-center gap-1">
+                  <span className="bg-black/15 text-white/95 px-2 py-0.5 rounded-full font-medium inline-flex items-center gap-1" title="ดาวแมว">
                     <FontAwesomeIcon icon={faRainbow} className="text-[10px]" />
                     <span>{deceasedCount}</span>
                   </span>
@@ -146,233 +146,243 @@ export default function HamburgerDrawer({
             </div>
           </div>
 
-          {/* Drawer Body Controls */}
-          <div className="p-5 space-y-4">
+          {/* Drawer Body - Organized into Clear UX Sections */}
+          <div className="p-4 sm:p-5 space-y-4">
             
-            {/* 1. Primary Quick Actions Grid */}
-            <div className="grid grid-cols-2 gap-2.5">
+            {/* SECTION 1: Primary Action & Tools */}
+            <div className="space-y-2">
+              {/* Primary Call-To-Action: Add Pet */}
               <button
+                type="button"
                 onClick={() => requestClose(onAddNewPet)}
-                className="flex flex-col items-center justify-center gap-2 p-3.5 rounded-2xl bg-paw-50 hover:bg-paw-100 text-paw-700 font-bold text-xs transition-colors transition-transform duration-150 ease-out border border-paw-200/80 active:scale-95 focus-visible:ring-2 focus-visible:ring-paw-500 outline-none"
+                className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-2xl bg-gradient-to-r from-paw-500 to-amber-500 hover:from-paw-600 hover:to-amber-600 text-white font-semibold text-xs shadow-xs active:scale-[0.98] transition-all focus-visible:ring-2 focus-visible:ring-paw-500 outline-none"
               >
-                <div className="w-9 h-9 rounded-xl bg-paw-500 text-white flex items-center justify-center shadow-xs">
-                  <FontAwesomeIcon icon={faPlus} className="text-sm" />
-                </div>
-                <span>Add Pet</span>
+                <FontAwesomeIcon icon={faPlus} className="text-xs" />
+                <span>เพิ่มสัตว์เลี้ยง (Add Pet)</span>
               </button>
 
-              <button
-                onClick={() => requestClose(onOpenFamily)}
-                className="flex flex-col items-center justify-center gap-2 p-3.5 rounded-2xl bg-amber-50 hover:bg-amber-100 text-amber-900 font-bold text-xs transition-colors transition-transform duration-150 ease-out border border-amber-200/80 active:scale-95 focus-visible:ring-2 focus-visible:ring-amber-500 outline-none"
-              >
-                <div className="w-9 h-9 rounded-xl bg-amber-500 text-white flex items-center justify-center shadow-xs">
-                  <FontAwesomeIcon icon={faSitemap} className="text-sm" />
-                </div>
-                <span>Family Tree</span>
-              </button>
+              {/* 4 Feature Tools in Cohesive 2x2 Grid */}
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => requestClose(onOpenFamily)}
+                  className="flex items-center gap-2 p-2.5 rounded-2xl bg-slate-50 hover:bg-slate-100 text-slate-700 font-semibold text-xs border border-slate-200/70 transition-all active:scale-95 focus-visible:ring-2 focus-visible:ring-paw-500 outline-none"
+                >
+                  <div className="w-7 h-7 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center flex-shrink-0">
+                    <FontAwesomeIcon icon={faSitemap} className="text-xs" />
+                  </div>
+                  <span className="truncate">Family Tree</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => requestClose(onOpenScanner)}
+                  className="flex items-center gap-2 p-2.5 rounded-2xl bg-slate-50 hover:bg-slate-100 text-slate-700 font-semibold text-xs border border-slate-200/70 transition-all active:scale-95 focus-visible:ring-2 focus-visible:ring-paw-500 outline-none"
+                >
+                  <div className="w-7 h-7 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center flex-shrink-0">
+                    <FontAwesomeIcon icon={faCamera} className="text-xs" />
+                  </div>
+                  <span className="truncate">สแกนเอกสาร</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => requestClose(onOpenSharedImport)}
+                  className="flex items-center gap-2 p-2.5 rounded-2xl bg-slate-50 hover:bg-slate-100 text-slate-700 font-semibold text-xs border border-slate-200/70 transition-all active:scale-95 focus-visible:ring-2 focus-visible:ring-paw-500 outline-none"
+                >
+                  <div className="w-7 h-7 rounded-xl bg-paw-500/10 text-paw-600 flex items-center justify-center flex-shrink-0">
+                    <FontAwesomeIcon icon={faImages} className="text-xs" />
+                  </div>
+                  <span className="truncate">นำเข้ารูปภาพ</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => requestClose(onOpenNotifications)}
+                  className="flex items-center justify-between gap-1.5 p-2.5 rounded-2xl bg-slate-50 hover:bg-slate-100 text-slate-700 font-semibold text-xs border border-slate-200/70 transition-all active:scale-95 focus-visible:ring-2 focus-visible:ring-paw-500 outline-none"
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className="w-7 h-7 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center flex-shrink-0">
+                      <FontAwesomeIcon icon={faBell} className="text-xs" />
+                    </div>
+                    <span className="truncate">การแจ้งเตือน</span>
+                  </div>
+                  {unreadNotificationsCount > 0 && (
+                    <span className="text-[10px] bg-amber-500 px-1.5 py-0.5 rounded-full text-white font-bold flex-shrink-0">
+                      {unreadNotificationsCount}
+                    </span>
+                  )}
+                </button>
+              </div>
             </div>
 
-            {/* Quick Action: Notification Center */}
-            <button
-              type="button"
-              onClick={() => requestClose(onOpenNotifications)}
-              className="w-full flex items-center justify-between p-3 rounded-2xl bg-amber-50/70 hover:bg-amber-100/70 text-slate-800 font-bold text-xs transition-colors transition-transform duration-150 ease-out border border-amber-200/80 active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-amber-500 outline-none shadow-2xs"
-            >
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-amber-500 text-white flex items-center justify-center shadow-xs">
-                  <FontAwesomeIcon icon={faBell} className="text-xs" />
-                </div>
-                <span className="font-bold text-xs text-slate-800">ศูนย์แจ้งเตือน</span>
-              </div>
-              {unreadNotificationsCount > 0 && (
-                <span className="text-[10px] bg-amber-500 px-2 py-0.5 rounded-full text-white font-semibold shadow-2xs">
-                  {unreadNotificationsCount}
-                </span>
-              )}
-            </button>
+            <hr className="border-slate-100" />
 
-            {/* Quick Share / Import Photos Button */}
-            <button
-              type="button"
-              onClick={() => requestClose(onOpenSharedImport)}
-              className="w-full flex items-center justify-between p-3 rounded-2xl bg-gradient-to-r from-paw-50 to-orange-50 hover:from-paw-100/70 hover:to-orange-100/70 text-slate-800 font-bold text-xs transition-colors transition-transform duration-150 ease-out border border-paw-200/80 active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-paw-500 outline-none shadow-2xs"
-            >
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-paw-500 text-white flex items-center justify-center shadow-xs">
-                  <FontAwesomeIcon icon={faImages} className="text-xs" />
-                </div>
-                <span className="font-bold text-xs text-slate-800">นำเข้ารูปภาพ</span>
+            {/* SECTION 2: Display & Filter */}
+            <div className="space-y-2.5">
+              <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider px-1">
+                การแสดงผล (Display)
               </div>
-            </button>
 
-            {/* Quick Action: Document Scanner (OCR) */}
-            <button
-              type="button"
-              onClick={() => requestClose(onOpenScanner)}
-              className="w-full flex items-center justify-between p-3 rounded-2xl bg-gradient-to-r from-emerald-50 to-teal-50 hover:from-emerald-100/70 hover:to-teal-100/70 text-slate-800 font-bold text-xs transition-colors transition-transform duration-150 ease-out border border-emerald-200/80 active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-emerald-500 outline-none shadow-2xs"
-            >
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-emerald-500 text-white flex items-center justify-center shadow-xs">
-                  <FontAwesomeIcon icon={faCamera} className="text-xs" />
-                </div>
-                <span className="font-bold text-xs text-slate-800">สแกนเอกสาร</span>
-              </div>
-            </button>
-
-            {/* 2. Filter Options */}
-            <div className="space-y-1.5">
+              {/* Status Filter Tab */}
               <div className="grid grid-cols-3 gap-1 bg-slate-100 p-1 rounded-2xl">
                 <button
+                  type="button"
                   onClick={() => setActiveTab('all')}
-                  className={`py-2 px-1 rounded-xl text-xs font-bold transition-colors duration-150 ease-out text-center active:scale-95 focus-visible:ring-2 focus-visible:ring-paw-500 outline-none ${
+                  className={`py-1.5 px-1 rounded-xl text-xs font-semibold transition-all text-center active:scale-95 focus-visible:ring-2 focus-visible:ring-paw-500 outline-none ${
                     activeTab === 'all'
                       ? 'bg-white text-slate-900 shadow-xs'
                       : 'text-slate-500 hover:text-slate-800'
                   }`}
                 >
-                  All
+                  ทั้งหมด
                 </button>
                 <button
+                  type="button"
                   onClick={() => setActiveTab('alive')}
-                  className={`py-2 px-1 rounded-xl text-xs font-bold transition-colors duration-150 ease-out text-center flex items-center justify-center gap-1 active:scale-95 focus-visible:ring-2 focus-visible:ring-paw-500 outline-none ${
+                  className={`py-1.5 px-1 rounded-xl text-xs font-semibold transition-all text-center flex items-center justify-center gap-1 active:scale-95 focus-visible:ring-2 focus-visible:ring-paw-500 outline-none ${
                     activeTab === 'alive'
                       ? 'bg-white text-emerald-700 shadow-xs'
                       : 'text-slate-500 hover:text-slate-800'
                   }`}
                 >
                   <FontAwesomeIcon icon={faSeedling} className="text-[10px]" />
-                  <span>With Us</span>
+                  <span>อยู่ด้วยกัน</span>
                 </button>
                 <button
+                  type="button"
                   onClick={() => setActiveTab('deceased')}
-                  className={`py-2 px-1 rounded-xl text-xs font-bold transition-colors duration-150 ease-out text-center flex items-center justify-center gap-1 active:scale-95 focus-visible:ring-2 focus-visible:ring-paw-500 outline-none ${
+                  className={`py-1.5 px-1 rounded-xl text-xs font-semibold transition-all text-center flex items-center justify-center gap-1 active:scale-95 focus-visible:ring-2 focus-visible:ring-paw-500 outline-none ${
                     activeTab === 'deceased'
                       ? 'bg-white text-sky-700 shadow-xs'
                       : 'text-slate-500 hover:text-slate-800'
                   }`}
                 >
                   <FontAwesomeIcon icon={faRainbow} className="text-[10px]" />
-                  <span>Memorial</span>
+                  <span>ดาวแมว</span>
                 </button>
               </div>
-            </div>
 
-            {/* 4. Sort Options */}
-            <div className="relative">
-              <FontAwesomeIcon icon={faArrowDownWideShort} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none" />
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-                className="w-full py-2.5 pl-9 pr-3.5 rounded-2xl bg-slate-100 border border-slate-200 text-xs font-semibold text-slate-700 focus:bg-white focus:outline-hidden cursor-pointer"
-              >
-                <option value="age_desc">Oldest First</option>
-                <option value="age_asc">Youngest First</option>
-                <option value="bday_near">Upcoming Birthday</option>
-              </select>
-            </div>
+              {/* Sort By & View Mode in Harmonious Row */}
+              <div className="flex items-center gap-2">
+                {/* Sort Dropdown */}
+                <div className="relative flex-1 min-w-0">
+                  <FontAwesomeIcon icon={faArrowDownWideShort} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none" />
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    className="w-full py-2 pl-8 pr-3 rounded-2xl bg-slate-100 border border-slate-200/80 text-xs font-semibold text-slate-700 focus:bg-white focus:outline-hidden cursor-pointer"
+                  >
+                    <option value="age_desc">อายุมากสุด</option>
+                    <option value="age_asc">อายุน้อยสุด</option>
+                    <option value="bday_near">ใกล้วันเกิด</option>
+                  </select>
+                </div>
 
-            {/* 4.5 Clean Minimalist View Mode Switcher Capsule (Exact Pill Design) */}
-            <div className="flex justify-center pt-0.5 pb-0.5">
-              <div className="relative inline-grid grid-cols-3 items-center bg-slate-100/95 p-1 rounded-full border border-slate-200/70 shadow-2xs">
-                {/* Sliding Active Circle Indicator */}
-                <span
-                  aria-hidden="true"
-                  style={{
-                    transform:
-                      viewMode === '1col'
-                        ? 'translateX(0%)'
-                        : viewMode === '2col'
-                          ? 'translateX(100%)'
-                          : 'translateX(200%)',
-                    transition: 'transform 220ms cubic-bezier(0.16, 1, 0.3, 1)'
-                  }}
-                  className="pointer-events-none absolute top-1 bottom-1 left-1 w-[36px] rounded-full bg-white shadow-xs"
-                />
+                {/* View Mode Switcher Capsule */}
+                <div className="relative inline-grid grid-cols-3 items-center bg-slate-100 p-1 rounded-2xl border border-slate-200/70 shadow-2xs flex-shrink-0">
+                  <span
+                    aria-hidden="true"
+                    style={{
+                      transform:
+                        viewMode === '1col'
+                          ? 'translateX(0%)'
+                          : viewMode === '2col'
+                            ? 'translateX(100%)'
+                            : 'translateX(200%)',
+                      transition: 'transform 220ms cubic-bezier(0.16, 1, 0.3, 1)'
+                    }}
+                    className="pointer-events-none absolute top-1 bottom-1 left-1 w-[30px] rounded-xl bg-white shadow-xs"
+                  />
 
-                <button
-                  type="button"
-                  onClick={() => onSetViewMode?.('1col')}
-                  className={`relative z-10 w-[36px] h-[36px] rounded-full flex items-center justify-center transition-colors duration-150 active:scale-95 outline-none ${
-                    viewMode === '1col'
-                      ? 'text-paw-600'
-                      : 'text-slate-400 hover:text-slate-600'
-                  }`}
-                  title="1 Column (Large Hero)"
-                  aria-label="1 Column"
-                >
-                  <FontAwesomeIcon icon={faSquare} className="text-sm" />
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => onSetViewMode?.('1col')}
+                    className={`relative z-10 w-[30px] h-[28px] rounded-xl flex items-center justify-center transition-colors duration-150 active:scale-95 outline-none ${
+                      viewMode === '1col' ? 'text-paw-600' : 'text-slate-400 hover:text-slate-600'
+                    }`}
+                    title="1 Column (Large Hero)"
+                    aria-label="1 Column"
+                  >
+                    <FontAwesomeIcon icon={faSquare} className="text-xs" />
+                  </button>
 
-                <button
-                  type="button"
-                  onClick={() => onSetViewMode?.('2col')}
-                  className={`relative z-10 w-[36px] h-[36px] rounded-full flex items-center justify-center transition-colors duration-150 active:scale-95 outline-none ${
-                    viewMode === '2col'
-                      ? 'text-paw-600'
-                      : 'text-slate-400 hover:text-slate-600'
-                  }`}
-                  title="2 Columns (Grid)"
-                  aria-label="2 Columns"
-                >
-                  <FontAwesomeIcon icon={faTableCellsLarge} className="text-sm" />
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => onSetViewMode?.('2col')}
+                    className={`relative z-10 w-[30px] h-[28px] rounded-xl flex items-center justify-center transition-colors duration-150 active:scale-95 outline-none ${
+                      viewMode === '2col' ? 'text-paw-600' : 'text-slate-400 hover:text-slate-600'
+                    }`}
+                    title="2 Columns (Grid)"
+                    aria-label="2 Columns"
+                  >
+                    <FontAwesomeIcon icon={faTableCellsLarge} className="text-xs" />
+                  </button>
 
-                <button
-                  type="button"
-                  onClick={() => onSetViewMode?.('list')}
-                  className={`relative z-10 w-[36px] h-[36px] rounded-full flex items-center justify-center transition-colors duration-150 active:scale-95 outline-none ${
-                    viewMode === 'list'
-                      ? 'text-paw-600'
-                      : 'text-slate-400 hover:text-slate-600'
-                  }`}
-                  title="Card List View"
-                  aria-label="Card List View"
-                >
-                  <FontAwesomeIcon icon={faList} className="text-sm" />
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => onSetViewMode?.('list')}
+                    className={`relative z-10 w-[30px] h-[28px] rounded-xl flex items-center justify-center transition-colors duration-150 active:scale-95 outline-none ${
+                      viewMode === 'list' ? 'text-paw-600' : 'text-slate-400 hover:text-slate-600'
+                    }`}
+                    title="Card List View"
+                    aria-label="Card List View"
+                  >
+                    <FontAwesomeIcon icon={faList} className="text-xs" />
+                  </button>
+                </div>
               </div>
-            </div>
-
-            {/* 5. Date Format System (Default or Thai Format) */}
-            <div className="grid grid-cols-2 gap-1 bg-slate-100 p-1 rounded-2xl">
-              <button
-                type="button"
-                onClick={() => onSetDateFormat?.('en')}
-                className={`py-2 px-2 rounded-xl text-xs font-bold transition-colors duration-150 ease-out flex items-center justify-center gap-1.5 active:scale-95 focus-visible:ring-2 focus-visible:ring-paw-500 outline-none ${
-                  dateFormat === 'en'
-                    ? 'bg-white text-paw-700 shadow-xs'
-                    : 'text-slate-500 hover:text-slate-800'
-                }`}
-              >
-                <FontAwesomeIcon icon={faGlobe} className="text-[10px]" />
-                <span>Default</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => onSetDateFormat?.('th')}
-                className={`py-2 px-2 rounded-xl text-xs font-bold transition-colors duration-150 ease-out flex items-center justify-center gap-1.5 active:scale-95 focus-visible:ring-2 focus-visible:ring-paw-500 outline-none ${
-                  dateFormat === 'th'
-                    ? 'bg-white text-paw-700 shadow-xs'
-                    : 'text-slate-500 hover:text-slate-800'
-                }`}
-              >
-                <FontAwesomeIcon icon={faGlobe} className="text-[10px]" />
-                <span>Thai Format</span>
-              </button>
             </div>
 
             <hr className="border-slate-100" />
 
-            {/* 6. Secondary Actions: Backup */}
-            <div className="space-y-1">
+            {/* SECTION 3: Preferences & Data */}
+            <div className="space-y-2">
+              <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider px-1">
+                การตั้งค่า (Preferences)
+              </div>
+
+              {/* Date Format Toggle */}
+              <div className="grid grid-cols-2 gap-1 bg-slate-100 p-1 rounded-2xl">
+                <button
+                  type="button"
+                  onClick={() => onSetDateFormat?.('en')}
+                  className={`py-1.5 px-2 rounded-xl text-xs font-semibold transition-all flex items-center justify-center gap-1.5 active:scale-95 focus-visible:ring-2 focus-visible:ring-paw-500 outline-none ${
+                    dateFormat === 'en'
+                      ? 'bg-white text-paw-700 shadow-xs'
+                      : 'text-slate-500 hover:text-slate-800'
+                  }`}
+                >
+                  <FontAwesomeIcon icon={faGlobe} className="text-[10px]" />
+                  <span>สากล (En)</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onSetDateFormat?.('th')}
+                  className={`py-1.5 px-2 rounded-xl text-xs font-semibold transition-all flex items-center justify-center gap-1.5 active:scale-95 focus-visible:ring-2 focus-visible:ring-paw-500 outline-none ${
+                    dateFormat === 'th'
+                      ? 'bg-white text-paw-700 shadow-xs'
+                      : 'text-slate-500 hover:text-slate-800'
+                  }`}
+                >
+                  <FontAwesomeIcon icon={faGlobe} className="text-[10px]" />
+                  <span>ไทย (Th)</span>
+                </button>
+              </div>
+
+              {/* Backup & Restore Action Row */}
               <button
+                type="button"
                 onClick={() => requestClose(onOpenBackup)}
-                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl hover:bg-slate-50 text-slate-700 font-semibold text-xs transition-colors transition-transform duration-150 [transition-timing-function:var(--ease-out)] active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-paw-500 outline-none"
+                className="w-full flex items-center justify-between p-2.5 rounded-2xl bg-slate-50 hover:bg-slate-100 text-slate-700 font-semibold text-xs border border-slate-200/70 transition-all active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-paw-500 outline-none"
               >
-                <div className="w-7 h-7 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center">
-                  <FontAwesomeIcon icon={faDatabase} className="text-xs" />
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-xl bg-slate-200/70 text-slate-700 flex items-center justify-center">
+                    <FontAwesomeIcon icon={faDatabase} className="text-xs" />
+                  </div>
+                  <span>สำรองและกู้คืนข้อมูล (Backup)</span>
                 </div>
-                <span>Backup & Restore</span>
+                <FontAwesomeIcon icon={faChevronRight} className="text-slate-400 text-[10px]" />
               </button>
             </div>
 
