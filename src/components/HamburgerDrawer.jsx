@@ -119,9 +119,9 @@ export default function HamburgerDrawer({
         } overscroll-contain`}
       >
         <div>
-          {/* 🛡️ Native Status Bar Protection in Drawer */}
+          {/* 🛡️ Native Status Bar Protection in Drawer (Soft dark blue-grey slate-800) */}
           <div 
-            className="w-full bg-slate-950 flex-shrink-0 select-none pointer-events-none"
+            className="w-full bg-slate-800 flex-shrink-0 select-none pointer-events-none"
             style={{ height: 'var(--safe-top, 0px)' }}
             aria-hidden="true"
           />

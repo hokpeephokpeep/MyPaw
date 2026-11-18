@@ -877,9 +877,9 @@ export default function App() {
       {/* App Container */}
       <div className="w-full max-w-lg md:max-w-3xl h-[100dvh] max-h-[100dvh] overflow-hidden bg-slate-50 shadow-2xl flex flex-col relative pb-0">
         
-        {/* 🛡️ Native Status Bar Protection: Isolates system noti bar so app background cannot flood it */}
+        {/* 🛡️ Native Status Bar Protection: Soft dark blue-grey (slate-800) preserving noti bar without harsh contrast */}
         <div 
-          className="w-full bg-slate-950 flex-shrink-0 select-none pointer-events-none z-40 transition-[height]"
+          className="w-full bg-slate-800 flex-shrink-0 select-none pointer-events-none z-40 transition-[height]"
           style={{ height: 'var(--safe-top, 0px)' }}
           aria-hidden="true"
         />
