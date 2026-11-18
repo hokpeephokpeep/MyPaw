@@ -160,7 +160,7 @@ export default function HamburgerDrawer({
                 className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-2xl bg-gradient-to-r from-paw-500 to-amber-500 hover:from-paw-600 hover:to-amber-600 text-white font-semibold text-xs shadow-xs active:scale-[0.98] transition-all focus-visible:ring-2 focus-visible:ring-paw-500 outline-none"
               >
                 <FontAwesomeIcon icon={faPlus} className="text-xs" />
-                <span>{language === 'th' ? 'เพิ่มสัตว์เลี้ยง (Add Pet)' : 'Add New Pet'}</span>
+                <span>{t('add_pet')}</span>
               </button>
 
               {/* 4 Feature Tools in Cohesive 2x2 Grid */}
@@ -346,12 +346,11 @@ export default function HamburgerDrawer({
 
               {/* 🌐 Language Switcher (Thai vs English) */}
               <div className="space-y-1">
-                <div className="flex items-center justify-between text-xs font-semibold text-slate-700 px-1">
+                <div className="flex items-center text-xs font-semibold text-slate-700 px-1">
                   <span className="flex items-center gap-1.5">
                     <FontAwesomeIcon icon={faLanguage} className="text-paw-500 text-xs" />
                     <span>{t('language_label')}</span>
                   </span>
-                  <span className="text-[10px] text-slate-400 font-sans font-normal uppercase">{language}</span>
                 </div>
                 <div className="grid grid-cols-2 gap-1 bg-slate-100 p-1 rounded-2xl">
                   <button
@@ -366,7 +365,7 @@ export default function HamburgerDrawer({
                         : 'text-slate-500 hover:text-slate-800'
                     }`}
                   >
-                    <span>🇹🇭 ไทย (TH)</span>
+                    <span>ไทย</span>
                   </button>
                   <button
                     type="button"
@@ -380,7 +379,7 @@ export default function HamburgerDrawer({
                         : 'text-slate-500 hover:text-slate-800'
                     }`}
                   >
-                    <span>🇺🇸 English (EN)</span>
+                    <span>English</span>
                   </button>
                 </div>
               </div>

@@ -877,13 +877,13 @@ export default function App() {
       {/* App Container */}
       <div className="w-full max-w-lg md:max-w-3xl h-[100dvh] max-h-[100dvh] overflow-hidden bg-slate-50 shadow-2xl flex flex-col relative pb-0">
         
-        {/* Clean Sticky App Bar (Glance Zone) */}
-        <header className="sticky top-0 z-30 flex-shrink-0 bg-white/95 backdrop-blur-md px-4 sm:px-5 py-3 border-b border-slate-200/60 flex items-center justify-between">
+        {/* Clean Sticky App Bar (Glance Zone: 56px standard mobile height, compact & perfectly balanced) */}
+        <header className="sticky top-0 z-30 flex-shrink-0 bg-white/95 backdrop-blur-md px-4 sm:px-5 py-2 sm:py-2.5 border-b border-slate-200/60 flex items-center justify-between">
           {/* Left: Hamburger Button (slides in from left) + Brand Title */}
           <div className="flex items-center gap-2.5">
             <button
               onClick={() => setIsDrawerOpen(true)}
-              className="w-10 h-10 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center active:scale-95 transition-transform transition-colors duration-150 ease-out shadow-2xs -ml-0.5 focus-visible:ring-2 focus-visible:ring-paw-500 outline-none"
+              className="w-10 h-10 aspect-square rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center active:scale-95 transition-transform transition-colors duration-150 ease-out shadow-2xs -ml-0.5 focus-visible:ring-2 focus-visible:ring-paw-500 outline-none"
               title={t('menu')}
               aria-label={t('menu')}
             >
@@ -901,7 +901,7 @@ export default function App() {
                 setIsBottomNavVisible(true);
                 resetIdleTimer(3200);
               }}
-              className="font-mitr text-2xl font-semibold text-slate-900 tracking-normal flex items-center cursor-pointer active:scale-98 transition-transform select-none"
+              className="font-mitr text-2xl font-semibold text-slate-900 tracking-normal leading-none flex items-center cursor-pointer active:scale-98 transition-transform select-none"
               title={t('scroll_top_hint')}
             >
               <span>MyP</span>
@@ -916,7 +916,7 @@ export default function App() {
             <div className="relative">
               <button
                 onClick={() => setIsNotiDropdownOpen(!isNotiDropdownOpen)}
-                className={`relative w-10 h-10 rounded-full flex items-center justify-center active:scale-95 transition-transform transition-colors duration-150 ease-out shadow-2xs border focus-visible:ring-2 focus-visible:ring-paw-500 outline-none ${
+                className={`relative w-10 h-10 aspect-square rounded-full flex items-center justify-center active:scale-95 transition-transform transition-colors duration-150 ease-out shadow-2xs border focus-visible:ring-2 focus-visible:ring-paw-500 outline-none ${
                   isNotiDropdownOpen
                     ? 'bg-paw-100 text-paw-700 border-paw-300 ring-2 ring-paw-200'
                     : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200/60'

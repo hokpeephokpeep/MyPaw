@@ -111,6 +111,8 @@ export function markAllNotificationsAsRead(ids) {
 export function generatePetNotifications(pets = [], options = {}) {
   if (!Array.isArray(pets) || pets.length === 0) return [];
 
+  const lang = options.lang || (typeof localStorage !== 'undefined' ? localStorage.getItem('mypaw_language') : 'th') || 'th';
+  const isEn = lang === 'en';
   const today = options.customDate || getTodayLocal();
   const currentYear = today.getFullYear();
   const prefs = options.prefs || getNotificationPrefs();
@@ -137,8 +139,8 @@ export function generatePetNotifications(pets = [], options = {}) {
 
         const daysUntilBday = Math.round((nextBday.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
         const newAgeYears = nextBday.getFullYear() - birth.getFullYear();
-        const thaiDayDate = getThaiDayAndDate(nextBday);
-        const diffLabel = formatRelativeDiff(daysUntilBday);
+        const thaiDayDate = getThaiDayAndDate(nextBday, lang);
+        const diffLabel = formatRelativeDiff(daysUntilBday, lang);
         const dateText = `${thaiDayDate} ${diffLabel}`;
 
         if (daysUntilBday === 0) {
@@ -151,15 +153,15 @@ export function generatePetNotifications(pets = [], options = {}) {
             urgency: 'urgent_today',
             priority: 10,
             icon: 'faCakeCandles',
-            title: `${pet.name} (วันเกิด)`,
+            title: isEn ? `${pet.name} (Birthday)` : `${pet.name} (วันเกิด)`,
             thaiDayDate,
             diffLabel,
             dateText,
             message: dateText,
-            subNote: `อายุครบ ${newAgeYears} ปี วันนี้ 🎉`,
+            subNote: isEn ? `Turns ${newAgeYears} years old today! 🎉` : `อายุครบ ${newAgeYears} ปี วันนี้ 🎉`,
             daysDiff: 0,
             actionType: 'view_pet',
-            actionLabel: 'ดูข้อมูลน้อง',
+            actionLabel: isEn ? 'View Profile' : 'ดูข้อมูลน้อง',
             timestamp: today.toISOString()
           });
         } else if (daysUntilBday > 0 && daysUntilBday <= 7) {
@@ -172,15 +174,15 @@ export function generatePetNotifications(pets = [], options = {}) {
             urgency: 'upcoming_soon',
             priority: 6,
             icon: 'faCakeCandles',
-            title: `${pet.name} (ใกล้ถึงวันเกิด)`,
+            title: isEn ? `${pet.name} (Upcoming Birthday)` : `${pet.name} (ใกล้ถึงวันเกิด)`,
             thaiDayDate,
             diffLabel,
             dateText,
             message: dateText,
-            subNote: `จะครบ ${newAgeYears} ปี`,
+            subNote: isEn ? `Turning ${newAgeYears} soon` : `จะครบ ${newAgeYears} ปี`,
             daysDiff: daysUntilBday,
             actionType: 'view_pet',
-            actionLabel: 'ดูข้อมูลน้อง',
+            actionLabel: isEn ? 'View Profile' : 'ดูข้อมูลน้อง',
             timestamp: today.toISOString()
           });
         }
@@ -197,8 +199,8 @@ export function generatePetNotifications(pets = [], options = {}) {
           const daysSinceFlea = Math.floor((today.getTime() - fleaDate.getTime()) / (1000 * 60 * 60 * 24));
           const remainingDays = 30 - daysSinceFlea;
           const dueDate = new Date(fleaDate.getFullYear(), fleaDate.getMonth(), fleaDate.getDate() + 30);
-          const thaiDayDate = getThaiDayAndDate(dueDate);
-          const diffLabel = formatRelativeDiff(remainingDays);
+          const thaiDayDate = getThaiDayAndDate(dueDate, lang);
+          const diffLabel = formatRelativeDiff(remainingDays, lang);
           const dateText = `${thaiDayDate} ${diffLabel}`;
 
           if (remainingDays < 0) {
@@ -211,15 +213,15 @@ export function generatePetNotifications(pets = [], options = {}) {
               urgency: 'urgent_today',
               priority: 9,
               icon: 'faShieldHalved',
-              title: `${pet.name} (หยดยาเห็บหมัด)`,
+              title: isEn ? `${pet.name} (Flea & Tick Due)` : `${pet.name} (หยดยาเห็บหมัด)`,
               thaiDayDate,
               diffLabel,
               dateText,
               message: dateText,
-              subNote: `หยอดล่าสุดเมื่อ ${daysSinceFlea} วันก่อน`,
+              subNote: isEn ? `Last treated ${daysSinceFlea} days ago` : `หยอดล่าสุดเมื่อ ${daysSinceFlea} วันก่อน`,
               daysDiff: remainingDays,
               actionType: 'flea_today',
-              actionLabel: 'หยดยาวันนี้แล้ว',
+              actionLabel: isEn ? 'Treated Today' : 'หยดยาวันนี้แล้ว',
               timestamp: today.toISOString()
             });
           } else if (remainingDays === 0) {
@@ -232,15 +234,15 @@ export function generatePetNotifications(pets = [], options = {}) {
               urgency: 'urgent_today',
               priority: 8,
               icon: 'faShieldHalved',
-              title: `${pet.name} (หยดยาเห็บหมัด)`,
+              title: isEn ? `${pet.name} (Flea & Tick Due)` : `${pet.name} (หยดยาเห็บหมัด)`,
               thaiDayDate,
               diffLabel,
               dateText,
               message: dateText,
-              subNote: `ครบกำหนดรอบ 30 วันแล้ว`,
+              subNote: isEn ? `30-day cycle due today` : `ครบกำหนดรอบ 30 วันแล้ว`,
               daysDiff: 0,
               actionType: 'flea_today',
-              actionLabel: 'หยดยาวันนี้แล้ว',
+              actionLabel: isEn ? 'Treated Today' : 'หยดยาวันนี้แล้ว',
               timestamp: today.toISOString()
             });
           } else if (remainingDays > 0 && remainingDays <= 3) {
@@ -253,15 +255,15 @@ export function generatePetNotifications(pets = [], options = {}) {
               urgency: 'upcoming_soon',
               priority: 5,
               icon: 'faShieldHalved',
-              title: `${pet.name} (หยดยาเห็บหมัด)`,
+              title: isEn ? `${pet.name} (Flea & Tick Due)` : `${pet.name} (หยดยาเห็บหมัด)`,
               thaiDayDate,
               diffLabel,
               dateText,
               message: dateText,
-              subNote: `หยอดล่าสุดเมื่อ ${daysSinceFlea} วันก่อน`,
+              subNote: isEn ? `Last treated ${daysSinceFlea} days ago` : `หยอดล่าสุดเมื่อ ${daysSinceFlea} วันก่อน`,
               daysDiff: remainingDays,
               actionType: 'flea_today',
-              actionLabel: 'หยดยาวันนี้แล้ว',
+              actionLabel: isEn ? 'Treated Today' : 'หยดยาวันนี้แล้ว',
               timestamp: today.toISOString()
             });
           }
@@ -279,8 +281,8 @@ export function generatePetNotifications(pets = [], options = {}) {
           const daysSinceVaccine = Math.floor((today.getTime() - vaccineDate.getTime()) / (1000 * 60 * 60 * 24));
           const remainingDays = 365 - daysSinceVaccine;
           const dueDate = new Date(vaccineDate.getFullYear(), vaccineDate.getMonth(), vaccineDate.getDate() + 365);
-          const thaiDayDate = getThaiDayAndDate(dueDate);
-          const diffLabel = formatRelativeDiff(remainingDays);
+          const thaiDayDate = getThaiDayAndDate(dueDate, lang);
+          const diffLabel = formatRelativeDiff(remainingDays, lang);
           const dateText = `${thaiDayDate} ${diffLabel}`;
 
           if (remainingDays <= 0) {
@@ -293,15 +295,15 @@ export function generatePetNotifications(pets = [], options = {}) {
               urgency: 'urgent_today',
               priority: 8,
               icon: 'faSyringe',
-              title: `${pet.name} (วัคซีนประจำปี)`,
+              title: isEn ? `${pet.name} (Annual Vaccine)` : `${pet.name} (วัคซีนประจำปี)`,
               thaiDayDate,
               diffLabel,
               dateText,
               message: dateText,
-              subNote: `ฉีดล่าสุดเมื่อ ${daysSinceVaccine} วันก่อน`,
+              subNote: isEn ? `Last shot ${daysSinceVaccine} days ago` : `ฉีดล่าสุดเมื่อ ${daysSinceVaccine} วันก่อน`,
               daysDiff: remainingDays,
               actionType: 'vaccine_today',
-              actionLabel: 'ฉีดวัคซีนวันนี้แล้ว',
+              actionLabel: isEn ? 'Vaccinated Today' : 'ฉีดวัคซีนวันนี้แล้ว',
               timestamp: today.toISOString()
             });
           } else if (remainingDays > 0 && remainingDays <= 30) {
@@ -314,15 +316,15 @@ export function generatePetNotifications(pets = [], options = {}) {
               urgency: 'upcoming_soon',
               priority: 4,
               icon: 'faSyringe',
-              title: `${pet.name} (วัคซีนประจำปี)`,
+              title: isEn ? `${pet.name} (Annual Vaccine)` : `${pet.name} (วัคซีนประจำปี)`,
               thaiDayDate,
               diffLabel,
               dateText,
               message: dateText,
-              subNote: `ฉีดล่าสุดเมื่อ ${daysSinceVaccine} วันก่อน`,
+              subNote: isEn ? `Last shot ${daysSinceVaccine} days ago` : `ฉีดล่าสุดเมื่อ ${daysSinceVaccine} วันก่อน`,
               daysDiff: remainingDays,
               actionType: 'vaccine_today',
-              actionLabel: 'ฉีดวัคซีนวันนี้แล้ว',
+              actionLabel: isEn ? 'Vaccinated Today' : 'ฉีดวัคซีนวันนี้แล้ว',
               timestamp: today.toISOString()
             });
           }
@@ -338,8 +340,8 @@ export function generatePetNotifications(pets = [], options = {}) {
         const checkupDate = parseLocalDate(pet.checkupDate);
         if (checkupDate) {
           const daysUntilCheckup = Math.round((checkupDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-          const thaiDayDate = getThaiDayAndDate(checkupDate);
-          const diffLabel = formatRelativeDiff(daysUntilCheckup);
+          const thaiDayDate = getThaiDayAndDate(checkupDate, lang);
+          const diffLabel = formatRelativeDiff(daysUntilCheckup, lang);
           const dateText = `${thaiDayDate} ${diffLabel}`;
 
           if (daysUntilCheckup === 0) {
@@ -352,15 +354,15 @@ export function generatePetNotifications(pets = [], options = {}) {
               urgency: 'urgent_today',
               priority: 9,
               icon: 'faStethoscope',
-              title: `${pet.name} (นัดสัตวแพทย์)`,
+              title: isEn ? `${pet.name} (Vet Checkup)` : `${pet.name} (นัดสัตวแพทย์)`,
               thaiDayDate,
               diffLabel,
               dateText,
               message: dateText,
-              subNote: `มีนัดตรวจสุขภาพหรือติดตามอาการวันนี้`,
+              subNote: isEn ? `Scheduled checkup or follow-up today` : `มีนัดตรวจสุขภาพหรือติดตามอาการวันนี้`,
               daysDiff: 0,
               actionType: 'view_health',
-              actionLabel: 'ดูสมุดสุขภาพ',
+              actionLabel: isEn ? 'View Health Log' : 'ดูสมุดสุขภาพ',
               timestamp: today.toISOString()
             });
           } else if (daysUntilCheckup > 0 && daysUntilCheckup <= 7) {
@@ -373,15 +375,15 @@ export function generatePetNotifications(pets = [], options = {}) {
               urgency: 'upcoming_soon',
               priority: 5,
               icon: 'faStethoscope',
-              title: `${pet.name} (นัดสัตวแพทย์)`,
+              title: isEn ? `${pet.name} (Vet Checkup)` : `${pet.name} (นัดสัตวแพทย์)`,
               thaiDayDate,
               diffLabel,
               dateText,
               message: dateText,
-              subNote: `ตรวจสุขภาพประจำปี`,
+              subNote: isEn ? `Annual health checkup` : `ตรวจสุขภาพประจำปี`,
               daysDiff: daysUntilCheckup,
               actionType: 'view_health',
-              actionLabel: 'ดูสมุดสุขภาพ',
+              actionLabel: isEn ? 'View Health Log' : 'ดูสมุดสุขภาพ',
               timestamp: today.toISOString()
             });
           }
@@ -400,8 +402,8 @@ export function generatePetNotifications(pets = [], options = {}) {
         // 100 days anniversary
         if (daysSinceDeceased === 100) {
           const memorial100Date = new Date(deceased.getFullYear(), deceased.getMonth(), deceased.getDate() + 100);
-          const thaiDayDate = getThaiDayAndDate(memorial100Date);
-          const diffLabel = `(ครบรอบ 100 วัน)`;
+          const thaiDayDate = getThaiDayAndDate(memorial100Date, lang);
+          const diffLabel = isEn ? `(100 Days Memorial)` : `(ครบรอบ 100 วัน)`;
           const dateText = `${thaiDayDate} ${diffLabel}`;
           notifications.push({
             id: `memorial-100d-${pet.id}`,
@@ -412,15 +414,15 @@ export function generatePetNotifications(pets = [], options = {}) {
             urgency: 'memorial',
             priority: 7,
             icon: 'faRainbow',
-            title: `${pet.name} (ครบรอบ 100 วัน)`,
+            title: isEn ? `${pet.name} (100 Days Memorial)` : `${pet.name} (ครบรอบ 100 วัน)`,
             thaiDayDate,
             diffLabel,
             dateText,
             message: dateText,
-            subNote: `อยู่ในความทรงจำเสมอ ✨`,
+            subNote: isEn ? `Always in our hearts ✨` : `อยู่ในความทรงจำเสมอ ✨`,
             daysDiff: 0,
             actionType: 'view_memorial',
-            actionLabel: 'ดูหน้าแห่งความทรงจำ',
+            actionLabel: isEn ? 'View Memorial' : 'ดูหน้าแห่งความทรงจำ',
             timestamp: today.toISOString()
           });
         }
@@ -430,8 +432,8 @@ export function generatePetNotifications(pets = [], options = {}) {
         const yearsPassed = today.getFullYear() - deceased.getFullYear();
         if (isSameMonthAndDay && yearsPassed >= 1) {
           const memorialYearDate = new Date(today.getFullYear(), deceased.getMonth(), deceased.getDate());
-          const thaiDayDate = getThaiDayAndDate(memorialYearDate);
-          const diffLabel = `(ครบรอบ ${yearsPassed} ปี)`;
+          const thaiDayDate = getThaiDayAndDate(memorialYearDate, lang);
+          const diffLabel = isEn ? `(${yearsPassed} Year Memorial)` : `(ครบรอบ ${yearsPassed} ปี)`;
           const dateText = `${thaiDayDate} ${diffLabel}`;
           notifications.push({
             id: `memorial-year-${pet.id}-${yearsPassed}`,
@@ -442,15 +444,15 @@ export function generatePetNotifications(pets = [], options = {}) {
             urgency: 'memorial',
             priority: 7,
             icon: 'faRainbow',
-            title: `${pet.name} (ครบรอบ ${yearsPassed} ปี)`,
+            title: isEn ? `${pet.name} (${yearsPassed} Year Memorial)` : `${pet.name} (ครบรอบ ${yearsPassed} ปี)`,
             thaiDayDate,
             diffLabel,
             dateText,
             message: dateText,
-            subNote: `คิดถึงเสมอ ✨`,
+            subNote: isEn ? `Forever remembered ✨` : `คิดถึงเสมอ ✨`,
             daysDiff: 0,
             actionType: 'view_memorial',
-            actionLabel: 'ดูหน้าแห่งความทรงจำ',
+            actionLabel: isEn ? 'View Memorial' : 'ดูหน้าแห่งความทรงจำ',
             timestamp: today.toISOString()
           });
         }

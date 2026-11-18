@@ -183,12 +183,18 @@ export function formatDateTh(dateStr) {
 }
 
 /**
- * Format Date to Thai with day-of-week prefix: e.g. "เสาร์ที่ 11 พ.ย. 2565"
+ * Format Date to Thai or English with day-of-week prefix: e.g. "เสาร์ที่ 11 พ.ย. 2565" or "Saturday, 11 Nov 2022"
  */
-export function getThaiDayAndDate(dateObj) {
+export function getThaiDayAndDate(dateObj, lang = 'th') {
   if (!dateObj) return '';
   const d = typeof dateObj === 'string' ? parseLocalDate(dateObj) : dateObj;
   if (!d || isNaN(d.getTime())) return '';
+
+  if (lang === 'en') {
+    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const enMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return `${dayNames[d.getDay()]}, ${d.getDate()} ${enMonths[d.getMonth()]} ${d.getFullYear()}`;
+  }
 
   const dayNames = [
     'อาทิตย์ที่',
@@ -208,22 +214,29 @@ export function getThaiDayAndDate(dateObj) {
   return `${dayNames[d.getDay()]} ${d.getDate()} ${thMonths[d.getMonth()]} ${d.getFullYear() + 543}`;
 }
 
+export const getLocalizedDayAndDate = getThaiDayAndDate;
+
 /**
- * Format relative difference in days: e.g. "(วันนี้)", "(อีก 3 วัน)", "(เลยกำหนด 737 วัน)"
+ * Format relative difference in days: e.g. "(วันนี้)", "(อีก 3 วัน)", "(เลยกำหนด 737 วัน)" or "(Today)", "(in 3 days)", "(737 days overdue)"
  */
-export function formatRelativeDiff(daysDiff) {
+export function formatRelativeDiff(daysDiff, lang = 'th') {
+  if (lang === 'en') {
+    if (daysDiff === 0) return '(Today)';
+    if (daysDiff > 0) return `(in ${daysDiff} ${daysDiff === 1 ? 'day' : 'days'})`;
+    return `(${Math.abs(daysDiff)} ${Math.abs(daysDiff) === 1 ? 'day' : 'days'} overdue)`;
+  }
   if (daysDiff === 0) return '(วันนี้)';
   if (daysDiff > 0) return `(อีก ${daysDiff} วัน)`;
   return `(เลยกำหนด ${Math.abs(daysDiff)} วัน)`;
 }
 
 /**
- * Combined Thai day, date, and relative diff: e.g. "เสาร์ที่ 11 พ.ย. 2565 (เลยกำหนด 737 วัน)"
+ * Combined day, date, and relative diff: e.g. "เสาร์ที่ 11 พ.ย. 2565 (เลยกำหนด 737 วัน)"
  */
-export function formatThaiDayDateWithDiff(dateObj, daysDiff) {
-  const dayDate = getThaiDayAndDate(dateObj);
+export function formatThaiDayDateWithDiff(dateObj, daysDiff, lang = 'th') {
+  const dayDate = getThaiDayAndDate(dateObj, lang);
   if (!dayDate) return '';
-  const diff = formatRelativeDiff(daysDiff);
+  const diff = formatRelativeDiff(daysDiff, lang);
   return `${dayDate} ${diff}`;
 }
 

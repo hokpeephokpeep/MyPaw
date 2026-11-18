@@ -8,8 +8,10 @@ import {
 import { calculateAge, calculateCatToHumanAge, formatDate, getLifeStage, getDaysUntilBirthday, getHumanAgeIcon } from '../utils';
 import { getPhotoSrc, getPhotoThumb } from '../imageUtils';
 import { useSheetDrag } from '../useSheetDrag';
+import { useLanguage } from '../i18n.jsx';
 
 export default function PetDetailModal({ pet, allPets = [], dateFormat = 'en', isOpen, onClose, onEdit, onOpenMemorial, onOpenHealth, onOpenFamily, onSelectPet, onViewImage }) {
+  const { language, t } = useLanguage();
   const {
     isVisible,
     activeData: activePet,
@@ -231,13 +233,13 @@ export default function PetDetailModal({ pet, allPets = [], dateFormat = 'en', i
                   isDeceased ? 'bg-sky-500/80 text-white' : 'bg-emerald-500/80 text-white'
                 }`}>
                   <FontAwesomeIcon icon={isDeceased ? faRainbow : faSeedling} className="text-[10px]" />
-                  <span>{isDeceased ? 'ดาวแมว' : 'อยู่ด้วยกัน'}</span>
+                  <span>{isDeceased ? t('memorial') : t('with_us')}</span>
                 </span>
 
                 {currentPet.neutered && (
                   <span className="px-2 py-0.5 rounded-full bg-white/20 backdrop-blur-md text-white text-[11px] font-medium inline-flex items-center gap-1">
                     <FontAwesomeIcon icon={faScissors} className="text-[9px]" />
-                    <span>ทำหมัน</span>
+                    <span>{t('neutered')}</span>
                   </span>
                 )}
 
@@ -256,8 +258,9 @@ export default function PetDetailModal({ pet, allPets = [], dateFormat = 'en', i
                 e.preventDefault();
                 onEdit(currentPet);
               }}
-              className="w-10 h-10 rounded-full bg-paw-500 hover:bg-paw-600 text-white shadow-lg flex items-center justify-center active:scale-95 transition-transform pointer-events-auto"
-              title="แก้ไข"
+              className="w-10 h-10 aspect-square rounded-full bg-paw-500 hover:bg-paw-600 text-white shadow-lg flex items-center justify-center active:scale-95 transition-transform pointer-events-auto"
+              title={t('edit')}
+              aria-label={t('edit')}
             >
               <FontAwesomeIcon icon={faPenToSquare} className="text-sm" />
             </button>
@@ -281,14 +284,14 @@ export default function PetDetailModal({ pet, allPets = [], dateFormat = 'en', i
                 {!isDeceased ? (
                   <div className="text-[11px] text-paw-600 font-semibold flex items-center gap-1 mt-0.5 truncate">
                     <FontAwesomeIcon icon={faCakeCandles} className="text-[10px] flex-shrink-0" />
-                    <span className="truncate">{daysUntilBday === 0 ? 'วันนี้!' : `อีก ${daysUntilBday} วัน`}</span>
+                    <span className="truncate">{daysUntilBday === 0 ? t('today') : t('days_left', { n: daysUntilBday })}</span>
                   </div>
                 ) : (
                   <div className="text-[10px] sm:text-[11px] text-slate-500 mt-0.5 leading-tight">
                     <div className="truncate">{formatDate(currentPet.deceasedDate, dateFormat)}</div>
                     {lifespan && (
                       <div className="text-amber-600 font-semibold truncate mt-0.5">
-                        อายุขัย {lifespan.years > 0 ? `${lifespan.years}y ` : ''}{lifespan.months > 0 ? `${lifespan.months}m ` : ''}{lifespan.days}d
+                        {t('lifespan_label')} {lifespan.years > 0 ? `${lifespan.years}y ` : ''}{lifespan.months > 0 ? `${lifespan.months}m ` : ''}{lifespan.days}d
                       </div>
                     )}
                   </div>
@@ -316,8 +319,8 @@ export default function PetDetailModal({ pet, allPets = [], dateFormat = 'en', i
                 </div>
                 <div className="text-[10px] sm:text-[11px] text-slate-500 mt-1 font-sans font-medium truncate">
                   {isDeceased && timeSincePassing 
-                    ? `ดาวแมว ${timeSincePassing.years}y ${timeSincePassing.months}m ${timeSincePassing.days}d`
-                    : `~${humanAge}y human`
+                    ? `${t('memorial')} ${timeSincePassing.years}y ${timeSincePassing.months}m ${timeSincePassing.days}d`
+                    : `~${humanAge}y ${t('human_yrs')}`
                   }
                 </div>
               </div>
@@ -337,9 +340,9 @@ export default function PetDetailModal({ pet, allPets = [], dateFormat = 'en', i
                   <FontAwesomeIcon icon={faWeightScale} className="text-sm" />
                 </div>
                 <div className="min-w-0">
-                  <div className="text-xs font-bold text-slate-800">Health Log</div>
+                  <div className="text-xs font-bold text-slate-800">{t('health_log_tile')}</div>
                   <div className="text-[11px] text-paw-600 font-semibold truncate">
-                    {currentPet.latestWeight ? `${currentPet.latestWeight} kg` : 'Weight • Vaccine'}
+                    {currentPet.latestWeight ? `${currentPet.latestWeight} kg` : t('health_log_sub')}
                   </div>
                 </div>
               </button>
@@ -354,8 +357,8 @@ export default function PetDetailModal({ pet, allPets = [], dateFormat = 'en', i
                   <FontAwesomeIcon icon={faFire} className="text-sm" />
                 </div>
                 <div className="min-w-0">
-                  <div className="text-xs font-bold text-slate-800">Memorial</div>
-                  <div className="text-[11px] text-amber-700 font-medium truncate">Candle • Letters</div>
+                  <div className="text-xs font-bold text-slate-800">{t('memorial_tile')}</div>
+                  <div className="text-[11px] text-amber-700 font-medium truncate">{t('memorial_sub')}</div>
                 </div>
               </button>
             )}
@@ -370,8 +373,8 @@ export default function PetDetailModal({ pet, allPets = [], dateFormat = 'en', i
                 <FontAwesomeIcon icon={faSitemap} className="text-sm" />
               </div>
               <div className="min-w-0">
-                <div className="text-xs font-bold text-slate-800">Family Tree</div>
-                <div className="text-[11px] text-blue-600 font-semibold">{relations.length} relatives</div>
+                <div className="text-xs font-bold text-slate-800">{t('family_tree_tile')}</div>
+                <div className="text-[11px] text-blue-600 font-semibold">{t('relatives_count', { n: relations.length })}</div>
               </div>
             </button>
           </div>
