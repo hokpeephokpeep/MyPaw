@@ -228,9 +228,6 @@ export default function SplashScreen({ onFinish }) {
             <FontAwesomeIcon icon={faPaw} className="text-paw-500 text-[0.70em] ml-[1px] mr-0 -translate-y-[0.5px]" />
             <span>w</span>
           </h1>
-          <p className="mt-2.5 text-xs sm:text-sm font-sans font-medium text-slate-500 tracking-wide">
-            บันทึกความทรงจำเจ้าเหมียว
-          </p>
         </div>
 
         {/* Clean, Elegant Loading Capsule */}
