@@ -33,13 +33,16 @@ export default function ImageViewerModal({ pet, onClose }) {
 
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  // Vertical Swipe & Touch Tracking State (1:1 with finger, preserves native Android back gesture on horizontal edges)
+  // Horizontal Swipe & Touch Tracking State (1:1 with finger, snaps to center)
   const trackRef = useRef(null);
   const isPointerDownRef = useRef(false);
+  const startXRef = useRef(0);
   const startYRef = useRef(0);
+  const deltaXRef = useRef(0);
   const deltaYRef = useRef(0);
   const startTimeRef = useRef(0);
   const lastWheelTimeRef = useRef(0);
+  const isHorizontalRef = useRef(false);
 
   // Reset index when active pet changes
   useEffect(() => {
@@ -49,18 +52,18 @@ export default function ImageViewerModal({ pet, onClose }) {
   // Sync transform when currentIndex changes
   useEffect(() => {
     if (trackRef.current) {
-      trackRef.current.style.transition = 'transform 280ms cubic-bezier(0.23, 1, 0.32, 1)';
-      trackRef.current.style.transform = `translateY(-${currentIndex * 100}%)`;
+      trackRef.current.style.transition = 'transform 280ms cubic-bezier(0.22, 1, 0.36, 1)';
+      trackRef.current.style.transform = `translateX(-${currentIndex * 100}%)`;
     }
   }, [currentIndex]);
 
-  // Keyboard navigation (ArrowUp / ArrowDown / ArrowLeft / ArrowRight / Escape)
+  // Keyboard navigation (ArrowLeft / ArrowRight / ArrowUp / ArrowDown / Escape)
   useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (e) => {
-      if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
         setCurrentIndex(prev => Math.min(photoList.length - 1, prev + 1));
-      } else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
+      } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
         setCurrentIndex(prev => Math.max(0, prev - 1));
       } else if (e.key === 'Escape') {
         requestClose();
@@ -82,41 +85,54 @@ export default function ImageViewerModal({ pet, onClose }) {
     a.click();
   };
 
-  // Direct 1:1 Vertical Touch & Gesture handlers
-  const handlePointerStart = (clientY) => {
+  // Direct 1:1 Horizontal Touch & Gesture handlers
+  const handlePointerStart = (clientX, clientY) => {
     isPointerDownRef.current = true;
+    startXRef.current = clientX;
     startYRef.current = clientY;
+    deltaXRef.current = 0;
     deltaYRef.current = 0;
     startTimeRef.current = Date.now();
+    isHorizontalRef.current = false;
 
     if (trackRef.current) {
       trackRef.current.style.transition = 'none';
     }
   };
 
-  const handlePointerMove = (clientY, e) => {
+  const handlePointerMove = (clientX, clientY, e) => {
     if (!isPointerDownRef.current) return;
+    const currentDeltaX = clientX - startXRef.current;
     const currentDeltaY = clientY - startYRef.current;
 
-    // Prevent vertical page scroll while dragging photos
-    if (Math.abs(currentDeltaY) > 4 && e?.cancelable) {
+    if (!isHorizontalRef.current) {
+      if (Math.abs(currentDeltaX) > 8 && Math.abs(currentDeltaX) > Math.abs(currentDeltaY) * 1.1) {
+        isHorizontalRef.current = true;
+      }
+    }
+
+    if (e?.cancelable) {
       e.preventDefault();
     }
 
-    let effectiveDeltaY = currentDeltaY;
-    // Rubber-band resistance at top and bottom boundaries (0.28 factor)
-    const isAtTop = currentIndex === 0 && currentDeltaY > 0;
-    const isAtBottom = currentIndex === photoList.length - 1 && currentDeltaY < 0;
-    if (isAtTop || isAtBottom || photoList.length <= 1) {
-      effectiveDeltaY = currentDeltaY * 0.28;
-    }
+    deltaYRef.current = currentDeltaY;
 
-    deltaYRef.current = effectiveDeltaY;
+    if (isHorizontalRef.current) {
+      let effectiveDeltaX = currentDeltaX;
+      // Rubber-band resistance at boundary edges (0.28 factor)
+      const isAtLeft = currentIndex === 0 && currentDeltaX > 0;
+      const isAtRight = currentIndex === photoList.length - 1 && currentDeltaX < 0;
+      if (isAtLeft || isAtRight || photoList.length <= 1) {
+        effectiveDeltaX = currentDeltaX * 0.28;
+      }
 
-    // 1:1 direct style write for 60fps / 120fps tracking
-    if (trackRef.current) {
-      const basePercent = -currentIndex * 100;
-      trackRef.current.style.transform = `translateY(calc(${basePercent}% + ${effectiveDeltaY}px))`;
+      deltaXRef.current = effectiveDeltaX;
+
+      // 1:1 direct style write for 60fps / 120fps tracking
+      if (trackRef.current) {
+        const basePercent = -currentIndex * 100;
+        trackRef.current.style.transform = `translateX(calc(${basePercent}% + ${effectiveDeltaX}px))`;
+      }
     }
   };
 
@@ -125,22 +141,29 @@ export default function ImageViewerModal({ pet, onClose }) {
     isPointerDownRef.current = false;
 
     const elapsed = Date.now() - startTimeRef.current;
+    const dx = deltaXRef.current;
     const dy = deltaYRef.current;
 
-    // Vertical slide transition decision: swipe up = next photo, swipe down = prev photo
-    const threshold = Math.min(window.innerHeight * 0.12, 50);
-    const isFlick = elapsed < 280 && Math.abs(dy) > 25;
+    // Vertical swipe down to dismiss modal (like iOS Photos / Instagram)
+    if (Math.abs(dy) > 90 && Math.abs(dy) > Math.abs(dx) * 1.3) {
+      requestClose();
+      return;
+    }
+
+    // Horizontal slide transition decision: swipe left = next photo, swipe right = prev photo
+    const threshold = Math.min(window.innerWidth * 0.18, 60);
+    const isFlick = elapsed < 280 && Math.abs(dx) > 25;
 
     let targetIndex = currentIndex;
-    if ((dy < -threshold || (isFlick && dy < 0)) && currentIndex < photoList.length - 1) {
-      targetIndex = currentIndex + 1; // Dragged UP -> Next photo below
-    } else if ((dy > threshold || (isFlick && dy > 0)) && currentIndex > 0) {
-      targetIndex = currentIndex - 1; // Dragged DOWN -> Prev photo above
+    if ((dx < -threshold || (isFlick && dx < 0)) && currentIndex < photoList.length - 1) {
+      targetIndex = currentIndex + 1; // Dragged LEFT -> Next photo
+    } else if ((dx > threshold || (isFlick && dx > 0)) && currentIndex > 0) {
+      targetIndex = currentIndex - 1; // Dragged RIGHT -> Prev photo
     }
 
     if (trackRef.current) {
-      trackRef.current.style.transition = 'transform 260ms cubic-bezier(0.23, 1, 0.32, 1)';
-      trackRef.current.style.transform = `translateY(-${targetIndex * 100}%)`;
+      trackRef.current.style.transition = 'transform 280ms cubic-bezier(0.22, 1, 0.36, 1)';
+      trackRef.current.style.transform = `translateX(-${targetIndex * 100}%)`;
     }
 
     if (targetIndex !== currentIndex) {
@@ -189,23 +212,23 @@ export default function ImageViewerModal({ pet, onClose }) {
       >
         <div 
           className="relative rounded-3xl overflow-hidden shadow-2xl border border-white/10 h-[68vh] sm:h-[72vh] w-full flex items-center bg-black cursor-grab active:cursor-grabbing select-none"
-          onTouchStart={(e) => handlePointerStart(e.touches[0].clientY)}
-          onTouchMove={(e) => handlePointerMove(e.touches[0].clientY, e)}
+          onTouchStart={(e) => handlePointerStart(e.touches[0].clientX, e.touches[0].clientY)}
+          onTouchMove={(e) => handlePointerMove(e.touches[0].clientX, e.touches[0].clientY, e)}
           onTouchEnd={handlePointerEnd}
           onTouchCancel={handlePointerEnd}
-          onMouseDown={(e) => handlePointerStart(e.clientY)}
-          onMouseMove={(e) => handlePointerMove(e.clientY, e)}
+          onMouseDown={(e) => handlePointerStart(e.clientX, e.clientY)}
+          onMouseMove={(e) => handlePointerMove(e.clientX, e.clientY, e)}
           onMouseUp={handlePointerEnd}
           onMouseLeave={handlePointerEnd}
           onWheel={handleWheel}
         >
-          {/* 1:1 Vertical Multi-Photo Track (Swipe Up/Down) */}
+          {/* 1:1 Horizontal Multi-Photo Track (Swipes Left/Right, snaps to center) */}
           <div
             ref={trackRef}
-            className="flex flex-col w-full h-full will-change-transform"
+            className="flex flex-row w-full h-full will-change-transform"
             style={{
-              transform: `translateY(-${currentIndex * 100}%)`,
-              transition: 'transform 280ms cubic-bezier(0.23, 1, 0.32, 1)'
+              transform: `translateX(-${currentIndex * 100}%)`,
+              transition: 'transform 280ms cubic-bezier(0.22, 1, 0.36, 1)'
             }}
           >
             {photoList.map((photoSrc, idx) => (

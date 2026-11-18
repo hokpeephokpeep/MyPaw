@@ -635,6 +635,9 @@ export default function App() {
 
   // 📱 Horizontal swipe/drag gesture between Home and Notifications (Touch + Pointer/Mouse)
   const isPointerDraggingRef = useRef(false);
+  const [screenDragOffset, setScreenDragOffset] = useState(0);
+  const [isScreenDragging, setIsScreenDragging] = useState(false);
+  const isHorizontalGestureRef = useRef(false);
 
   const handleScreenPointerDown = (e) => {
     if (
@@ -646,33 +649,69 @@ export default function App() {
     if (e.button !== undefined && e.button !== 0) return;
     screenSwipeStartRef.current = { x: e.clientX, y: e.clientY, time: Date.now() };
     isPointerDraggingRef.current = true;
+    isHorizontalGestureRef.current = false;
+    setIsScreenDragging(false);
+    setScreenDragOffset(0);
+  };
+
+  const handleScreenPointerMove = (e) => {
+    if (!isPointerDraggingRef.current || !screenSwipeStartRef.current.time) return;
+    const diffX = e.clientX - screenSwipeStartRef.current.x;
+    const diffY = e.clientY - screenSwipeStartRef.current.y;
+
+    if (!isHorizontalGestureRef.current) {
+      if (Math.abs(diffX) > 10 && Math.abs(diffX) > Math.abs(diffY) * 1.15) {
+        isHorizontalGestureRef.current = true;
+        setIsScreenDragging(true);
+      } else if (Math.abs(diffY) > 10) {
+        isPointerDraggingRef.current = false;
+        screenSwipeStartRef.current.time = 0;
+        return;
+      }
+    }
+
+    if (isHorizontalGestureRef.current) {
+      let effectiveDiffX = diffX;
+      if ((activeScreen === 'home' && diffX > 0) || (activeScreen === 'notifications' && diffX < 0)) {
+        effectiveDiffX = diffX * 0.28;
+      }
+      setScreenDragOffset(effectiveDiffX);
+    }
   };
 
   const handleScreenPointerUp = (e) => {
-    if (!isPointerDraggingRef.current || !screenSwipeStartRef.current.time) return;
+    if (!isPointerDraggingRef.current || !screenSwipeStartRef.current.time) {
+      isPointerDraggingRef.current = false;
+      setIsScreenDragging(false);
+      setScreenDragOffset(0);
+      isHorizontalGestureRef.current = false;
+      return;
+    }
     isPointerDraggingRef.current = false;
-    const diffX = e.clientX - screenSwipeStartRef.current.x;
-    const diffY = e.clientY - screenSwipeStartRef.current.y;
     const elapsed = Date.now() - screenSwipeStartRef.current.time;
-
     screenSwipeStartRef.current = { x: 0, y: 0, time: 0 };
 
-    const isHorizontal = Math.abs(diffX) > Math.abs(diffY) * 1.15;
-    const isFastFlick = elapsed < 450 && Math.abs(diffX) > 30;
-    const isLongDrag = Math.abs(diffX) > 60;
-
-    if (isHorizontal && (isFastFlick || isLongDrag)) {
+    if (isHorizontalGestureRef.current) {
       isSwipedRef.current = true;
+      const threshold = Math.min(window.innerWidth * 0.2, 80);
+      const isFlick = elapsed < 300 && Math.abs(screenDragOffset) > 25;
+
+      if (activeScreen === 'home') {
+        if (screenDragOffset < -threshold || (isFlick && screenDragOffset < 0)) {
+          setActiveScreen('notifications');
+        }
+      } else if (activeScreen === 'notifications') {
+        if (screenDragOffset > threshold || (isFlick && screenDragOffset > 0)) {
+          setActiveScreen('home');
+        }
+      }
       setIsBottomNavVisible(true);
       resetIdleTimer(3200);
-      if (diffX < 0 && activeScreen === 'home') {
-        // Dragged Left on Home -> Switch to Notifications
-        setActiveScreen('notifications');
-      } else if (diffX > 0 && activeScreen === 'notifications') {
-        // Dragged Right on Notifications -> Switch to Home
-        setActiveScreen('home');
-      }
     }
+
+    setIsScreenDragging(false);
+    setScreenDragOffset(0);
+    isHorizontalGestureRef.current = false;
   };
 
   const handleScreenTouchStart = (e) => {
@@ -685,34 +724,68 @@ export default function App() {
     if (e.touches.length !== 1) return;
     const touch = e.touches[0];
     screenSwipeStartRef.current = { x: touch.clientX, y: touch.clientY, time: Date.now() };
+    isHorizontalGestureRef.current = false;
+    setIsScreenDragging(false);
+    setScreenDragOffset(0);
+  };
+
+  const handleScreenTouchMove = (e) => {
+    if (!screenSwipeStartRef.current.time) return;
+    const touch = e.touches[0];
+    const diffX = touch.clientX - screenSwipeStartRef.current.x;
+    const diffY = touch.clientY - screenSwipeStartRef.current.y;
+
+    if (!isHorizontalGestureRef.current) {
+      if (Math.abs(diffX) > 10 && Math.abs(diffX) > Math.abs(diffY) * 1.15) {
+        isHorizontalGestureRef.current = true;
+        setIsScreenDragging(true);
+      } else if (Math.abs(diffY) > 10) {
+        screenSwipeStartRef.current.time = 0;
+        return;
+      }
+    }
+
+    if (isHorizontalGestureRef.current) {
+      if (e.cancelable) e.preventDefault();
+      let effectiveDiffX = diffX;
+      if ((activeScreen === 'home' && diffX > 0) || (activeScreen === 'notifications' && diffX < 0)) {
+        effectiveDiffX = diffX * 0.28;
+      }
+      setScreenDragOffset(effectiveDiffX);
+    }
   };
 
   const handleScreenTouchEnd = (e) => {
-    if (!screenSwipeStartRef.current.time) return;
-    const touch = e.changedTouches[0];
-    const diffX = touch.clientX - screenSwipeStartRef.current.x;
-    const diffY = touch.clientY - screenSwipeStartRef.current.y;
+    if (!screenSwipeStartRef.current.time) {
+      setIsScreenDragging(false);
+      setScreenDragOffset(0);
+      isHorizontalGestureRef.current = false;
+      return;
+    }
     const elapsed = Date.now() - screenSwipeStartRef.current.time;
-
     screenSwipeStartRef.current = { x: 0, y: 0, time: 0 };
 
-    // Determine if primarily horizontal swipe
-    const isHorizontal = Math.abs(diffX) > Math.abs(diffY) * 1.15;
-    const isFastFlick = elapsed < 450 && Math.abs(diffX) > 30;
-    const isLongDrag = Math.abs(diffX) > 60;
-
-    if (isHorizontal && (isFastFlick || isLongDrag)) {
+    if (isHorizontalGestureRef.current) {
       isSwipedRef.current = true;
+      const threshold = Math.min(window.innerWidth * 0.2, 80);
+      const isFlick = elapsed < 300 && Math.abs(screenDragOffset) > 25;
+
+      if (activeScreen === 'home') {
+        if (screenDragOffset < -threshold || (isFlick && screenDragOffset < 0)) {
+          setActiveScreen('notifications');
+        }
+      } else if (activeScreen === 'notifications') {
+        if (screenDragOffset > threshold || (isFlick && screenDragOffset > 0)) {
+          setActiveScreen('home');
+        }
+      }
       setIsBottomNavVisible(true);
       resetIdleTimer(3200);
-      if (diffX < 0 && activeScreen === 'home') {
-        // Swiped Left on Home -> Switch to Notifications
-        setActiveScreen('notifications');
-      } else if (diffX > 0 && activeScreen === 'notifications') {
-        // Swiped Right on Notifications -> Switch to Home
-        setActiveScreen('home');
-      }
     }
+
+    setIsScreenDragging(false);
+    setScreenDragOffset(0);
+    isHorizontalGestureRef.current = false;
   };
 
   // Save to localStorage
@@ -1010,17 +1083,25 @@ export default function App() {
         {/* 📱 Horizontal Swipeable Surface (Home <-> Notifications) */}
         <div 
           onTouchStart={handleScreenTouchStart}
+          onTouchMove={handleScreenTouchMove}
           onTouchEnd={handleScreenTouchEnd}
+          onTouchCancel={handleScreenTouchEnd}
           onPointerDown={handleScreenPointerDown}
+          onPointerMove={handleScreenPointerMove}
           onPointerUp={handleScreenPointerUp}
-          className="flex-1 min-h-0 w-full overflow-hidden flex flex-col relative"
+          onPointerCancel={handleScreenPointerUp}
+          className="flex-1 min-h-0 w-full overflow-hidden flex flex-col relative touch-pan-y"
         >
           <div 
-            className={`flex w-[200%] transition-transform duration-300 [transition-timing-function:cubic-bezier(0.25,1,0.5,1)] ${
+            className={`flex w-[200%] will-change-transform ${
+              isScreenDragging
+                ? 'transition-none'
+                : 'transition-transform duration-350 [transition-timing-function:cubic-bezier(0.22,1,0.36,1)]'
+            } ${
               activeScreen === 'notifications' ? 'h-full flex-1' : 'flex-1'
             }`}
             style={{
-              transform: activeScreen === 'home' ? 'translateX(0%)' : 'translateX(-50%)'
+              transform: `translate3d(calc(${activeScreen === 'home' ? '0%' : '-50%'} + ${screenDragOffset}px), 0, 0)`
             }}
           >
             {/* Screen 1: Home (Main Pet Cards Feed) */}
