@@ -15,12 +15,26 @@
   </head>
   <body class="bg-slate-50">
     <div id="root">
-      <div style="position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: linear-gradient(180deg, #FFFDF8 0%, #FFFFFF 50%, #FFF7ED 100%);">
-        <div style="width: 96px; height: 96px; border-radius: 28px; background: linear-gradient(135deg, #FF6B4A 0%, #F59E0B 100%); display: flex; align-items: center; justify-content: center; box-shadow: 0 20px 25px -5px rgba(255, 107, 74, 0.35); font-size: 48px; color: white;">
-          🐾
+      <div style="position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #F8FAFC; user-select: none;">
+        <!-- Official Brand App Icon -->
+        <div style="width: 88px; height: 88px; border-radius: 26px; background: linear-gradient(135deg, #FF6B4A 0%, #F59E0B 100%); display: flex; align-items: center; justify-content: center; box-shadow: 0 16px 32px -6px rgba(255, 107, 74, 0.35);">
+          <svg style="width: 48px; height: 48px; color: #FFFFFF;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="currentColor">
+            <path d="M234.5 92.9c14.3 42.9-.3 86.2-32.6 96.8s-70.1-15.6-84.4-58.5 .3-86.2 32.6-96.8 70.1 15.6 84.4 58.5zM100.4 198.6c18.9 32.4 14.3 70.1-10.2 84.1s-59.7-.9-78.5-33.3-14.3-70.1 10.2-84.1 59.7 .9 78.5 33.3zM69.2 401.2C121.6 259.9 214.7 224 256 224s134.4 35.9 186.8 177.2c3.6 9.7 5.2 20.1 5.2 30.5l0 1.6c0 25.8-20.9 46.7-46.7 46.7-11.5 0-22.9-1.4-34-4.2l-88-22c-15.3-3.8-31.3-3.8-46.6 0l-88 22c-11.1 2.8-22.5 4.2-34 4.2-25.8 0-46.7-20.9-46.7-46.7l0-1.6c0-10.4 1.6-20.8 5.2-30.5zM421.8 282.7c-24.5-14-29.1-51.7-10.2-84.1s54-47.3 78.5-33.3 29.1 51.7 10.2 84.1-54 47.3-78.5 33.3zM310.1 189.7c-32.3-10.6-46.9-53.9-32.6-96.8s52.1-69.1 84.4-58.5 46.9 53.9 32.6 96.8-52.1 69.1-84.4 58.5z"/>
+          </svg>
         </div>
-        <div style="margin-top: 24px; font-family: 'Mitr', sans-serif; font-size: 36px; font-weight: 800; background: linear-gradient(90deg, #EA580C, #D97706); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
-          MyPaw
+
+        <!-- Official Brand Wordmark: MyP🐾w -->
+        <div style="margin-top: 20px; font-family: 'Mitr', sans-serif; font-size: 32px; font-weight: 600; color: #0F172A; display: flex; align-items: center; letter-spacing: -0.01em; line-height: 1;">
+          <span>MyP</span>
+          <svg style="width: 22px; height: 22px; color: #FF6B4A; margin-left: 1px; transform: translateY(-0.5px);" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="currentColor">
+            <path d="M234.5 92.9c14.3 42.9-.3 86.2-32.6 96.8s-70.1-15.6-84.4-58.5 .3-86.2 32.6-96.8 70.1 15.6 84.4 58.5zM100.4 198.6c18.9 32.4 14.3 70.1-10.2 84.1s-59.7-.9-78.5-33.3-14.3-70.1 10.2-84.1 59.7 .9 78.5 33.3zM69.2 401.2C121.6 259.9 214.7 224 256 224s134.4 35.9 186.8 177.2c3.6 9.7 5.2 20.1 5.2 30.5l0 1.6c0 25.8-20.9 46.7-46.7 46.7-11.5 0-22.9-1.4-34-4.2l-88-22c-15.3-3.8-31.3-3.8-46.6 0l-88 22c-11.1 2.8-22.5 4.2-34 4.2-25.8 0-46.7-20.9-46.7-46.7l0-1.6c0-10.4 1.6-20.8 5.2-30.5zM421.8 282.7c-24.5-14-29.1-51.7-10.2-84.1s54-47.3 78.5-33.3 29.1 51.7 10.2 84.1-54 47.3-78.5 33.3zM310.1 189.7c-32.3-10.6-46.9-53.9-32.6-96.8s52.1-69.1 84.4-58.5 46.9 53.9 32.6 96.8-52.1 69.1-84.4 58.5z"/>
+          </svg>
+          <span>w</span>
+        </div>
+
+        <!-- Subtle loading capsule -->
+        <div style="margin-top: 24px; width: 64px; height: 3px; border-radius: 9999px; background: #E2E8F0; overflow: hidden; position: relative;">
+          <div style="width: 28px; height: 100%; border-radius: 9999px; background: #FF6B4A; position: absolute; left: 0; animation: pulse 1.2s infinite ease-in-out;"></div>
         </div>
       </div>
     </div>
