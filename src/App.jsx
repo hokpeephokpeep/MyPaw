@@ -637,6 +637,9 @@ export default function App() {
   const screenScrollRef = useRef(null);
   const isProgrammaticScrollRef = useRef(false);
   const isUserTouchingRef = useRef(false);
+  const viewPagerStartXRef = useRef(0);
+  const viewPagerStartYRef = useRef(0);
+  const viewPagerStartTimeRef = useRef(0);
 
   useEffect(() => {
     if (!screenScrollRef.current) return;
@@ -644,7 +647,7 @@ export default function App() {
     const width = screenScrollRef.current.clientWidth;
     if (width <= 0) return;
     const targetLeft = activeScreen === 'home' ? 0 : width;
-    if (Math.abs(screenScrollRef.current.scrollLeft - targetLeft) > 10) {
+    if (Math.abs(screenScrollRef.current.scrollLeft - targetLeft) > 2) {
       isProgrammaticScrollRef.current = true;
       screenScrollRef.current.scrollTo({
         left: targetLeft,
@@ -658,6 +661,8 @@ export default function App() {
 
   const handleScreenScroll = (e) => {
     if (isProgrammaticScrollRef.current) return;
+    // Don't flip activeScreen state mid-drag to prevent re-render jank
+    if (isUserTouchingRef.current) return;
     const scrollLeft = e.target.scrollLeft;
     const width = e.target.clientWidth;
     if (width > 0) {
@@ -669,6 +674,89 @@ export default function App() {
         resetIdleTimer(3200);
       }
     }
+  };
+
+  const handleScreenScrollEnd = (e) => {
+    if (isUserTouchingRef.current || isProgrammaticScrollRef.current) return;
+    const container = e.target;
+    const width = container.clientWidth;
+    if (width <= 0) return;
+    const currentScrollLeft = container.scrollLeft;
+    const targetIndex = Math.round(currentScrollLeft / width);
+    const targetLeft = targetIndex === 0 ? 0 : width;
+    if (Math.abs(currentScrollLeft - targetLeft) > 2) {
+      isProgrammaticScrollRef.current = true;
+      container.scrollTo({ left: targetLeft, behavior: 'smooth' });
+      setTimeout(() => {
+        isProgrammaticScrollRef.current = false;
+      }, 320);
+    }
+  };
+
+  const handleViewPagerTouchStart = (e) => {
+    isUserTouchingRef.current = true;
+    if (e.touches && e.touches[0]) {
+      viewPagerStartXRef.current = e.touches[0].clientX;
+      viewPagerStartYRef.current = e.touches[0].clientY;
+      viewPagerStartTimeRef.current = Date.now();
+    }
+  };
+
+  const handleViewPagerTouchEnd = (e) => {
+    if (!screenScrollRef.current) {
+      isUserTouchingRef.current = false;
+      return;
+    }
+    const container = screenScrollRef.current;
+    const width = container.clientWidth;
+    if (width <= 0) {
+      isUserTouchingRef.current = false;
+      return;
+    }
+
+    let deltaX = 0;
+    let deltaY = 0;
+    if (e.changedTouches && e.changedTouches[0]) {
+      deltaX = viewPagerStartXRef.current - e.changedTouches[0].clientX; // >0: dragged left (to notif), <0: dragged right (to home)
+      deltaY = viewPagerStartYRef.current - e.changedTouches[0].clientY;
+    }
+    const elapsedTime = Math.max(1, Date.now() - viewPagerStartTimeRef.current);
+    const isHorizontalSwipe = Math.abs(deltaX) > Math.abs(deltaY) * 0.8;
+    const currentScrollLeft = container.scrollLeft;
+
+    let targetIndex;
+    if (isHorizontalSwipe && elapsedTime < 320 && Math.abs(deltaX) > 35) {
+      // Quick flick detection
+      targetIndex = deltaX > 0 ? 1 : 0;
+    } else {
+      // Position-based snap threshold (if user dragged > 35% towards next screen, proceed; else snap back)
+      const ratio = currentScrollLeft / width;
+      if (activeScreen === 'home') {
+        targetIndex = ratio > 0.35 ? 1 : 0;
+      } else {
+        targetIndex = ratio < 0.65 ? 0 : 1;
+      }
+    }
+
+    const targetLeft = targetIndex === 0 ? 0 : width;
+    const targetScreen = targetIndex === 0 ? 'home' : 'notifications';
+
+    isProgrammaticScrollRef.current = true;
+    container.scrollTo({
+      left: targetLeft,
+      behavior: 'smooth'
+    });
+
+    if (activeScreen !== targetScreen) {
+      setActiveScreen(targetScreen);
+      setIsBottomNavVisible(true);
+      resetIdleTimer(3200);
+    }
+
+    setTimeout(() => {
+      isProgrammaticScrollRef.current = false;
+      isUserTouchingRef.current = false;
+    }, 320);
   };
 
   // Save to localStorage
@@ -963,18 +1051,18 @@ export default function App() {
         <div 
           ref={screenScrollRef}
           onScroll={handleScreenScroll}
-          onTouchStart={() => {
-            isUserTouchingRef.current = true;
-          }}
-          onTouchEnd={() => {
-            setTimeout(() => {
-              isUserTouchingRef.current = false;
-            }, 180);
-          }}
+          onScrollEnd={handleScreenScrollEnd}
+          onTouchStart={handleViewPagerTouchStart}
+          onTouchEnd={handleViewPagerTouchEnd}
           onTouchCancel={() => {
             isUserTouchingRef.current = false;
+            if (screenScrollRef.current) {
+              const w = screenScrollRef.current.clientWidth;
+              const idx = Math.round(screenScrollRef.current.scrollLeft / w);
+              screenScrollRef.current.scrollTo({ left: idx === 0 ? 0 : w, behavior: 'smooth' });
+            }
           }}
-          className={`flex-1 min-h-0 w-full flex overflow-x-auto overflow-y-hidden snap-x snap-mandatory scroll-smooth ${
+          className={`flex-1 min-h-0 w-full flex overflow-x-auto overflow-y-hidden snap-x snap-mandatory ${
             isModalOpen || isDrawerOpen || detailPet || memorialPet || healthPet || 
             isFamilyOpen || isBackupOpen || viewingImagePet || isScannerOpen || isSharedModalOpen
               ? 'pointer-events-none'
@@ -991,7 +1079,7 @@ export default function App() {
           {/* Screen 1: Home (Main Pet Cards Feed) */}
           <div 
             id="home-scroll-container"
-            className="w-full min-w-full flex-shrink-0 snap-center snap-always h-full flex flex-col overflow-y-auto overscroll-y-contain"
+            className="w-full min-w-full flex-shrink-0 snap-start snap-always h-full flex flex-col overflow-y-auto overscroll-y-contain"
           >
             {/* Pure Pet Cards Feed */}
             <main className="px-4 sm:px-5 py-3 flex-1 w-full pb-28" style={{ overflowAnchor: 'none' }}>
@@ -1080,7 +1168,7 @@ export default function App() {
           </div>
 
           {/* Screen 2: Notifications Screen (Full Screen View) */}
-          <div className="w-full min-w-full flex-shrink-0 snap-center snap-always h-full min-h-0 flex flex-col overflow-hidden">
+          <div className="w-full min-w-full flex-shrink-0 snap-start snap-always h-full min-h-0 flex flex-col overflow-hidden">
             <NotificationScreen
               pets={resolvedPets}
               onUpdatePet={handleSavePet}
