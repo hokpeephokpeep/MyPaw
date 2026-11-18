@@ -44,6 +44,7 @@ export const translations = {
     all_rights_reserved: 'สงวนลิขสิทธิ์ทั้งหมด',
     
     // Pet Card & List Item
+    add_cat_placeholder: 'เพิ่มน้องเหมียว',
     years_unit: 'y',
     months_unit: 'm',
     days_unit: 'd',
@@ -138,7 +139,7 @@ export const translations = {
     add_pet: 'Add Pet',
     add_pet_sub: 'Add New',
     family_tree: 'Family Tree',
-    scan_document: 'Scan Document',
+    scan_document: 'Scan Doc',
     import_photos: 'Import Photos',
     notifications_center: 'Notifications',
     display_section: 'Display & Filter',
@@ -162,6 +163,7 @@ export const translations = {
     all_rights_reserved: 'All rights reserved',
     
     // Pet Card & List Item
+    add_cat_placeholder: 'Add Cat',
     years_unit: 'y',
     months_unit: 'm',
     days_unit: 'd',

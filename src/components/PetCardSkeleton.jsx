@@ -1,6 +1,7 @@
 import React from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faPaw } from '@fortawesome/free-solid-svg-icons';
+import { useLanguage } from '../i18n.jsx';
 
 /**
  * 💀 Modern Shimmer Skeleton for Pet Cards
@@ -8,6 +9,7 @@ import { faPlus, faPaw } from '@fortawesome/free-solid-svg-icons';
  */
 
 export function PetCardSkeleton({ compact = false, isPlaceholder = false, onClick }) {
+  const { t } = useLanguage();
   if (compact) {
     // 2-Column Grid Card Skeleton
     return (
@@ -26,7 +28,9 @@ export function PetCardSkeleton({ compact = false, isPlaceholder = false, onClic
               <div className="w-10 h-10 rounded-full bg-white/90 shadow-2xs flex items-center justify-center text-slate-400 group-hover/skeleton:bg-paw-50 group-hover/skeleton:text-paw-500 transition-all mb-1 active:scale-95">
                 <FontAwesomeIcon icon={faPlus} className="text-sm" />
               </div>
-              <span className="font-mitr text-xs text-slate-400 font-normal group-hover/skeleton:text-paw-600 transition-colors">เพิ่มน้องเหมียว</span>
+              <span className="font-mitr text-xs text-slate-400 font-normal group-hover/skeleton:text-paw-600 transition-colors">
+                {t('add_cat_placeholder')}
+              </span>
             </div>
           ) : (
             <div className="w-full h-full animate-pulse" />

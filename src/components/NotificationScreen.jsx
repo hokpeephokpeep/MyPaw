@@ -18,6 +18,7 @@ import { getCachedNotifications } from '../cacheEngine.js';
 import { NotificationItemSkeleton } from './PetCardSkeleton.jsx';
 import { getPhotoSrc } from '../imageUtils';
 import confetti from 'canvas-confetti';
+import { useLanguage } from '../i18n.jsx';
 
 function formatNotificationTitle(item) {
   let title = (item.title || '').replace(/[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '').trim();
@@ -38,6 +39,7 @@ export default function NotificationScreen({
   isActive = false,
   onScroll
 }) {
+  const { language, t } = useLanguage();
   const [prefs, setPrefs] = useState(getNotificationPrefs);
   const [filter, setFilter] = useState('all'); // 'all', 'urgent', 'upcoming', 'memorial'
   const [showSettings, setShowSettings] = useState(false);
@@ -148,10 +150,10 @@ export default function NotificationScreen({
             <FontAwesomeIcon icon={faBell} />
           </div>
           <div className="flex items-center gap-2">
-            <h2 className="font-semibold text-slate-800 text-base">ศูนย์แจ้งเตือน</h2>
+            <h2 className="font-semibold text-slate-800 text-base">{t('notification_center_title')}</h2>
             {unreadCount > 0 && (
               <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-500 text-white animate-pulse">
-                {unreadCount} ใหม่
+                {unreadCount} {language === 'en' ? 'new' : 'ใหม่'}
               </span>
             )}
           </div>
@@ -166,8 +168,8 @@ export default function NotificationScreen({
                 ? 'bg-paw-100 text-paw-700 border-paw-300' 
                 : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700 border-slate-200/80 bg-white'
             }`}
-            title="ตั้งค่าการแจ้งเตือน"
-            aria-label="ตั้งค่าการแจ้งเตือน"
+            title={t('settings_panel_title')}
+            aria-label={t('settings_panel_title')}
           >
             <FontAwesomeIcon icon={faSliders} className="text-xs" />
           </button>
@@ -243,10 +245,10 @@ export default function NotificationScreen({
       <div className="px-4 sm:px-5 py-2.5 bg-white/80 backdrop-blur-sm border-b border-slate-100 flex items-center justify-between gap-2 overflow-x-auto no-scrollbar flex-shrink-0">
         <div className="flex items-center gap-1.5 flex-nowrap">
           {[
-            { id: 'all', label: 'ทั้งหมด' },
-            { id: 'overdue', label: 'ตกค้าง' },
-            { id: 'appointment', label: 'นัดหมาย' },
-            { id: 'anniversary', label: 'วันครบรอบ' }
+            { id: 'all', label: t('notif_tab_all') },
+            { id: 'overdue', label: t('notif_tab_overdue') },
+            { id: 'appointment', label: t('notif_tab_appointment') },
+            { id: 'anniversary', label: t('notif_tab_anniversary') }
           ].map(tab => (
             <button
               key={tab.id}
@@ -266,10 +268,10 @@ export default function NotificationScreen({
           <button
             onClick={handleMarkAllRead}
             className="text-[11px] text-slate-500 hover:text-paw-600 font-semibold whitespace-nowrap flex items-center gap-1 transition-colors px-2 py-1 rounded-lg hover:bg-slate-100 active:scale-95"
-            title="ทำเครื่องหมายอ่านแล้วทั้งหมด"
+            title={t('mark_all_read')}
           >
             <FontAwesomeIcon icon={faCheckDouble} className="text-[10px]" />
-            <span>อ่านแล้ว</span>
+            <span>{t('mark_all_read')}</span>
           </button>
         )}
       </div>

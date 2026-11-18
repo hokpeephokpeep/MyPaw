@@ -204,7 +204,7 @@ export default function PetCard({ pet, allPets = [], dateFormat = 'en', compact 
       ref={cardRef}
       role="button"
       tabIndex={0}
-      aria-label={`ดูรายละเอียดของ ${pet.name}`}
+      aria-label={t('view_details', { name: pet.name })}
       whileTap={{ scale: 0.985 }}
       transition={{ type: 'spring', stiffness: 400, damping: 28 }}
       onTouchStart={handleTouchStart}
