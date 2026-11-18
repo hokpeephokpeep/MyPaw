@@ -216,13 +216,17 @@ export default function SplashScreen({ onFinish }) {
           willChange: 'transform'
         }}
       >
-        {/* Single Unified App Icon Badge */}
-        <div className="w-[88px] h-[88px] rounded-[26px] bg-gradient-to-br from-paw-500 via-orange-500 to-amber-500 text-white shadow-xl shadow-paw-500/35 flex items-center justify-center">
-          <FontAwesomeIcon icon={faPaw} className="text-[46px] text-white drop-shadow-sm" />
+        {/* Single Unified App Icon: Exactly matching the phone app icon */}
+        <div className="w-[92px] h-[92px] sm:w-[108px] sm:h-[108px] flex items-center justify-center">
+          <img 
+            src="/paw_icon.png" 
+            alt="MyPaw" 
+            className="w-full h-full object-contain drop-shadow-xl select-none" 
+          />
         </div>
 
         {/* Single Unified Brand Wordmark: MyP🐾w */}
-        <div className="mt-5 text-center">
+        <div className="mt-4 text-center">
           <h1 className="font-mitr text-3xl sm:text-4xl font-semibold tracking-normal text-slate-900 flex items-center justify-center leading-none drop-shadow-2xs">
             <span>MyP</span>
             <FontAwesomeIcon icon={faPaw} className="text-paw-500 text-[0.70em] ml-[1px] mr-0 -translate-y-[0.5px]" />
