@@ -9,15 +9,19 @@ import android.util.Base64;
 import android.util.Log;
 import android.webkit.WebView;
 import androidx.activity.OnBackPressedCallback;
+import androidx.core.content.IntentCompat;
 import com.getcapacitor.BridgeActivity;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import org.json.JSONArray;
 
 public class MainActivity extends BridgeActivity {
     private static final String TAG = "MyPawMainActivity";
+    private final ExecutorService imageProcessingExecutor = Executors.newSingleThreadExecutor();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,6 +68,18 @@ public class MainActivity extends BridgeActivity {
         handleSharedIntent(intent);
     }
 
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        imageProcessingExecutor.shutdown();
+    }
+
+    private boolean isValidImageUri(Uri uri) {
+        if (uri == null) return false;
+        String scheme = uri.getScheme();
+        return "content".equalsIgnoreCase(scheme) || "file".equalsIgnoreCase(scheme);
+    }
+
     private void handleSharedIntent(Intent intent) {
         if (intent == null) return;
         String action = intent.getAction();
@@ -72,11 +88,15 @@ public class MainActivity extends BridgeActivity {
         if (type != null && type.startsWith("image/")) {
             List<Uri> uris = new ArrayList<>();
             if (Intent.ACTION_SEND.equals(action)) {
-                Uri uri = intent.getParcelableExtra(Intent.EXTRA_STREAM);
-                if (uri != null) uris.add(uri);
+                Uri uri = IntentCompat.getParcelableExtra(intent, Intent.EXTRA_STREAM, Uri.class);
+                if (isValidImageUri(uri)) uris.add(uri);
             } else if (Intent.ACTION_SEND_MULTIPLE.equals(action)) {
-                ArrayList<Uri> list = intent.getParcelableArrayListExtra(Intent.EXTRA_STREAM);
-                if (list != null) uris.addAll(list);
+                ArrayList<Uri> list = IntentCompat.getParcelableArrayListExtra(intent, Intent.EXTRA_STREAM, Uri.class);
+                if (list != null) {
+                    for (Uri u : list) {
+                        if (isValidImageUri(u)) uris.add(u);
+                    }
+                }
             }
 
             if (!uris.isEmpty()) {
@@ -86,7 +106,7 @@ public class MainActivity extends BridgeActivity {
     }
 
     private void processAndDeliverUris(List<Uri> uris) {
-        new Thread(() -> {
+        imageProcessingExecutor.execute(() -> {
             try {
                 JSONArray jsonArray = new JSONArray();
                 for (Uri uri : uris) {
@@ -140,6 +160,6 @@ public class MainActivity extends BridgeActivity {
             } catch (Exception e) {
                 Log.e(TAG, "Error in processAndDeliverUris", e);
             }
-        }).start();
+        });
     }
 }
