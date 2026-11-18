@@ -13,6 +13,7 @@ import PetDetailModal from './components/PetDetailModal';
 import SharedPhotosModal from './components/SharedPhotosModal';
 import NotificationModal from './components/NotificationModal';
 import NotificationScreen from './components/NotificationScreen';
+import QuickNotificationDropdown from './components/QuickNotificationDropdown';
 import DocumentScannerModal from './components/DocumentScannerModal';
 import SplashScreen from './components/SplashScreen';
 import { resolveAllKinships } from './kinshipEngine';
@@ -139,6 +140,7 @@ export default function App() {
   const [isFamilyOpen, setIsFamilyOpen] = useState(false);
   const [detailPet, setDetailPet] = useState(null);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+  const [isNotiDropdownOpen, setIsNotiDropdownOpen] = useState(false);
   const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [scannerPetId, setScannerPetId] = useState(null);
   const [scannerInitialFile, setScannerInitialFile] = useState(null);
@@ -189,6 +191,12 @@ export default function App() {
     // 2. Full-screen Image Viewer
     if (viewingImagePet) {
       setViewingImagePet(null);
+      return 'handled';
+    }
+
+    // 2.05 Quick Notification Dropdown
+    if (isNotiDropdownOpen) {
+      setIsNotiDropdownOpen(false);
       return 'handled';
     }
 
@@ -694,6 +702,9 @@ export default function App() {
   };
 
   const handleViewPagerTouchStart = (e) => {
+    if (isNotiDropdownOpen) {
+      setIsNotiDropdownOpen(false);
+    }
     isUserTouchingRef.current = true;
     if (e.touches && e.touches[0]) {
       viewPagerStartXRef.current = e.touches[0].clientX;
@@ -969,25 +980,42 @@ export default function App() {
 
           {/* Right: Notification Bell + View Mode Switcher (Capsule with sliding indicator per animate/SKILL.md) */}
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => setActiveScreen(activeScreen === 'home' ? 'notifications' : 'home')}
-              className={`relative w-10 h-10 rounded-2xl flex items-center justify-center active:scale-95 transition-transform transition-colors duration-150 ease-out shadow-2xs border focus-visible:ring-2 focus-visible:ring-paw-500 outline-none ${
-                activeScreen === 'notifications'
-                  ? 'bg-paw-100 text-paw-700 border-paw-300'
-                  : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200/60'
-              }`}
-              title={activeScreen === 'notifications' ? 'กลับหน้าหลัก' : 'ศูนย์แจ้งเตือน'}
-              aria-label="Notifications"
-            >
-              <FontAwesomeIcon icon={faBell} className="text-sm" />
-              {unreadNotificationsCount > 0 && (
-                <span className={`absolute -top-1 -right-1 min-w-[20px] h-[20px] px-1 rounded-full text-[10px] font-bold text-white flex items-center justify-center shadow-xs border-2 border-white ${
-                  urgentNotificationsCount > 0 ? 'bg-amber-500 animate-pulse' : 'bg-paw-500'
-                }`}>
-                  {unreadNotificationsCount > 9 ? '9+' : unreadNotificationsCount}
-                </span>
-              )}
-            </button>
+            {/* Quick Glance Momentary Notification Dropdown */}
+            <div className="relative">
+              <button
+                onClick={() => setIsNotiDropdownOpen(!isNotiDropdownOpen)}
+                className={`relative w-10 h-10 rounded-2xl flex items-center justify-center active:scale-95 transition-transform transition-colors duration-150 ease-out shadow-2xs border focus-visible:ring-2 focus-visible:ring-paw-500 outline-none ${
+                  isNotiDropdownOpen
+                    ? 'bg-paw-100 text-paw-700 border-paw-300 ring-2 ring-paw-200'
+                    : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200/60'
+                }`}
+                title="การแจ้งเตือนด่วน"
+                aria-label="Quick Notifications"
+              >
+                <FontAwesomeIcon icon={faBell} className="text-sm" />
+                {unreadNotificationsCount > 0 && (
+                  <span className={`absolute -top-1 -right-1 min-w-[20px] h-[20px] px-1 rounded-full text-[10px] font-bold text-white flex items-center justify-center shadow-xs border-2 border-white ${
+                    urgentNotificationsCount > 0 ? 'bg-amber-500 animate-pulse' : 'bg-paw-500'
+                  }`}>
+                    {unreadNotificationsCount > 9 ? '9+' : unreadNotificationsCount}
+                  </span>
+                )}
+              </button>
+
+              <QuickNotificationDropdown
+                isOpen={isNotiDropdownOpen}
+                onClose={() => setIsNotiDropdownOpen(false)}
+                pets={resolvedPets}
+                onUpdatePet={handleSavePet}
+                onOpenPetDetail={(p) => setDetailPet(p)}
+                onOpenMemorial={(p) => setMemorialPet(p)}
+                onOpenHealth={(p) => setHealthPet(p)}
+                onViewAllNotifications={() => {
+                  setIsNotiDropdownOpen(false);
+                  setActiveScreen('notifications');
+                }}
+              />
+            </div>
 
             <div className="relative inline-grid grid-cols-3 items-center bg-slate-100/95 p-1 rounded-full border border-slate-200/70 shadow-2xs">
               {/* Sliding Active Circle Indicator */}
