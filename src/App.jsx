@@ -636,9 +636,11 @@ export default function App() {
   // 📱 Screen ViewPager Scroll Synchronization (Home <-> Notifications)
   const screenScrollRef = useRef(null);
   const isProgrammaticScrollRef = useRef(false);
+  const isUserTouchingRef = useRef(false);
 
   useEffect(() => {
     if (!screenScrollRef.current) return;
+    if (isUserTouchingRef.current) return;
     const width = screenScrollRef.current.clientWidth;
     if (width <= 0) return;
     const targetLeft = activeScreen === 'home' ? 0 : width;
@@ -961,6 +963,17 @@ export default function App() {
         <div 
           ref={screenScrollRef}
           onScroll={handleScreenScroll}
+          onTouchStart={() => {
+            isUserTouchingRef.current = true;
+          }}
+          onTouchEnd={() => {
+            setTimeout(() => {
+              isUserTouchingRef.current = false;
+            }, 180);
+          }}
+          onTouchCancel={() => {
+            isUserTouchingRef.current = false;
+          }}
           className={`flex-1 min-h-0 w-full flex overflow-x-auto overflow-y-hidden snap-x snap-mandatory scroll-smooth ${
             isModalOpen || isDrawerOpen || detailPet || memorialPet || healthPet || 
             isFamilyOpen || isBackupOpen || viewingImagePet || isScannerOpen || isSharedModalOpen
@@ -1067,13 +1080,14 @@ export default function App() {
           </div>
 
           {/* Screen 2: Notifications Screen (Full Screen View) */}
-          <div className="w-full min-w-full flex-shrink-0 snap-center snap-always h-full min-h-0 flex flex-col overflow-y-auto overscroll-y-contain">
+          <div className="w-full min-w-full flex-shrink-0 snap-center snap-always h-full min-h-0 flex flex-col overflow-hidden">
             <NotificationScreen
               pets={resolvedPets}
               onUpdatePet={handleSavePet}
               onOpenPetDetail={(p) => setDetailPet(p)}
               onOpenMemorial={(p) => setMemorialPet(p)}
               onOpenHealth={(p) => setHealthPet(p)}
+              onBackToHome={() => setActiveScreen('home')}
               isActive={activeScreen === 'notifications'}
               onScroll={handleNotificationScroll}
             />

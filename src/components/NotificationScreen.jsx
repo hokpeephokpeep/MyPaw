@@ -3,7 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
   faBell, faCheck, faCakeCandles, faShieldHalved, 
   faSyringe, faStethoscope, faRainbow, faCheckDouble,
-  faCircleCheck, faChevronRight, faSliders, faXmark
+  faCircleCheck, faChevronRight, faSliders, faXmark, faArrowLeft
 } from '@fortawesome/free-solid-svg-icons';
 import { 
   generatePetNotifications, 
@@ -23,6 +23,7 @@ export default function NotificationScreen({
   onOpenPetDetail,
   onOpenMemorial,
   onOpenHealth,
+  onBackToHome,
   isActive = false,
   onScroll
 }) {
@@ -126,6 +127,16 @@ export default function NotificationScreen({
       {/* Top Bar for Notifications Screen */}
       <div className="px-4 sm:px-5 py-3.5 bg-white border-b border-slate-100 flex items-center justify-between flex-shrink-0 shadow-2xs">
         <div className="flex items-center gap-2.5">
+          {onBackToHome && (
+            <button
+              onClick={onBackToHome}
+              className="w-9 h-9 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center active:scale-95 transition-transform shadow-2xs focus-visible:ring-2 focus-visible:ring-paw-500 outline-none"
+              title="กลับหน้าหลัก"
+              aria-label="Back to Home"
+            >
+              <FontAwesomeIcon icon={faArrowLeft} className="text-sm" />
+            </button>
+          )}
           <div className="w-9 h-9 rounded-2xl bg-paw-100 text-paw-600 flex items-center justify-center text-sm shadow-2xs">
             <FontAwesomeIcon icon={faBell} />
           </div>
@@ -257,7 +268,7 @@ export default function NotificationScreen({
       <div 
         id="notif-scroll-container"
         onScroll={onScroll}
-        className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-5 py-4 space-y-3 pb-36 overscroll-y-contain touch-pan-y"
+        className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-5 py-4 space-y-3 pb-36 overscroll-y-contain"
       >
         {filteredList.length === 0 ? (
           <div className="py-16 px-4 text-center">
