@@ -15,6 +15,15 @@ import {
 import { getPhotoSrc } from '../imageUtils';
 import confetti from 'canvas-confetti';
 
+function formatNotificationTitle(item) {
+  let title = (item.title || '').replace(/[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '').trim();
+  const match = title.match(/^(.+?)\s*\((.+?)\)$/);
+  if (match && item.petName && match[2] === item.petName) {
+    return `${item.petName} (${match[1].trim()})`;
+  }
+  return title;
+}
+
 export default function QuickNotificationDropdown({
   isOpen,
   onClose,
@@ -220,24 +229,24 @@ export default function QuickNotificationDropdown({
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-1 mb-0.5">
                         <h4 className="text-xs font-semibold text-slate-800 truncate">
-                          {item.title}
+                          {formatNotificationTitle(item)}
                         </h4>
                         {!item.isRead && (
                           <span className="w-2 h-2 rounded-full bg-amber-500 flex-shrink-0" />
                         )}
                       </div>
 
-                      <div className="flex items-center gap-1.5 flex-wrap text-[11px] mb-1">
+                      <div className="flex items-center gap-1.5 flex-wrap text-xs mb-1 font-mitr font-medium">
+                        {item.dateText && (
+                          <span className="text-slate-800 font-medium">
+                            {item.dateText.split('(')[0].trim()}
+                          </span>
+                        )}
                         <span className={`font-semibold ${
                           isUrgent ? 'text-amber-600' : isMemorial ? 'text-indigo-600' : 'text-paw-600'
                         }`}>
                           {item.diffLabel}
                         </span>
-                        {item.dateText && (
-                          <span className="text-slate-400 text-[10px]">
-                            • {item.dateText.split('(')[0].trim()}
-                          </span>
-                        )}
                       </div>
 
                       {/* Quick Action Button */}

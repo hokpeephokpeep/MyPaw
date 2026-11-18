@@ -19,6 +19,15 @@ import { NotificationItemSkeleton } from './PetCardSkeleton.jsx';
 import { getPhotoSrc } from '../imageUtils';
 import confetti from 'canvas-confetti';
 
+function formatNotificationTitle(item) {
+  let title = (item.title || '').replace(/[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '').trim();
+  const match = title.match(/^(.+?)\s*\((.+?)\)$/);
+  if (match && item.petName && match[2] === item.petName) {
+    return `${item.petName} (${match[1].trim()})`;
+  }
+  return title;
+}
+
 export default function NotificationScreen({
   pets = [],
   onUpdatePet,
@@ -323,20 +332,20 @@ export default function NotificationScreen({
 
                   {/* Body Content */}
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between gap-1 mb-1">
+                    <div className="flex items-center justify-between gap-1 mb-0.5">
                       <h4 className="text-sm font-semibold text-slate-800 truncate">
-                        {item.title}
+                        {formatNotificationTitle(item)}
                       </h4>
                       {!item.isRead && (
                         <span className="w-2.5 h-2.5 rounded-full bg-amber-500 flex-shrink-0 ring-2 ring-white" title="ยังไม่ได้อ่าน" />
                       )}
                     </div>
 
-                    {/* Date with day of week & relative badge: เสาร์ที่ ... (อีกกี่วัน)(เลยกำหนด) */}
-                    <p className="text-xs font-medium text-slate-700 leading-snug">
-                      <span>{item.thaiDayDate || item.dateText || item.message}</span>
+                    {/* Date with day of week & relative badge (เน้นวันที่ใหญ่หน่อย mitr) */}
+                    <p className="font-mitr text-sm sm:text-base font-medium text-slate-800 leading-snug">
+                      <span>{item.thaiDayDate || item.dateText?.split('(')[0]?.trim() || item.message}</span>
                       {item.diffLabel && (
-                        <span className={`ml-1.5 font-semibold ${
+                        <span className={`ml-1.5 font-mitr text-xs sm:text-sm font-semibold ${
                           item.daysDiff < 0 
                             ? 'text-amber-600' 
                             : item.daysDiff === 0 

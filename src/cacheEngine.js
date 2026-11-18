@@ -9,7 +9,7 @@ import { generatePetNotifications, getNotificationPrefs } from './notificationEn
 
 const KINSHIP_CACHE_PREFIX = 'mypaw_cache_kinship_';
 const NOTIF_CACHE_PREFIX = 'mypaw_cache_notif_';
-const CACHE_VERSION = 'v2';
+const CACHE_VERSION = 'v3';
 
 // 🚀 Fast in-memory L1 cache (zero serialization cost)
 const memoryCache = new Map();
