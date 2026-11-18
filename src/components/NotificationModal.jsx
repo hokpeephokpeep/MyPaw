@@ -59,9 +59,15 @@ export default function NotificationModal({
 
   // Filtered notifications
   const filteredList = notifications.filter(n => {
-    if (filter === 'urgent') return n.urgency === 'urgent_today';
-    if (filter === 'upcoming') return n.urgency === 'upcoming_soon';
-    if (filter === 'memorial') return n.urgency === 'memorial';
+    if (filter === 'overdue') {
+      return (typeof n.daysDiff === 'number' && n.daysDiff < 0) || n.id.includes('overdue');
+    }
+    if (filter === 'appointment') {
+      return ['flea', 'vaccine', 'checkup'].includes(n.type);
+    }
+    if (filter === 'anniversary') {
+      return n.type === 'birthday' || n.type === 'memorial';
+    }
     return true;
   });
 
@@ -261,9 +267,9 @@ export default function NotificationModal({
           <div className="flex items-center gap-1.5 flex-nowrap">
             {[
               { id: 'all', label: 'ทั้งหมด' },
-              { id: 'urgent', label: 'ด่วนวันนี้' },
-              { id: 'upcoming', label: 'เร็วๆ นี้' },
-              { id: 'memorial', label: 'ดาวแมว' }
+              { id: 'overdue', label: 'ตกค้าง' },
+              { id: 'appointment', label: 'นัดหมาย' },
+              { id: 'anniversary', label: 'วันครบรอบ' }
             ].map(tab => (
               <button
                 key={tab.id}
