@@ -1079,10 +1079,10 @@ export default function App() {
           {/* Screen 1: Home (Main Pet Cards Feed) */}
           <div 
             id="home-scroll-container"
-            className="w-full min-w-full flex-shrink-0 snap-start snap-always h-full flex flex-col overflow-y-auto overscroll-y-contain"
+            className="w-full min-w-full flex-shrink-0 snap-start snap-always h-full flex flex-col overflow-y-auto overflow-x-hidden overscroll-y-contain"
           >
             {/* Pure Pet Cards Feed */}
-            <main className="px-4 sm:px-5 py-3 flex-1 w-full pb-28" style={{ overflowAnchor: 'none' }}>
+            <main className="px-4 sm:px-5 py-3 flex-1 w-full pb-28 overflow-x-hidden" style={{ overflowAnchor: 'none' }}>
               {filteredPets.length > 0 ? (
                 viewMode === 'list' ? (
                   /* 3. Card List View */

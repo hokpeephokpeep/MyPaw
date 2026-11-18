@@ -268,7 +268,7 @@ export default function NotificationScreen({
       <div 
         id="notif-scroll-container"
         onScroll={onScroll}
-        className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-5 py-4 space-y-3 pb-36 overscroll-y-contain"
+        className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-4 sm:px-5 py-4 space-y-3 pb-36 overscroll-y-contain"
       >
         {filteredList.length === 0 ? (
           <div className="py-16 px-4 text-center">
