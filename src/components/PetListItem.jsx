@@ -6,8 +6,10 @@ import {
   faVenus, faMars, faRainbow, faCakeCandles, faPaw, 
   faChevronRight, faInfinity 
 } from '@fortawesome/free-solid-svg-icons';
+import { useLanguage } from '../i18n.jsx';
 
 export default function PetListItem({ pet, dateFormat = 'en', onOpenMore, onToggleBottomNav }) {
+  const { language, t } = useLanguage();
   const isDeceased = pet.status === 'deceased';
   const age = calculateAge(pet.birthDate);
   const lifespan = isDeceased && pet.deceasedDate 
@@ -18,7 +20,7 @@ export default function PetListItem({ pet, dateFormat = 'en', onOpenMore, onTogg
     : null;
   const humanAge = calculateCatToHumanAge(age.years, age.months);
   const daysUntilBday = !isDeceased ? getDaysUntilBirthday(pet.birthDate) : 999;
-  const specialEvents = getPetSpecialEvents(pet);
+  const specialEvents = getPetSpecialEvents(pet, language);
 
   const timerRef = useRef(null);
   const isLongPressRef = useRef(false);
@@ -155,12 +157,12 @@ export default function PetListItem({ pet, dateFormat = 'en', onOpenMore, onTogg
           <div className="bg-stone-50 border border-stone-200/80 rounded-full px-2.5 py-1 flex items-center gap-1.5 shadow-2xs whitespace-nowrap">
             <FontAwesomeIcon icon={getHumanAgeIcon(humanAge)} className="text-stone-500 text-[10px]" />
             <span className="text-xs font-medium text-stone-800 tabular-nums">
-              ~{humanAge} <span className="font-normal text-stone-500 text-[11px] font-sans">human yrs</span>
+              ~{humanAge} <span className="font-normal text-stone-500 text-[11px] font-sans">{t('human_yrs')}</span>
             </span>
           </div>
         ) : (
           <div 
-            title="จากเราไปสู่ดาวแมวแล้วนานแค่ไหน"
+            title={t('from_us_since')}
             className="bg-slate-100/90 border border-slate-200/80 rounded-full px-2.5 py-1 flex items-center gap-1.5 shadow-2xs whitespace-nowrap"
           >
             <FontAwesomeIcon icon={faRainbow} className="text-slate-400 text-[10px]" />

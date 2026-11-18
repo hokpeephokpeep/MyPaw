@@ -8,8 +8,10 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { motion } from 'motion/react';
 import { BorderBeam } from './ui/border-beam';
+import { useLanguage } from '../i18n.jsx';
 
 export default function PetCard({ pet, allPets = [], dateFormat = 'en', compact = false, onOpenMore, onToggleBottomNav }) {
+  const { language, t } = useLanguage();
   const isDeceased = pet.status === 'deceased';
   // 🐾 Continuous age counting from birthdate until today (living memory in our hearts)
   const age = calculateAge(pet.birthDate);
@@ -23,7 +25,7 @@ export default function PetCard({ pet, allPets = [], dateFormat = 'en', compact 
     : null;
   const humanAge = calculateCatToHumanAge(age.years, age.months);
   const daysUntilBday = !isDeceased ? getDaysUntilBirthday(pet.birthDate) : 999;
-  const specialEvents = getPetSpecialEvents(pet);
+  const specialEvents = getPetSpecialEvents(pet, language);
 
   // Long press handling: 380ms hold enters detail profile
   const timerRef = useRef(null);
@@ -470,12 +472,12 @@ export default function PetCard({ pet, allPets = [], dateFormat = 'en', compact 
                   <FontAwesomeIcon icon={getHumanAgeIcon(humanAge)} className="text-stone-500 text-[10px]" />
                 )}
                 <span className={`${compact ? 'text-[10px] sm:text-[11px]' : 'text-xs'} font-medium text-stone-800 tabular-nums whitespace-nowrap`}>
-                  ~{humanAge}<span className="font-normal text-stone-500 text-[9px] sm:text-[10px] font-sans ml-0.5">{compact ? 'y' : ' human yrs'}</span>
+                  ~{humanAge}<span className="font-normal text-stone-500 text-[9px] sm:text-[10px] font-sans ml-0.5">{compact ? 'y' : ` ${t('human_yrs')}`}</span>
                 </span>
               </div>
             ) : (
               <div 
-                title="จากเราไปสู่ดาวแมวแล้วนานแค่ไหน"
+                title={t('from_us_since')}
                 className={`bg-gradient-to-r from-sky-50 via-amber-50/70 to-indigo-50/80 border border-sky-200/90 rounded-xl ${compact ? 'px-1.5 py-0.5' : 'px-2.5 py-1'} flex items-center gap-1 shadow-2xs flex-shrink-0`}
               >
                 <FontAwesomeIcon icon={faRainbow} className="text-amber-500 text-[9px] sm:text-[10px]" />

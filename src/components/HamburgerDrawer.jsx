@@ -4,8 +4,9 @@ import {
   faPlus, faDatabase, 
   faArrowDownWideShort, faFilter, faHeart, faPaw, faSitemap, faGlobe,
   faSeedling, faRainbow, faImages, faBell, faCamera,
-  faSquare, faTableCellsLarge, faList, faChevronRight
+  faSquare, faTableCellsLarge, faList, faChevronRight, faLanguage
 } from '@fortawesome/free-solid-svg-icons';
+import { useLanguage } from '../i18n.jsx';
 
 export default function HamburgerDrawer({ 
   isOpen, 
@@ -29,6 +30,7 @@ export default function HamburgerDrawer({
   viewMode = '1col',
   onSetViewMode
 }) {
+  const { language, setLanguage, t } = useLanguage();
   const [shouldRender, setShouldRender] = useState(Boolean(isOpen));
   const [isClosing, setIsClosing] = useState(false);
   const timerRef = useRef(null);
@@ -128,16 +130,16 @@ export default function HamburgerDrawer({
 
               {/* Quick Stats Pill */}
               <div className="flex items-center gap-1.5 text-xs">
-                <span className="bg-black/15 text-white/95 px-2 py-0.5 rounded-full font-medium inline-flex items-center gap-1" title="ทั้งหมด">
+                <span className="bg-black/15 text-white/95 px-2 py-0.5 rounded-full font-medium inline-flex items-center gap-1" title={t('stats_total')}>
                   <FontAwesomeIcon icon={faPaw} className="text-[10px]" />
                   <span>{totalPets}</span>
                 </span>
-                <span className="bg-black/15 text-white/95 px-2 py-0.5 rounded-full font-medium inline-flex items-center gap-1" title="อยู่ด้วยกัน">
+                <span className="bg-black/15 text-white/95 px-2 py-0.5 rounded-full font-medium inline-flex items-center gap-1" title={t('stats_alive')}>
                   <FontAwesomeIcon icon={faSeedling} className="text-[10px]" />
                   <span>{aliveCount}</span>
                 </span>
                 {deceasedCount > 0 && (
-                  <span className="bg-black/15 text-white/95 px-2 py-0.5 rounded-full font-medium inline-flex items-center gap-1" title="ดาวแมว">
+                  <span className="bg-black/15 text-white/95 px-2 py-0.5 rounded-full font-medium inline-flex items-center gap-1" title={t('stats_deceased')}>
                     <FontAwesomeIcon icon={faRainbow} className="text-[10px]" />
                     <span>{deceasedCount}</span>
                   </span>
@@ -158,7 +160,7 @@ export default function HamburgerDrawer({
                 className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-2xl bg-gradient-to-r from-paw-500 to-amber-500 hover:from-paw-600 hover:to-amber-600 text-white font-semibold text-xs shadow-xs active:scale-[0.98] transition-all focus-visible:ring-2 focus-visible:ring-paw-500 outline-none"
               >
                 <FontAwesomeIcon icon={faPlus} className="text-xs" />
-                <span>เพิ่มสัตว์เลี้ยง (Add Pet)</span>
+                <span>{language === 'th' ? 'เพิ่มสัตว์เลี้ยง (Add Pet)' : 'Add New Pet'}</span>
               </button>
 
               {/* 4 Feature Tools in Cohesive 2x2 Grid */}
@@ -171,7 +173,7 @@ export default function HamburgerDrawer({
                   <div className="w-7 h-7 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center flex-shrink-0">
                     <FontAwesomeIcon icon={faSitemap} className="text-xs" />
                   </div>
-                  <span className="truncate">Family Tree</span>
+                  <span className="truncate">{t('family_tree')}</span>
                 </button>
 
                 <button
@@ -182,7 +184,7 @@ export default function HamburgerDrawer({
                   <div className="w-7 h-7 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center flex-shrink-0">
                     <FontAwesomeIcon icon={faCamera} className="text-xs" />
                   </div>
-                  <span className="truncate">สแกนเอกสาร</span>
+                  <span className="truncate">{t('scan_document')}</span>
                 </button>
 
                 <button
@@ -193,7 +195,7 @@ export default function HamburgerDrawer({
                   <div className="w-7 h-7 rounded-xl bg-paw-500/10 text-paw-600 flex items-center justify-center flex-shrink-0">
                     <FontAwesomeIcon icon={faImages} className="text-xs" />
                   </div>
-                  <span className="truncate">นำเข้ารูปภาพ</span>
+                  <span className="truncate">{t('import_photos')}</span>
                 </button>
 
                 <button
@@ -205,7 +207,7 @@ export default function HamburgerDrawer({
                     <div className="w-7 h-7 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center flex-shrink-0">
                       <FontAwesomeIcon icon={faBell} className="text-xs" />
                     </div>
-                    <span className="truncate">แจ้งเตือน</span>
+                    <span className="truncate">{t('notifications')}</span>
                   </div>
                   {unreadNotificationsCount > 0 && (
                     <span className="text-[10px] bg-amber-500 px-1.5 py-0.5 rounded-full text-white font-bold flex-shrink-0">
@@ -221,7 +223,7 @@ export default function HamburgerDrawer({
             {/* SECTION 2: Display & Filter */}
             <div className="space-y-2.5">
               <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider px-1">
-                การแสดงผล (Display)
+                {t('display_section')}
               </div>
 
               {/* Status Filter Tab */}
@@ -235,7 +237,7 @@ export default function HamburgerDrawer({
                       : 'text-slate-500 hover:text-slate-800'
                   }`}
                 >
-                  ทั้งหมด
+                  {t('all')}
                 </button>
                 <button
                   type="button"
@@ -247,7 +249,7 @@ export default function HamburgerDrawer({
                   }`}
                 >
                   <FontAwesomeIcon icon={faSeedling} className="text-[10px]" />
-                  <span>อยู่ด้วยกัน</span>
+                  <span>{t('with_us')}</span>
                 </button>
                 <button
                   type="button"
@@ -259,7 +261,7 @@ export default function HamburgerDrawer({
                   }`}
                 >
                   <FontAwesomeIcon icon={faRainbow} className="text-[10px]" />
-                  <span>ดาวแมว</span>
+                  <span>{t('memorial')}</span>
                 </button>
               </div>
 
@@ -273,9 +275,9 @@ export default function HamburgerDrawer({
                     onChange={(e) => setSortBy(e.target.value)}
                     className="w-full py-2 pl-8 pr-3 rounded-2xl bg-slate-100 border border-slate-200/80 text-xs font-semibold text-slate-700 focus:bg-white focus:outline-hidden cursor-pointer"
                   >
-                    <option value="age_desc">อายุมากสุด</option>
-                    <option value="age_asc">อายุน้อยสุด</option>
-                    <option value="bday_near">ใกล้วันเกิด</option>
+                    <option value="age_desc">{t('sort_oldest')}</option>
+                    <option value="age_asc">{t('sort_youngest')}</option>
+                    <option value="bday_near">{t('sort_bday')}</option>
                   </select>
                 </div>
 
@@ -301,7 +303,7 @@ export default function HamburgerDrawer({
                     className={`relative z-10 w-[30px] h-[28px] rounded-xl flex items-center justify-center transition-colors duration-150 active:scale-95 outline-none ${
                       viewMode === '1col' ? 'text-paw-600' : 'text-slate-400 hover:text-slate-600'
                     }`}
-                    title="1 Column (Large Hero)"
+                    title={t('view_1col')}
                     aria-label="1 Column"
                   >
                     <FontAwesomeIcon icon={faSquare} className="text-xs" />
@@ -313,7 +315,7 @@ export default function HamburgerDrawer({
                     className={`relative z-10 w-[30px] h-[28px] rounded-xl flex items-center justify-center transition-colors duration-150 active:scale-95 outline-none ${
                       viewMode === '2col' ? 'text-paw-600' : 'text-slate-400 hover:text-slate-600'
                     }`}
-                    title="2 Columns (Grid)"
+                    title={t('view_2col')}
                     aria-label="2 Columns"
                   >
                     <FontAwesomeIcon icon={faTableCellsLarge} className="text-xs" />
@@ -325,7 +327,7 @@ export default function HamburgerDrawer({
                     className={`relative z-10 w-[30px] h-[28px] rounded-xl flex items-center justify-center transition-colors duration-150 active:scale-95 outline-none ${
                       viewMode === 'list' ? 'text-paw-600' : 'text-slate-400 hover:text-slate-600'
                     }`}
-                    title="Card List View"
+                    title={t('view_list')}
                     aria-label="Card List View"
                   >
                     <FontAwesomeIcon icon={faList} className="text-xs" />
@@ -337,37 +339,82 @@ export default function HamburgerDrawer({
             <hr className="border-slate-100" />
 
             {/* SECTION 3: Preferences & Data */}
-            <div className="space-y-2">
+            <div className="space-y-3">
               <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider px-1">
-                การตั้งค่า (Preferences)
+                {t('preferences_section')}
+              </div>
+
+              {/* 🌐 Language Switcher (Thai vs English) */}
+              <div className="space-y-1">
+                <div className="flex items-center justify-between text-xs font-semibold text-slate-700 px-1">
+                  <span className="flex items-center gap-1.5">
+                    <FontAwesomeIcon icon={faLanguage} className="text-paw-500 text-xs" />
+                    <span>{t('language_label')}</span>
+                  </span>
+                  <span className="text-[10px] text-slate-400 font-sans font-normal uppercase">{language}</span>
+                </div>
+                <div className="grid grid-cols-2 gap-1 bg-slate-100 p-1 rounded-2xl">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setLanguage('th');
+                      onSetDateFormat?.('th');
+                    }}
+                    className={`py-1.5 px-2 rounded-xl text-xs font-semibold transition-all flex items-center justify-center gap-1.5 active:scale-95 focus-visible:ring-2 focus-visible:ring-paw-500 outline-none ${
+                      language === 'th'
+                        ? 'bg-white text-paw-700 shadow-xs'
+                        : 'text-slate-500 hover:text-slate-800'
+                    }`}
+                  >
+                    <span>🇹🇭 ไทย (TH)</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setLanguage('en');
+                      onSetDateFormat?.('en');
+                    }}
+                    className={`py-1.5 px-2 rounded-xl text-xs font-semibold transition-all flex items-center justify-center gap-1.5 active:scale-95 focus-visible:ring-2 focus-visible:ring-paw-500 outline-none ${
+                      language === 'en'
+                        ? 'bg-white text-paw-700 shadow-xs'
+                        : 'text-slate-500 hover:text-slate-800'
+                    }`}
+                  >
+                    <span>🇺🇸 English (EN)</span>
+                  </button>
+                </div>
               </div>
 
               {/* Date Format Toggle */}
-              <div className="grid grid-cols-2 gap-1 bg-slate-100 p-1 rounded-2xl">
-                <button
-                  type="button"
-                  onClick={() => onSetDateFormat?.('en')}
-                  className={`py-1.5 px-2 rounded-xl text-xs font-semibold transition-all flex items-center justify-center gap-1.5 active:scale-95 focus-visible:ring-2 focus-visible:ring-paw-500 outline-none ${
-                    dateFormat === 'en'
-                      ? 'bg-white text-paw-700 shadow-xs'
-                      : 'text-slate-500 hover:text-slate-800'
-                  }`}
-                >
-                  <FontAwesomeIcon icon={faGlobe} className="text-[10px]" />
-                  <span>สากล (En)</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onSetDateFormat?.('th')}
-                  className={`py-1.5 px-2 rounded-xl text-xs font-semibold transition-all flex items-center justify-center gap-1.5 active:scale-95 focus-visible:ring-2 focus-visible:ring-paw-500 outline-none ${
-                    dateFormat === 'th'
-                      ? 'bg-white text-paw-700 shadow-xs'
-                      : 'text-slate-500 hover:text-slate-800'
-                  }`}
-                >
-                  <FontAwesomeIcon icon={faGlobe} className="text-[10px]" />
-                  <span>ไทย (Th)</span>
-                </button>
+              <div className="space-y-1">
+                <div className="text-xs font-semibold text-slate-700 px-1 flex items-center gap-1.5">
+                  <FontAwesomeIcon icon={faGlobe} className="text-slate-400 text-xs" />
+                  <span>{t('date_format_label')}</span>
+                </div>
+                <div className="grid grid-cols-2 gap-1 bg-slate-100 p-1 rounded-2xl">
+                  <button
+                    type="button"
+                    onClick={() => onSetDateFormat?.('en')}
+                    className={`py-1.5 px-2 rounded-xl text-xs font-semibold transition-all flex items-center justify-center gap-1.5 active:scale-95 focus-visible:ring-2 focus-visible:ring-paw-500 outline-none ${
+                      dateFormat === 'en'
+                        ? 'bg-white text-paw-700 shadow-xs'
+                        : 'text-slate-500 hover:text-slate-800'
+                    }`}
+                  >
+                    <span>{t('date_format_en')}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onSetDateFormat?.('th')}
+                    className={`py-1.5 px-2 rounded-xl text-xs font-semibold transition-all flex items-center justify-center gap-1.5 active:scale-95 focus-visible:ring-2 focus-visible:ring-paw-500 outline-none ${
+                      dateFormat === 'th'
+                        ? 'bg-white text-paw-700 shadow-xs'
+                        : 'text-slate-500 hover:text-slate-800'
+                    }`}
+                  >
+                    <span>{t('date_format_th')}</span>
+                  </button>
+                </div>
               </div>
 
               {/* Backup & Restore Action Row */}
@@ -380,7 +427,7 @@ export default function HamburgerDrawer({
                   <div className="w-7 h-7 rounded-xl bg-slate-200/70 text-slate-700 flex items-center justify-center">
                     <FontAwesomeIcon icon={faDatabase} className="text-xs" />
                   </div>
-                  <span>สำรองและกู้คืนข้อมูล (Backup)</span>
+                  <span>{t('backup_restore')}</span>
                 </div>
                 <FontAwesomeIcon icon={faChevronRight} className="text-slate-400 text-[10px]" />
               </button>
@@ -416,7 +463,7 @@ export default function HamburgerDrawer({
 
           <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1 border-t border-slate-200/60 font-sans">
             <span>© tonwtch</span>
-            <span>All rights reserved</span>
+            <span>{t('all_rights_reserved')}</span>
           </div>
         </div>
       </div>

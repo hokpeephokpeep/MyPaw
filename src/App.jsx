@@ -18,6 +18,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { motion } from 'motion/react';
 import confetti from 'canvas-confetti';
+import { useLanguage } from './i18n.jsx';
 
 // 🚀 Code-Split Heavy Modals via React.lazy for instant launch & 60fps swipes
 const PetModal = lazy(() => import('./components/PetModal'));
@@ -34,6 +35,7 @@ const DocumentScannerModal = lazy(() => import('./components/DocumentScannerModa
 const STORAGE_KEY = 'mypetsage_modern_pets_v2';
 
 export default function App() {
+  const { language, t } = useLanguage();
   const [pets, setPets] = useState(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
@@ -882,8 +884,8 @@ export default function App() {
             <button
               onClick={() => setIsDrawerOpen(true)}
               className="w-10 h-10 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center active:scale-95 transition-transform transition-colors duration-150 ease-out shadow-2xs -ml-0.5 focus-visible:ring-2 focus-visible:ring-paw-500 outline-none"
-              title="Menu"
-              aria-label="Menu"
+              title={t('menu')}
+              aria-label={t('menu')}
             >
               <FontAwesomeIcon icon={faBars} className="text-sm" />
             </button>
@@ -900,7 +902,7 @@ export default function App() {
                 resetIdleTimer(3200);
               }}
               className="font-mitr text-2xl font-semibold text-slate-900 tracking-normal flex items-center cursor-pointer active:scale-98 transition-transform select-none"
-              title="แตะเพื่อเลื่อนขึ้นบนสุด"
+              title={t('scroll_top_hint')}
             >
               <span>MyP</span>
               <FontAwesomeIcon icon={faPaw} className="text-paw-500 text-[0.70em] ml-[1px] mr-0 -translate-y-[0.5px]" />
@@ -919,8 +921,8 @@ export default function App() {
                     ? 'bg-paw-100 text-paw-700 border-paw-300 ring-2 ring-paw-200'
                     : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200/60'
                 }`}
-                title="การแจ้งเตือนด่วน"
-                aria-label="Quick Notifications"
+                title={t('quick_notifications')}
+                aria-label={t('quick_notifications')}
               >
                 <FontAwesomeIcon icon={faBell} className="text-sm" />
                 {unreadNotificationsCount > 0 && (
@@ -981,6 +983,7 @@ export default function App() {
                         key={pet.id}
                         pet={pet}
                         dateFormat={dateFormat}
+                        language={language}
                         onOpenMore={(p) => setDetailPet(p)}
                         onToggleBottomNav={toggleBottomNav}
                       />
@@ -996,6 +999,7 @@ export default function App() {
                           compact={true}
                           allPets={pets}
                           dateFormat={dateFormat}
+                          language={language}
                           onOpenMore={(p) => setDetailPet(p)}
                           onToggleBottomNav={toggleBottomNav}
                         />
@@ -1025,6 +1029,7 @@ export default function App() {
                           compact={false}
                           allPets={pets}
                           dateFormat={dateFormat}
+                          language={language}
                           onOpenMore={(p) => setDetailPet(p)}
                           onToggleBottomNav={toggleBottomNav}
                         />
@@ -1039,10 +1044,10 @@ export default function App() {
                     <FontAwesomeIcon icon={faPaw} />
                   </div>
                   <h2 className="font-mitr text-xl font-medium text-slate-800 mb-1.5">
-                    ยังไม่มีข้อมูลน้องเหมียว
+                    {t('empty_pets_title')}
                   </h2>
                   <p className="text-xs text-slate-500 mb-6 leading-relaxed">
-                    เริ่มต้นบันทึกวันเกิด ความทรงจำ และช่วงเวลาดีๆ ของเจ้าตัวโปรดกันเถอะ
+                    {t('empty_pets_desc')}
                   </p>
                   <button
                     onClick={() => {
@@ -1051,8 +1056,8 @@ export default function App() {
                     }}
                     className="px-6 py-3.5 rounded-2xl bg-paw-500 hover:bg-paw-600 text-white font-bold text-sm shadow-lg shadow-paw-500/25 transition-transform transition-colors duration-150 ease-out inline-flex items-center gap-2 active:scale-95 focus-visible:ring-2 focus-visible:ring-paw-500 outline-none"
                   >
-                    <FontAwesomeIcon icon={faPlus} />
-                    <span>เพิ่มน้องแมวตัวแรก</span>
+                    <FontAwesomeIcon icon={faPlus} className="text-xs" />
+                    <span>{t('empty_add_btn')}</span>
                   </button>
                 </div>
               ) : (
@@ -1125,7 +1130,7 @@ export default function App() {
                   />
                 )}
                 <FontAwesomeIcon icon={faHouse} className="text-xs flex-shrink-0" />
-                <span className="truncate">หน้าหลัก</span>
+                <span className="truncate">{t('home')}</span>
               </button>
 
               <button
@@ -1138,7 +1143,7 @@ export default function App() {
                     ? 'text-paw-600 font-bold'
                     : 'text-slate-500 hover:text-slate-800'
                 }`}
-                title="หน้าแจ้งเตือน"
+                title={t('notifications')}
               >
                 {activeScreen === 'notifications' && (
                   <motion.div
@@ -1148,7 +1153,7 @@ export default function App() {
                   />
                 )}
                 <FontAwesomeIcon icon={faBell} className="text-xs flex-shrink-0" />
-                <span className="truncate">แจ้งเตือน</span>
+                <span className="truncate">{t('notifications')}</span>
                 {unreadNotificationsCount > 0 && (
                   <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold text-white leading-none ${
                     urgentNotificationsCount > 0 ? 'bg-amber-500' : 'bg-paw-500'
